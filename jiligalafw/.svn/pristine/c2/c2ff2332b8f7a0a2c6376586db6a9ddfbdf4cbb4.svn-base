@@ -1,0 +1,265 @@
+package sy.domain.model.product;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import sy.domain.model.base.BasicUser;
+import sy.domain.model.shared.PersistentObject;
+
+/**
+ * 订单资源审批PO
+ * @author LB
+ *
+ */
+@Entity
+@Table(name = "CLOUD_ORDER_APPROVAL")
+public class CloudOrderApproval implements PersistentObject {
+	
+	private static final long serialVersionUID = -3624971544758545616L;
+	
+	private String id;
+	/**
+	 * 订单ID
+	 */
+	private CloudUserOrder cloudUserOrder;
+	/**
+	 * 订单用户
+	 */
+	private BasicUser basicUser;
+	/**
+	 * 订单账户
+	 */
+	private BasicUser basicAccount;
+	/**
+	 * 审批标记
+	 */
+	private String approvalFlag;
+	
+	
+	/**
+	 * 数据中心：接口ID 36位
+	 */
+	private CloudMdmZone cloudMdmZone;
+	/**
+	 * 计算方案：接口ID 36位
+	 */
+	private CloudMdmCPUSoln cloudCpuSoln;
+	/**
+	 * 磁盘方案：接口ID 36位
+	 */
+	private CloudMdmDiskSoln cloudMdmDiskSoln;
+	/**
+	 * 磁盘大小：自定义时才有
+	 */
+	private Double diskSize;
+	/**
+	 * 模板：接口ID 36位
+	 */
+	private CloudMdmTemplate cloudMdmTemplate;
+	/**
+	 * 网络方案：接口ID 36位
+	 */
+	private CloudMdmNetworkSoln cloudMdmNetworkSoln;
+	/**
+	 * IP地址：接口ID 36位
+	 */
+	private CloudMdmIP cloudMdmIP;
+	
+	/**
+	 * 虚拟机名称
+	 */
+	private String vmName;
+	/**
+	 * 停机时间
+	 */
+	private Date stopTime;
+	/**
+	 * 网络ID：如果有多个,分割
+	 */
+	private String netIds;
+	
+	
+	private String createdBy;
+	
+	private Date created;
+	
+	private String updatedBy;
+	
+	private Date updated;
+	
+
+	@Id
+	@Column(name="ID",length = 32)
+	@GeneratedValue(generator = "system-uuid")
+	@GenericGenerator(name = "system-uuid", strategy = "uuid")
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	
+	@Column(name="APPROVAL_FLAG")
+	public String getApprovalFlag() {
+		return approvalFlag;
+	}
+	public void setApprovalFlag(String approvalFlag) {
+		this.approvalFlag = approvalFlag;
+	}
+	
+	@ManyToOne()  
+    @JoinColumn(name = "ORDER_ID")
+	public CloudUserOrder getCloudUserOrder() {
+		return cloudUserOrder;
+	}
+	public void setCloudUserOrder(CloudUserOrder cloudUserOrder) {
+		this.cloudUserOrder = cloudUserOrder;
+	}
+	
+	@ManyToOne()  
+    @JoinColumn(name = "USER_ID")
+	public BasicUser getBasicUser() {
+		return basicUser;
+	}
+	public void setBasicUser(BasicUser basicUser) {
+		this.basicUser = basicUser;
+	}
+	
+	@ManyToOne()  
+    @JoinColumn(name = "ACCOUNT_ID")
+	public BasicUser getBasicAccount() {
+		return basicAccount;
+	}
+	public void setBasicAccount(BasicUser basicAccount) {
+		this.basicAccount = basicAccount;
+	}
+
+	
+	@ManyToOne()  
+    @JoinColumn(name = "ZONE_ID")
+	public CloudMdmZone getCloudMdmZone() {
+		return cloudMdmZone;
+	}
+	public void setCloudMdmZone(CloudMdmZone cloudMdmZone) {
+		this.cloudMdmZone = cloudMdmZone;
+	}
+	
+	@ManyToOne()  
+    @JoinColumn(name = "CPU_SOLN_ID")
+	public CloudMdmCPUSoln getCloudCpuSoln() {
+		return cloudCpuSoln;
+	}
+	public void setCloudCpuSoln(CloudMdmCPUSoln cloudCpuSoln) {
+		this.cloudCpuSoln = cloudCpuSoln;
+	}
+	
+	@ManyToOne()  
+    @JoinColumn(name = "DISK_SOLN_ID")
+	public CloudMdmDiskSoln getCloudMdmDiskSoln() {
+		return cloudMdmDiskSoln;
+	}
+	public void setCloudMdmDiskSoln(CloudMdmDiskSoln cloudMdmDiskSoln) {
+		this.cloudMdmDiskSoln = cloudMdmDiskSoln;
+	}
+	
+	@Column(name="DISK_SIZE")
+	public Double getDiskSize() {
+		return diskSize;
+	}
+	public void setDiskSize(Double diskSize) {
+		this.diskSize = diskSize;
+	}
+	
+	@ManyToOne()  
+    @JoinColumn(name = "TEMPLATE_ID")
+	public CloudMdmTemplate getCloudMdmTemplate() {
+		return cloudMdmTemplate;
+	}
+	public void setCloudMdmTemplate(CloudMdmTemplate cloudMdmTemplate) {
+		this.cloudMdmTemplate = cloudMdmTemplate;
+	}
+	
+	@ManyToOne()  
+    @JoinColumn(name = "NETWORK_SOLN_ID")
+	public CloudMdmNetworkSoln getCloudMdmNetworkSoln() {
+		return cloudMdmNetworkSoln;
+	}
+	public void setCloudMdmNetworkSoln(CloudMdmNetworkSoln cloudMdmNetworkSoln) {
+		this.cloudMdmNetworkSoln = cloudMdmNetworkSoln;
+	}
+	
+	@ManyToOne()  
+    @JoinColumn(name = "IP_ID")
+	public CloudMdmIP getCloudMdmIP() {
+		return cloudMdmIP;
+	}
+	public void setCloudMdmIP(CloudMdmIP cloudMdmIP) {
+		this.cloudMdmIP = cloudMdmIP;
+	}
+	
+	@Column(name="VM_NAME")
+	public String getVmName() {
+		return vmName;
+	}
+	public void setVmName(String vmName) {
+		this.vmName = vmName;
+	}
+	
+	@Column(name="STOP_TIME")
+	public Date getStopTime() {
+		return stopTime;
+	}
+	public void setStopTime(Date stopTime) {
+		this.stopTime = stopTime;
+	}
+	
+	@Column(name="NET_IDS")
+	public String getNetIds() {
+		return netIds;
+	}
+	public void setNetIds(String netIds) {
+		this.netIds = netIds;
+	}
+	
+	
+	@Column(name="CREATED_BY")
+	public String getCreatedBy() {
+		return createdBy;
+	}
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+	@Column(name="CREATED")
+	public Date getCreated() {
+		return created;
+	}
+	public void setCreated(Date created) {
+		this.created = created;
+	}
+	
+	@Column(name="UPDATED_BY")
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+	@Column(name="UPDATED")
+	public Date getUpdated() {
+		return updated;
+	}
+	public void setUpdated(Date updated) {
+		this.updated = updated;
+	}
+
+	
+}

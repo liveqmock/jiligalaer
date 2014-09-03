@@ -1,0 +1,133 @@
+package sy.service.product;
+
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+
+import sy.common.model.QueryContext;
+import sy.common.util.DateUtil;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.product.CloudProductPrice;
+import sy.domain.vo.product.CloudProductPriceVo;
+import sy.domain.vo.product.ProductPriceVo;
+import sy.service.shared.BaseServiceTemplate;
+
+
+/**
+ * 产品定价
+ * @author luobin
+ *
+ */
+@Service("cloudProductPriceService")
+public class CloudProductPriceService extends
+		BaseServiceTemplate<CloudProductPrice, CloudProductPriceVo> implements CloudProductPriceServiceI {
+
+	
+	public List<ProductPriceVo> getProdPriceInfo(QueryContext context, String prodType){
+		String sql = "select 	" +
+		"				prod.ID as prodId, prod.PROD_NAME as prodName, item.id as prodItemId, price.ID as priceId, " +
+		"				price.ONE_TIME_PRICE as oneTimePrice, price.YEAR_PRICE as yearPrice, " +
+		"				price.MONTH_PRICE as monthPrice, price.DAY_PRICE as dayPrice, price.HOUR_PRICE as hourPrice, " +
+		"				price.PRICE_MODE as priceMode, price.EFFECTIVE_DATE as effectiveDate, price.INVALID_DATE as invalidDate, " +
+		"				disk.ISCUSTOMIZED as iscustomized, prod.DESCRIPTION as description, item.ITEM_TYPE as prodType " +
+		"	from 	cloud_mdm_product prod " +
+		"			inner join cloud_mdm_product_item item on item.PROD_ID=prod.ID " +
+		"			left join cloud_product_price price on prod.ID=price.PROD_ID " +
+		"			left join cloud_mdm_disk_soln disk on disk.ID=item.ITEM_ID " +
+		"	where	1=1 ";
+		if(StringUtils.isNotEmpty(prodType)){
+			sql += " and item.ITEM_TYPE='" + prodType + "' ";
+		}
+		if(StringUtils.isNotEmpty(context.get("prodName"))){
+			sql += " and prod.PROD_NAME LIKE '%" + context.get("prodName") + "%' ";
+		}
+		if(StringUtils.isNotEmpty(context.get("description"))){
+			sql += " and prod.DESCRIPTION LIKE '%" + context.get("description") + "%' ";
+		}
+		if(StringUtils.isNotEmpty(context.get("statrDate"))){
+			sql += " and price.EFFECTIVE_DATE >= '"+context.get("statrDate")+"' ";
+		}
+		if(StringUtils.isNotEmpty(context.get("endDate"))){
+			sql += " and price.INVALID_DATE <= '"+context.get("endDate")+" 23:59:59' ";
+		}
+		sql += "order by 	item.ITEM_TYPE, prod.PROD_NAME ";
+		context.clearParmeters();
+		return this.listBySql(ProductPriceVo.class, context, sql);
+	}
+	
+	/**
+	 * 获取单一、组合产品列表
+	 */
+	public List<Object[]> getMdmProductPriceInfo(QueryContext context, String prodType){
+		String sql = "select 	prod.ID as prodId, prod.PROD_NAME as prodName, price.ID as priceId, " +
+				"				price.ONE_TIME_PRICE as oneTimePrice, price.YEAR_PRICE as yearPrice, " +
+				"				price.MONTH_PRICE as monthPrice, price.DAY_PRICE as dayPrice, " +
+				"				price.PRICE_MODE as priceMode, price.EFFECTIVE_DATE as effectiveDate, disk.ISCUSTOMIZED, item.id as prodItemId " +
+				"	from 	cloud_mdm_product prod " +
+				"			inner join cloud_mdm_product_item item on item.PROD_ID=prod.ID " +
+				"			left join cloud_product_price price on prod.ID=price.PROD_ID " +
+				"			left join cloud_mdm_disk_soln disk on disk.ID=item.ITEM_ID " +
+				"	where	item.ITEM_TYPE='" + prodType + "' ";
+		
+		return super.getBaseDao().findBySQL(sql);
+//		return this.list(MdmProductPriceInfo.class, context, sql, prodType);
+	}
+	
+	/**
+	 * 保存产品定价信息
+	 */
+	public void saveProdPrice(List<CloudProductPriceVo> voList) throws ValidatorException{
+		for(CloudProductPriceVo vo : voList){
+			this.save(vo);
+		}
+	}
+	
+	public CloudProductPriceVo getPriceByProdId(String prodId) throws ValidatorException{
+		QueryContext context = new QueryContext();
+		context.put("$eq_cloudMdmProduct_id", prodId);
+		context.put("$le_effectiveDate", DateUtil.format(new Date(), "yyyy-MM-dd"));
+		context.put("$ge_invalidDate", DateUtil.format(new Date(), "yyyy-MM-dd"));
+		List<CloudProductPriceVo> list = this.list(context);
+		if(list != null && list.size()>0){
+			return list.get(0);
+		}else{
+			return null;
+		}
+	}
+
+	@Override
+	public CloudProductPriceVo getPriceByProdType(String prodType)
+			throws ValidatorException {
+		// TODO Auto-generated method stub
+		String sql ="select 	price.ONE_TIME_PRICE as oneTimePrice, price.YEAR_PRICE as yearPrice, " +
+				"				price.MONTH_PRICE as monthPrice, price.DAY_PRICE as dayPrice, " +
+				"				price.PRICE_MODE as priceMode " +
+				"	from 	cloud_mdm_product prod " +
+				"			inner join cloud_mdm_product_item item on item.PROD_ID=prod.ID " +
+				"			left join cloud_product_price price on prod.ID=price.PROD_ID " +
+				"	where	item.ITEM_TYPE='" + prodType + "' and price.EFFECTIVE_DATE <=now() and price.INVALID_DATE>=now() ";
+		return this.findUniqueBySql(sql);
+	}
+	@Override
+	public List<CloudProductPriceVo> getCloudProductPriceVoByComb() throws Exception {
+		// TODO Auto-generated method stub
+		String hql = "select pp from CloudProductPrice pp where  pp.cloudMdmProductItem.itemType='compProd' " +
+				"and pp.effectiveDate <=now() and pp.invalidDate>=now() and pp.cloudMdmProductItem.state=1";
+		return this.find(CloudProductPriceVo.class,hql);
+	}
+	
+	
+	@Override
+	public List<CloudProductPriceVo> getCurrentProductPriceList() {
+		String hql =
+				"From CloudProductPrice price " +
+				"Where price.effectiveDate <=now() " +
+				"And price.invalidDate>=now() " +
+				"And price.cloudMdmProductItem.state=1";
+		return this.find(CloudProductPriceVo.class,hql);
+	}
+	
+	
+}

@@ -1,0 +1,200 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />  
+    <title>账户注册-瑞云云计算门户系统</title>
+    <link href="${ctx}/css/css_login.css" rel="stylesheet" />
+    <link href="${ctx}/css/css_font.css" rel="stylesheet" />
+    <link href="${ctx}/css/css_cycle.css" rel="stylesheet" />
+	<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+	<link href="${ctx}/css/table.css" rel="stylesheet" />
+
+    <style type="text/css">
+	    <!--
+			  body {
+				  background-color: #000000;
+				  margin-left: 0px;
+				  margin-top: 0px;
+				  margin-right: 0px;
+				  margin-bottom: 0px;
+			  }
+      -->
+    </style>
+ <script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+ <script type="text/javascript"	src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+ <script type="text/javascript"	src="${ctx}/widgets/jquery/jquery-1.4.3.min.js"></script>
+ <script type="text/javascript"	src="${ctx}/widgets/jquery/jquery.nivo.slider.pack.js"></script>
+ <script type="text/javascript">
+ 	function refreshimg(object) {
+		var d = new Date();
+		object.src = '${ctx}/commons/image.jsp?' + d.toString(38);
+		$("#rand").focus();
+	}
+
+ 	function changeImg() {
+		$("#imageCode").click();
+	}
+ 	
+ 	function userReg(){
+ 		
+ 		if(document.getElementById("userAccount").value==''){
+ 			alert('用户名(邮箱)不能为空'); 
+ 			return false;
+ 		}
+ 		if(!checkEmail(document.getElementById("userAccount").value)){
+ 			alert("请输入有效的邮箱地址!");
+ 			return;
+ 		}
+ 		if(document.getElementById("userPassword").value==''){
+ 			alert('密码不能为空'); 
+ 			return false;
+ 		}
+ 		if(document.getElementById("reUserPassword").value==''){
+ 			alert('确认密码不能为空'); 
+ 			return false;
+ 		}
+ 		if(document.getElementById("userName").value==''){
+ 			alert('姓名不能为空'); 
+ 			return false;
+ 		}
+ 		if(document.getElementById("tel").value==''){
+ 			alert('电话不能为空'); 
+ 			return false;
+ 		}
+ 		if(document.getElementById("birthDate").value==''){
+ 			alert('出生日期不能为空'); 
+ 			return false;
+ 		}
+ 		
+		if(document.getElementById("rand").value==''){
+ 			alert('验证码不能为空'); 
+ 			return false;
+ 		}
+ 		
+		
+ 		if($("#chkAgree").is(':checked')){
+			$("#userRegisterVo").submit();
+ 		} else {
+			alert('请您阅读并同意瑞云浩天的《法律条款》'); 			
+ 		}
+	}
+ 	
+ 	function reset(){
+		$("#userRegisterVo").reset();
+	}
+ 	
+ </script>
+ </head>
+  <body>
+    <div id="header_bg"></div>
+    <div id="middle_bg">
+      <div id="middle">
+        <div id="register">
+  		<form:form  modelAttribute="userRegisterVo" action="${ctx}/base/userRegister/saveUserInfo.do"  method="post">
+    	    <table width="952" height="470" border="0" cellpadding="0" cellspacing="0" align="center">
+				    <tr height="40">
+				    	<td width="2%" ></td>
+				    	<td colspan="5" class="f18_1">注册成为瑞云浩天云计算门户系统的用户</td>
+				    </tr>
+				    <tr height="40">
+				    	<td width="2%" ></td>
+				    	<td width="2%" ></td>
+				    	<td colspan="4" class="f16_2">
+				    	  <span class="f16_3">1 资料填写</span>
+				    	  &nbsp;&nbsp;&nbsp;&nbsp;》&nbsp;&nbsp;&nbsp;
+				    	  2 邮箱验证
+				    	  &nbsp;&nbsp;&nbsp;&nbsp;》&nbsp;&nbsp;&nbsp;
+				    	  3 完成注册
+				    	</td>
+				    </tr>
+				    <tr height="25">
+				    	<td></td>
+				    	<td>
+				    		<form:input path="invitationKey" type="hidden"/>
+					    	<form:input path="userFlag" type="hidden"/>
+				    	</td>
+				    	<td  class="f13">用户名(邮箱)<span style="color:#ff0000">*</span>：</td>
+				    	<td><form:input path="userAccount" type="text"  class="text13" size="30" maxlength="35" />&nbsp;<font size="2" color="red"><form:errors path="userAccount" /></font></td>
+				    	<td  class="f13"></td>
+				    	<td  class="f12"></td>
+				    </tr>
+				    <tr height="25">
+				    	<td></td>
+				    	<td></td>
+				    	<td class="f13">密码<span style="color:#ff0000">*</span>：</td>
+				    	<td height="25">
+				    	  <table align="left" width="100%"  border="0" cellspacing="1" cellpadding="0" bordercolor="#cccccc" style='height:25px; margin:0px; padding:0px; display:inline;'>
+						    <tr align="center">
+						      <td height="25px">
+			    				<form:input path="userPassword" type="password" class="text13" size="30" cssStyle="height:20px;" maxlength="15" onKeyUp='pwStrength(this.value)' onBlur='pwStrength(this.value)'/>
+			    				<font size="2" color="red"><form:errors path="userPassword" /></font>
+						      </td>
+						      <td class="f13" width="35" height="20" id="strength_L"  bgcolor="#eeeeee">弱</td>
+						      <td class="f13" width="35" height="20" id="strength_M"  bgcolor="#eeeeee">中</td>
+						      <td class="f13" width="35" height="20" id="strength_H"  bgcolor="#eeeeee">强</td>
+						    </tr>
+						  </table>
+				    	</td>
+				    	<td class="f13">确认密码<span style="color:#ff0000">*</span>：</td>
+				    	<td><form:input path="reUserPassword" type="password" class="text13" size="30" maxlength="15" />&nbsp;<font size="2" color="red"><form:errors path="reUserPassword" /></font></td>
+				    </tr>
+				    <tr height="25">
+				    	<td></td>
+				    	<td></td>
+				    	<td class="f13">姓名<span style="color:#ff0000">*</span>：</td>
+				    	<td><form:input path="userName" type="text" class="text13" size="30" maxlength="15"/>&nbsp;<font size="2" color="red"><form:errors path="userName" /></font></td>
+				    	<td class="f13">联系电话<span style="color:#ff0000">*</span>：</td>
+				    	<td><form:input path="tel" type="text" class="text13" size="30" maxlength="12" />&nbsp;<font size="2" color="red"><form:errors path="tel" /></font></td>
+				    </tr>
+				    <tr height="25" id="tr_identityCard" >
+				    	<td></td>
+				    	<td></td>
+				    	<td class="f13">出生日期<span style="color:#ff0000">*</span>：</td>
+				    	<td><form:input path="birthDate" class="date_but" size="30" onfocus="WdatePicker()" readonly="true" id="userBrithday" /></td>
+				    	<td class="f13"></td>
+				    	<td class="f12"></td>
+				    </tr>
+				    <tr height="25">
+				    	<td></td>
+				    	<td></td>
+				    	<td class="f13">备注：</td>
+				    	<td colspan="3"><form:textarea path="remark" cols="86" rows="2"/></td>
+				    </tr>
+				    <tr height="25">
+				    	<td></td>
+				    	<td></td>
+				    	<td class="f13">验证码<span style="color:#ff0000">*</span>：</td>
+				    	<td colspan="3" class="f12"><form:input path="rand" type="text" class="text13" size="20"  id="rand"/> <img id="imageCode" src="${ctx}/commons/image.jsp" style="padding-top:1px;width:57px;cursor:pointer;" height="24" border="0" alt="点击更换验证码" onclick="javascript:refreshimg(this);" />&nbsp;<font size="2" color="red"><form:errors path="rand" /></font></td>
+				    </tr>
+				    <tr height="35">
+				    	<td></td>
+				    	<td></td>
+				    	<td colspan="4" align="center" class="f15_3"><input type="checkbox"  <c:choose><c:when test="${chkAgree=='1'}">checked</c:when></c:choose>  id="chkAgree"/>我已阅读并同意瑞云浩天的&nbsp;&nbsp;<a href="${ctx}/commons/legal.html" style="color:red" target="_blank" >《法律条款》</a></td>
+				    </tr>
+				    <tr height="35">
+				    	<td></td>
+				    	<td></td>
+				    	<td class="f13" colspan="4" align="center">
+			    			<img src="${ctx}/images/btns2.png" width="120" height="32" border="0" align="absmiddle"  onclick="javascript:userReg();" style="cursor: pointer;"/>
+				    		&nbsp;
+			    			<img src="${ctx}/images/btnc1.png" width="120" height="32" border="0" align="absmiddle" onclick="javascript:reset();" style="cursor: pointer;"/>
+				    		<!--
+				    		&nbsp;
+			    			<img src="${ctx}/images/btn10.png" width="120" height="32" border="0" align="absmiddle" onclick="javascript:window.history.go(-1);"/>
+				    		-->
+				    	</td>
+				    </tr>
+				    <tr height="15"><td colspan="6"></td></tr>
+          </table>
+          </form:form>
+        </div>
+      </div>
+    </div>
+    <!-- middle -->
+		<div>
+			<jsp:include page="/commons/footUserReg.jsp"></jsp:include>
+		</div>
+  </body>
+</html>

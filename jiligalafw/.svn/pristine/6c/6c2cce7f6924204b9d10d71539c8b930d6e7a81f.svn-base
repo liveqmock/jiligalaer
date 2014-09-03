@@ -1,0 +1,388 @@
+/*
+ * 创建日期 2005-6-21
+ *
+ */
+package sy.util2;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.log4j.Logger;
+
+import com.cits.inbound.buzlogic.InBoundBuzLogicConstants;
+import com.cits.online.common.ioc.IoC;
+
+/**
+ * FTP文件上传工具
+ */
+public class CitNETFTPClientUtil {
+	/** 日志 */
+	protected static Logger logger = (Logger) IoC.get("Logger");
+
+	/** FTPClient 实例 */
+	private FTPClient client;
+
+	/**
+	 * Creates a new NETFtpClientUtil object.
+	 * 
+	 * @throws IOException
+	 */
+	public CitNETFTPClientUtil() throws IOException {
+		client = CitNETFTPClientFactory.getFTPClient();
+	}
+
+	/**
+	 * 上传文件到FTP服务器
+	 * 
+	 * 
+	 * @param fileName 本地的文件名和要上传的文件名相等
+	 * 
+	 * @param dirPath  本地的文件路径和要上传的文件的路径（不包括文件名）相等
+	 * 
+	 * @return 文件上传成功：true/失败：false
+
+	 */
+	public synchronized  boolean uploadFile(String fileName,String dirPath) {
+		return uploadFile(fileName, fileName, dirPath,dirPath);
+	}
+
+	/**
+	 * 从FTP服务器删除文件
+	 * 
+	 * /mnt/citsonlineFiles/下面的文件(dirPath)　
+	 * 	 
+	 * @param path  要删除的文件的绝对路径（包括文件名)
+	 * 
+	 * 
+	 * @return 删除文件成功：true/失败：false
+	 */
+	public synchronized boolean deleteFile(String path) {
+		boolean result = false;
+
+
+		try {
+
+			if(checkFileExist(path)){
+				result = client.deleteFile(path);
+
+				logger.debug("删除文件存在，并删除文件 "+ path + (result ? " 成功" : " 失败"));
+			}else{
+				//不存在理解为删除成功
+				result = true;
+				logger.debug("删除文件不存在,理解为删除成功");
+			}
+
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			try {
+				CitNETFTPClientFactory.reLogin(client);
+			} catch (Exception e1) {
+				logger.debug("重新登录FTP服务器错误。" + e1.getMessage());
+			}
+			
+			
+		}
+
+
+		return result;
+	}
+
+
+
+	/**
+	 * 上传文件到FTP服务器
+	 * 
+	 * 
+	 * @param fileNameFrom 要上传的文件名
+	 * 
+	 * @param fileNameTo 上传后的文件名
+	 * 
+	 * @param dirPathFrom  要上传的文件的绝对路径（不包括文件名）
+	 * 
+	 * @param dirPathTo  要上传的文件的绝对路径（不包括文件名）
+	 * 
+	 * 
+	 * @return 文件上传成功：true/失败：false
+	 */
+	public synchronized boolean uploadFile(String fileNameFrom, String fileNameTo,String dirPathFrom,String dirPathTo) {
+		boolean result = false;
+
+		String dirFullPathFrom=dirPathFrom+fileNameFrom;
+
+		String dirFullPathTo=dirPathTo+fileNameTo;
+
+		File fromFile = new File(dirFullPathFrom);
+
+		if (fromFile.exists() && fromFile.isFile()) {
+			InputStream inputStream = null;
+
+			try {
+
+				inputStream = new FileInputStream(fromFile);
+
+				client.setFileType(FTPClient.BINARY_FILE_TYPE);
+				//如果没有文件夹　就创建一个文件夹
+				//有文件才可以上传，如果文件夹没有创建成功，上传是一定会失败的
+				if(this.checkPathExist(dirPathTo)){
+
+					result = client.storeFile(dirFullPathTo, inputStream);
+				}
+
+
+				logger.debug("上传文件 " +dirFullPathFrom + " TO " + dirFullPathTo + (result ? " 成功" : " 失败"));
+			} catch (Exception e) {
+				logger.debug("上传文件 " +dirFullPathFrom + " TO " + dirFullPathTo + (result ? " 成功" : " 失败"));
+				e.printStackTrace();
+				try {					
+					CitNETFTPClientFactory.reLogin(client);
+				} catch (Exception e1) {
+					logger.debug("重新登录FTP服务器错误。" + e1.getMessage());
+				}
+
+			} finally {
+				try {
+					if(inputStream!=null)
+						inputStream.close();
+				} catch (Exception e1) {
+				}
+			}
+		}
+
+		return result;
+	}
+
+
+	/**
+	 * 
+	 * 从FTP服务器上下载文件到本地
+	 * 
+	 * @param remotePath FTP服务器上的绝对路径(包括文件名)
+	 * 
+	 * @param localPath 下载后保存到本地的绝对路径(不包括文件名)
+	 * 
+	 * @param fileName 下载的文件名
+	 * 
+	 * @return 文件下载成功：true/失败：false
+	 */
+	public synchronized boolean copyFile(String remotePath ,String localPath,String fileName) {
+		boolean result = false;
+
+		OutputStream os=null;
+		try{
+
+			File localFile = new File(localPath);         
+			if(!localFile.exists()){
+				localFile.mkdir();
+			}
+			os= new FileOutputStream(new File(localPath+fileName));     
+
+			result = client.retrieveFile(remotePath, os);              
+
+			logger.debug("下载文件 " +remotePath + " TO " + localPath+fileName + (result ? " 成功" : " 失败"));
+		} catch (Exception e) {
+
+			logger.debug("下载文件 " +remotePath + " TO " + localPath+fileName + (result ? " 成功" : " 失败"));
+			e.printStackTrace();
+			try {
+				CitNETFTPClientFactory.reLogin(client);
+			} catch (Exception e1) {
+				logger.debug("重新登录FTP服务器错误。" + e1.getMessage());
+			} 
+			
+		
+
+		} finally {
+			try {
+				if(os!=null)
+					os.close();
+			} catch (Exception e1) {
+			}
+		}
+
+
+
+
+		return result;
+	}
+
+
+	/**
+	 * 下载文件从FTP服务器，会弹出下载窗口
+	 * 	 * 
+	 * @param remotePath FTP服务器上的绝对路径(包括文件名)
+	 * 
+	 * @param response 用来写文件的HttpServletResponse
+	 * 	 * 
+	 * @param fileName 下载的默认文件名
+	 * 
+	 * @return 文件下载成功：true/失败：false
+	 * 
+	 * 
+	 */
+	public synchronized boolean downFile(String remotePath,HttpServletResponse response,String fileName){
+		InputStream inStream =null;
+		OutputStream outStream =null;
+		try{			 
+
+			inStream= client.retrieveFileStream(remotePath); 
+
+			if(inStream==null)return false;
+
+			outStream= response.getOutputStream(); 
+
+			response.reset(); 
+			response.setContentType("bin");
+			response.addHeader("Content-Disposition","attachment; filename=\""+fileName+"\"" );
+
+			byte[] b = new byte[1044]; 
+			int len; 
+
+			while((len=inStream.read(b)) >0) {
+				outStream.write(b,0,len);
+			}
+
+			outStream.flush();
+
+			logger.debug("下载文件 " +remotePath +" 成功" );
+		} catch (Exception e) {
+
+			logger.debug("下载文件 " +remotePath +" 失败" );			
+			e.printStackTrace();
+			try {				
+				CitNETFTPClientFactory.reLogin(client);
+			}  catch (Exception e1) {
+				logger.debug("重新登录FTP服务器错误。" + e1.getMessage());
+			}			
+
+			
+			return false;
+		} finally{
+			try {
+				if(inStream!=null){
+
+					inStream.close();
+					client.completePendingCommand();
+				}
+			} catch (Exception e) {
+			}
+			try {
+				if(outStream!=null)
+					outStream.close();
+			} catch (Exception e) {
+			}
+
+		}
+		return true;
+
+
+	}
+
+
+	/** 
+	 * 查找指定目录下面指定名称的文件是否存在 
+	 * @param String filePath 要查找的目录和文件
+	 * @return boolean:存在:true，不存在:false 
+	 * @throws IOException 
+	 */ 
+	private  boolean checkFileExist(String filePath){ 
+		boolean existFlag = false; 
+		try {
+
+			String fileName="";
+//			跳转到指定的文件目录 
+			if(filePath!=null && !filePath.equals("")){ 
+				if(filePath.lastIndexOf(InBoundBuzLogicConstants.URL_SEPARATOR)!=-1){ 
+					int index = 0; 
+					index=filePath.lastIndexOf(InBoundBuzLogicConstants.URL_SEPARATOR);				
+					client.changeWorkingDirectory(filePath.substring(0,index)); 
+
+					fileName = filePath.substring(index+1,filePath.length()); 
+
+				}else{ 
+					fileName=filePath; 
+				} 
+			}  
+			logger.debug("======fileName===="+fileName);
+			String[] fileNames = client.listNames(); 
+			if(fileNames!=null && fileNames.length>0){ 
+				for(int i=0;i<fileNames.length;i++){ 
+					if(fileNames[i]!=null && fileNames[i].equals(fileName)){ 
+						existFlag = true; 
+						break; 
+					} 
+				} 
+			} 
+			client.changeToParentDirectory(); 
+		} catch (Exception e) {
+			e.printStackTrace();
+			existFlag=false;
+		}
+		logger.debug("======existFlag===="+existFlag);
+		return existFlag; 
+	} 
+
+
+
+	/** 
+	 * 查找指定目录是否存在 
+	 * @param String filePath 要查找的目录 
+	 * @return boolean:存在:true，不存在:false 
+	 * @throws IOException 
+	 * @throws IOException 
+	 * @throws IOException 
+	 */ 
+	private  boolean checkPathExist(String filePath) throws IOException  { 
+		boolean existFlag = false; 
+
+		if(!client.changeWorkingDirectory(filePath)){ 
+			logger.debug("======filePath===="+filePath+"不存在. ");
+			
+			existFlag =client.makeDirectory(filePath);
+			
+			logger.debug("==建立文件夹=="+filePath+"===="+(existFlag? " 成功" : " 失败")); 
+			
+			
+		}else{
+			existFlag=true;
+			logger.debug("======filePath===="+filePath+"存在");
+		}
+
+
+		return existFlag; 
+	} 
+
+	/**
+	 * 上传多个文件到FTP服务器
+	 * 
+	 * 
+	 * @param fileNames 要上传的文件名数组
+	 * 
+	 * 
+	 * @return 文件上传成功：true/失败：false
+	 */
+	public boolean storeFile(String[] fileNames) {
+		boolean isSuccess = false;
+
+		for (int i = 0; i < fileNames.length; i++) {
+			isSuccess = uploadFile(fileNames[i], fileNames[i]);
+
+			if (!isSuccess) {
+				return isSuccess;
+			}
+		}
+
+		return isSuccess;
+	}
+
+
+
+	
+}

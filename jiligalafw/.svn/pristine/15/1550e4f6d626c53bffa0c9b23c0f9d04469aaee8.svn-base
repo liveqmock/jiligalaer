@@ -1,0 +1,75 @@
+
+//字典树
+function openDictTree(ctx, dictId, onlyLeaf, model, values, exp,callback) {
+	if (!onlyLeaf) onlyLeaf = '';
+	if (!model) model = '';
+	var obj = new Object();
+	obj.values = values || "";
+	if (!exp) exp = '';
+	var result = window.showModalDialog(ctx + "/dictItem/tree.do?first=1&onlyLeaf=" + onlyLeaf + "&model=" + model + "&dictId=" + dictId + "&" + exp + "&rand=" + Math.random(), obj, "dialogHeight:480px;dialogWidth:480px;scroll=no;help:no;status:no");
+	if(typeof(callback)=="function"){
+		callback(result);
+	}
+}
+
+function openResTree(ctx, onlyLeaf, model, values, exp,callback){
+	if (!onlyLeaf) onlyLeaf = '';
+	if (!model) model = '';
+	var obj = new Object();
+	obj.values = values || "";
+	if (!exp) exp = '';
+	var result = window.showModalDialog(ctx + "/resource/tree.do?first=1&onlyLeaf=" + onlyLeaf + "&model=" + model + "&" + exp + "&rand=" + Math.random(), obj, "dialogHeight:480px;dialogWidth:480px;scroll=no;help:no;status:no");
+	if(typeof(callback)=="function"){
+		callback(result);
+	}
+}
+
+//账户树
+function openAccountTree(ctx, dictId, onlyLeaf, model, values, exp, callback, userFlag) {
+	if (!onlyLeaf) onlyLeaf = '';
+	if (!model) model = '';
+	var obj = new Object();
+	obj.values = values || "";
+	if (!exp) exp = '';
+	var result = window.showModalDialog(ctx + "/tree/accountTree.do?first=1&onlyLeaf=" + onlyLeaf + "&model=" + model + "&" + exp + "&userFlag=" + userFlag + "&rand=" + Math.random(), obj, "dialogHeight:480px;dialogWidth:480px;scroll=no;help:no;status:no");
+	if(typeof(callback)=="function"){
+		callback(result);
+	}
+}
+//虚拟机列表
+function openVmTree(ctx, dictId, onlyLeaf, model, values, exp, callback, userFlag, networkId) {
+	if (!onlyLeaf) onlyLeaf = '';
+	if (!model) model = '';
+	var obj = new Object();
+	obj.values = values || "";
+	if (!exp) exp = '';
+	var result = window.showModalDialog(ctx + "/tree/vmTree.do?first=1&onlyLeaf=" + onlyLeaf + "&model=" + model + "&" + exp + "&networkId=" + networkId + "&rand=" + Math.random(), obj, "dialogHeight:480px;dialogWidth:480px;scroll=no;help:no;status:no");
+	if(typeof(callback)=="function"){
+		callback(result);
+	}
+}
+//数据中心列表
+function openZoneTree(ctx, dictId, onlyLeaf, model, values, exp, callback, userFlag) {
+	if (!onlyLeaf) onlyLeaf = '';
+	if (!model) model = '';
+	var obj = new Object();
+	obj.values = values || "";
+	if (!exp) exp = '';
+	var result = window.showModalDialog(ctx + "/tree/zoneTree.do?first=1&onlyLeaf=" + onlyLeaf + "&model=" + model + "&" + exp + "&userFlag=" + userFlag + "&rand=" + Math.random(), obj, "dialogHeight:480px;dialogWidth:480px;scroll=no;help:no;status:no");
+	if(typeof(callback)=="function"){
+		callback(result);
+	}
+}
+
+//可用IP列表
+function openIpTree(ctx, dictId, onlyLeaf, model, values, exp, callback, zoneid) {
+	if (!onlyLeaf) onlyLeaf = '';
+	if (!model) model = '';
+	var obj = new Object();
+	obj.values = values || "";
+	if (!exp) exp = '';
+	var result = window.showModalDialog(ctx + "/tree/ipTree.do?first=1&onlyLeaf=" + onlyLeaf + "&model=" + model + "&" + exp + "&zoneid=" + zoneid + "&rand=" + Math.random(), obj, "dialogHeight:480px;dialogWidth:480px;scroll=no;help:no;status:no");
+	if(typeof(callback)=="function"){
+		callback(result);
+	}
+}

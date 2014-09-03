@@ -1,0 +1,240 @@
+@charset "utf-8";
+/* CSS Document */
+
+.f20 {
+	font-family:"微软雅黑";
+	font-size: 20px;
+	font-style: italic;
+	font-weight: bold;
+	color: #FFFFFF;
+	padding-left:8px;
+	letter-spacing:1px;
+}
+
+.f18 {
+	font-family:"微软雅黑";
+	font-size: 18px;
+	color: #FFFFFF;
+}
+
+.f18_1 {
+	font-family: 微软雅黑;
+	font-size: 18px;
+	font-weight: bold;
+	color: #FFFFFF;
+}
+
+.f18b1 {
+  font-family: "微软雅黑";
+  font-size: 18px;
+  font-weight: bold;
+  color: #000000;
+}	
+
+.f18b2 {
+  font-family: "微软雅黑";
+  font-size: 18px;
+  font-weight: bold;
+  padding-left:10px;
+  color: #474f63;
+}		
+
+.f18b3 {
+  font-family: "微软雅黑";
+  font-size: 18px;
+  font-weight: bold;
+  color: #474f63;
+}		
+
+.f16 {
+	font-size: 16px;
+	color: #FFFFFF;
+	font-family: "微软雅黑";
+}
+
+.f16_1 {
+  font-family: "微软雅黑";
+  font-size: 16px;
+  color: #21a8cd;
+  font-weight: bold;
+  letter-spacing:1px;
+}
+
+.f16_2 {
+	font-size: 16px;
+	color: #FFFFFF;
+	font-family: "微软雅黑";
+	font-weight: bold;
+}
+
+.f16_3 {
+	font-size: 16px;
+	color: #86caf5;
+	font-family: "微软雅黑";
+	font-weight: bold;
+}
+.f16b2 {
+  font-family: "微软雅黑";
+  font-size: 16px;
+  font-weight: bold;
+  padding-left:10px;
+  color: #474f63;
+}
+.f14b2 {
+  font-family: "微软雅黑";
+  font-size: 14px;
+  font-weight: bold;
+  padding-left:10px;
+  color: #474f63;
+}	
+.f15 {
+	font-family:"微软雅黑";
+	font-size: 15px;
+	color: #000000;
+	font-weight: bold;
+}
+
+.f15_1 {
+  font-family: "微软雅黑";
+  font-size: 15px;
+  color: #59b9ce;
+  font-weight: bold;
+}
+
+.f15_1_success {
+  font-family: "微软雅黑";
+  font-size: 15px;
+  color: #0000FF;
+  font-weight: bold;
+}
+
+.f15_1_error {
+  font-family: "微软雅黑";
+  font-size: 15px;
+  color: #FF0000;
+  font-weight: bold;
+}
+
+.f15_12 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #0000FF;
+  font-weight: bold;
+}
+
+.f15_2 {
+  font-family: "微软雅黑";
+  font-size: 15px;
+  color: #aaaaaa;
+}
+
+.f15_3 {
+	font-family:"微软雅黑";
+	font-size: 15px;
+	color: #ffffff;
+	font-weight: bold;
+}
+
+.f14 {
+	font-family:"微软雅黑";
+	font-size: 14px;
+	color: #FFFFFF;
+	font-weight: bold;
+	line-height:28px;
+}
+
+.f13 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #86caf5;
+}
+
+.f13_1 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #000000;
+}
+
+.f13_2 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #ffffff;
+}
+
+.f13_3 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #1491ad;
+}
+
+.f13_4 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #59b9ce;
+  font-weight: bold;
+}
+
+.f13_5 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #59b9ce;
+}
+.f13_6 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #000000;
+  font-weight: bold;
+}
+
+.f13_7 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.f13_8 {
+  font-family: "微软雅黑";
+  font-size: 13px;
+  color: #30a8c3;
+  font-weight: bold;
+}
+
+
+.f12 {
+	font-family:"微软雅黑";
+	color: #FFFFFF;
+	font-size: 12px;
+}
+
+.f12_1 {
+	font-family:"微软雅黑";
+	color: #000000;
+	font-size: 12px;
+}
+
+.f12_2 {
+	font-family:"微软雅黑";
+	color: #aaaaaa;
+	font-size: 12px;
+}
+
+.f12_3 {
+  font-family: "微软雅黑";
+  font-size: 12px;
+  color: #59b9ce;
+}
+
+.f12_4 {
+  font-family: "微软雅黑";
+  font-size: 12px;
+  color: #59b9ce;
+  font-weight: bold;
+}
+
+.text13 {
+	font-family:"微软雅黑";
+	color:#000000;
+	font-size: 13px;
+	line-height:18px;
+}

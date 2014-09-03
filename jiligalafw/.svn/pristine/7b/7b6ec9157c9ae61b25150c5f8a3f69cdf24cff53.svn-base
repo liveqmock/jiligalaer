@@ -1,0 +1,74 @@
+package sy.service.product;
+
+import java.util.List;
+
+import sy.common.util.validator.ValidatorException;
+import sy.domain.vo.product.CloudUserOrderItemVo;
+import sy.domain.vo.product.CloudUserOrderVo;
+import sy.service.shared.BasicServiceI;
+
+
+/**
+ * 用户订单
+ * @author cs
+ *
+ */
+public interface CloudUserOrderServiceI extends BasicServiceI<CloudUserOrderVo> {
+
+	/**
+	 * 根据用户 查询购买的模板产品
+	 * @param userId
+	 * @return
+	 */
+	public List<Object[]> getTemplateOrderInfo(String userId);
+	
+	/**
+	 * 保存账户建立网络、申请IP、快速购买时订单信息
+	 * @param vo
+	 * @param itemVo
+	 */
+	public void saveOrder(CloudUserOrderVo vo, CloudUserOrderItemVo itemVo) throws ValidatorException;
+	
+	/**
+	 * 删除IP地址和网络时，修改订单表的状态、已经订单子表的资源销毁时间
+	 * @param ipId
+	 */
+	public void updateDestroyDateById(String id, String prodType) throws ValidatorException;
+	
+	/**
+	 * 自定义购买时保存
+	 * @param vo
+	 * @param items
+	 * @throws ValidatorException
+	 */
+	public void saveOrderAndItems(CloudUserOrderVo vo, List<CloudUserOrderItemVo> items) throws ValidatorException;
+
+	/**
+	 * 更改计算方案、增加磁盘方案保存；
+	 * 更改失败后订单还原；
+	 * @param vo
+	 * @param itemVo
+	 * @param newItemVo
+	 * @throws ValidatorException
+	 */
+	public void savePordChange(CloudUserOrderVo vo, CloudUserOrderItemVo itemVo, CloudUserOrderItemVo newItemVo) throws ValidatorException;
+
+	
+	public List<CloudUserOrderVo> getStartBillingOrders();
+	
+	/**
+	 * 销毁虚拟机时，处理用户购买的订单
+	 * @param vmId
+	 * @throws ValidatorException
+	 */
+	public void destroyVmOrder(String vmId) throws ValidatorException;
+	
+	public List<CloudUserOrderVo> getUserOrderByVmId(String vmId) throws ValidatorException;
+	
+	/*
+	 * 检查主机名称是否已被使用
+	 */
+	public boolean checkVmNameIsExist(String vmName, String accountId);
+	
+	
+}

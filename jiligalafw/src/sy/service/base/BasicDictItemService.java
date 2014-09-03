@@ -1,0 +1,102 @@
+package sy.service.base;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+
+import sy.common.model.QueryContext;
+import sy.common.util.move.Mover;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.base.BasicDict;
+import sy.domain.model.base.BasicDictItem;
+import sy.domain.vo.base.BasicDictItemVo;
+import sy.domain.vo.base.BasicDictVo;
+import sy.domain.vo.shared.TreeVo;
+import sy.service.shared.BaseServiceTemplate;
+
+/**
+ * 
+ * @author lidongbo
+ * 
+ */
+@Service("basicDictItemService")
+public class BasicDictItemService extends
+		BaseServiceTemplate<BasicDictItem, BasicDictItemVo> implements
+		BasicDictItemServiceI {
+
+	@Override
+	public List<TreeVo> getTree(QueryContext context, String dictId,
+			String levelCode, String state) throws ValidatorException {
+		context.setPaging(false);
+
+		context.equals("basicDict_dictId", dictId);
+		context.equals("levelCode", levelCode);
+		context.equals("state", state);
+		context.setSort("basicDict_dictId,levelCode,sort");
+
+		List<BasicDictItemVo> list = list(context);
+
+		List<TreeVo> nodes = new ArrayList<TreeVo>();
+		for (BasicDictItemVo itemVo : list) {
+			TreeVo node = new TreeVo();
+			String pid = itemVo.getBasicDictItem() == null ? "" : itemVo
+					.getBasicDictItem().getDictItemId().toString();
+			String id = itemVo.getDictItemId();
+			String name = itemVo.getItemName();
+			node.setPid(pid);
+			node.setId(id);
+			node.setName(name);
+			nodes.add(node);
+		}
+
+		return nodes;
+	}
+
+	/**
+	 * 根据字典编码 获取字典 Vo对象.
+	 */
+	@Override
+	public BasicDictItemVo getBasicDictItemVoByItemCode(String dictType,
+			String itemCode) throws Exception {
+		// TODO Auto-generated method stub
+		BasicDictItemVo basicDictItemVo = null;
+		BasicDictItem basicDictItem = null;
+		if (StringUtils.isNotBlank(itemCode)) {
+			basicDictItem = (BasicDictItem) createQuery(
+					"from BasicDictItem where basicDict.dictId=? and itemCode=?",
+					dictType, itemCode).uniqueResult();
+			if (null != basicDictItem) {
+				basicDictItemVo = Mover.getInstance().move(basicDictItem,
+						new BasicDictItemVo());
+			}
+		}
+		return basicDictItemVo;
+	}
+
+	@Override
+	public List<BasicDictItemVo> getBaiscDictItemListByDictType(String dictType)
+			throws Exception {
+		// TODO Auto-generated method stub
+		List<BasicDictItemVo> basicDictItemList = null;
+		try {
+			basicDictItemList = this.find(
+					"from BasicDictItem where basicDict.dictId=?", dictType);
+		} catch (Exception e) {
+			throw new Exception("查询字典表列表时出错：" + e.getMessage());
+		}
+		return basicDictItemList;
+	}
+
+	
+	public BasicDictVo getBasicDictByDictId(String dictId) throws ValidatorException{
+		String hql = "from basicDict where dictId=?";
+		BasicDict basicDict = super.findUnique(BasicDict.class, hql, dictId);
+		BasicDictVo basicDictVo = null;
+		if (null != basicDict) {
+			basicDictVo = Mover.getInstance().move(basicDict, new BasicDictVo());
+		}
+		return basicDictVo;
+	}
+}

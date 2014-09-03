@@ -1,0 +1,643 @@
+package sy.controller.base;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.SessionAttributes;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
+import sy.common.model.ECContext;
+import sy.common.model.QueryContext;
+import sy.common.util.BaseConfigurator;
+import sy.common.util.Constants;
+import sy.common.util.validator.ValidatorException;
+import sy.controller.shared.BaseControllerTemplate;
+import sy.domain.vo.base.BasicDictItemVo;
+import sy.domain.vo.base.BasicRoleVo;
+import sy.domain.vo.base.BasicUserActivationCodeVo;
+import sy.domain.vo.base.BasicUserVo;
+import sy.domain.vo.expense.AccountExpenseVo;
+import sy.service.base.BasicDictItemServiceI;
+import sy.service.base.BasicRoleServiceI;
+import sy.service.base.BasicUserActivationCodeServiceI;
+import sy.service.base.BasicUserRoleServiceI;
+import sy.service.base.BasicUserServiceI;
+import sy.service.core.MailServiceI;
+import sy.service.expense.AccountExpenseServiceI;
+import sy.service.shared.BasicServiceI;
+
+/**
+ * 
+ * @author luobin
+ * 
+ */
+@Controller
+@RequestMapping("/account")
+@SessionAttributes("basicUserVo")
+public class BasicAccountController extends BaseControllerTemplate<BasicUserVo> {
+
+	@Autowired
+	private BasicUserServiceI basicUserService;
+	@Autowired
+	private BasicUserRoleServiceI basicUserRoleService;
+	@Autowired
+	private BasicRoleServiceI basicRoleService;
+	@Autowired
+	private BasicDictItemServiceI basicDictItemService;
+	@Autowired
+	private BasicUserActivationCodeServiceI basicUserActivationCodeService;
+	@Autowired
+	private MailServiceI mailService;
+	@Autowired
+	private AccountExpenseServiceI accountExpenseService;
+	
+	public MailServiceI getMailService() {
+		return mailService;
+	}
+
+	public void setMailService(MailServiceI mailService) {
+		this.mailService = mailService;
+	}
+
+	public BasicUserActivationCodeServiceI getBasicUserActivationCodeService() {
+		return basicUserActivationCodeService;
+	}
+
+	public void setBasicUserActivationCodeService(
+			BasicUserActivationCodeServiceI basicUserActivationCodeService) {
+		this.basicUserActivationCodeService = basicUserActivationCodeService;
+	}
+
+	public BasicUserRoleServiceI getBasicUserRoleService() {
+		return basicUserRoleService;
+	}
+
+	public void setBasicUserRoleService(
+			BasicUserRoleServiceI basicUserRoleService) {
+		this.basicUserRoleService = basicUserRoleService;
+	}
+
+	public String getViewPath() {
+		return "base";
+	}
+
+	public BasicUserServiceI getBasicUserService() {
+		return basicUserService;
+	}
+
+	public void setBasicUserService(BasicUserServiceI basicUserService) {
+		this.basicUserService = basicUserService;
+	}
+
+	public BasicRoleServiceI getBasicRoleService() {
+		return basicRoleService;
+	}
+
+	public void setBasicRoleService(BasicRoleServiceI basicRoleService) {
+		this.basicRoleService = basicRoleService;
+	}
+
+	@Override
+	public BasicServiceI<BasicUserVo> getService() {
+		return basicUserService;
+	}
+
+	public BasicDictItemServiceI getBasicDictItemService() {
+		return basicDictItemService;
+	}
+
+	public void setBasicDictItemService(
+			BasicDictItemServiceI basicDictItemService) {
+		this.basicDictItemService = basicDictItemService;
+	}
+
+	public AccountExpenseServiceI getAccountExpenseService() {
+		return accountExpenseService;
+	}
+
+	public void setAccountExpenseService(
+			AccountExpenseServiceI accountExpenseService) {
+		this.accountExpenseService = accountExpenseService;
+	}
+
+	/**
+	 * 查询账户信息
+	 */
+	@RequestMapping(value = "list")
+	public String list(HttpServletRequest request, ModelMap modelMap)
+			throws ValidatorException {
+		QueryContext context = new ECContext(request, modelMap, getNameSpace());
+		String userFlag = request.getParameter("userFlag");
+		if ("".equals(userFlag) || null == userFlag) {
+			userFlag = String.valueOf(Constants.USER_FLAG_ACCOUNT);
+		}
+		context.put("$in_userFlag", userFlag);
+		context.put("$eq_parentBasicUser_userId", null);
+		List<BasicDictItemVo> userAccountTypeItemList = null;
+		List<BasicDictItemVo> userIdentityItemList = null;
+		List<BasicDictItemVo> industryDictItemList = null;
+		List<BasicDictItemVo> geoDictItemList = null;
+		try {
+			userAccountTypeItemList = basicDictItemService
+					.getBaiscDictItemListByDictType("userAccountType");
+			userIdentityItemList = basicDictItemService
+					.getBaiscDictItemListByDictType("userIdentity");
+			industryDictItemList = basicDictItemService
+					.getBaiscDictItemListByDictType("industry");
+			geoDictItemList = basicDictItemService
+					.getBaiscDictItemListByDictType("geo");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		request.setAttribute("userAccountType", userAccountTypeItemList);
+		request.setAttribute("userIdentity", userIdentityItemList);
+		request.setAttribute("industry", industryDictItemList);
+		request.setAttribute("geo", geoDictItemList);
+		String queryType = request.getParameter("queryType");
+		if ("0".equals(queryType) || "1".equals(queryType)
+				|| "2".equals(queryType) || "3".equals(queryType)
+				|| "4".equals(queryType)) {
+			context.put("$lk_userName", null);
+			context.put("$lk_userAccount", null);
+			context.put("$lk_tel", null);
+			context.put("$in_state", null);
+			context.put("$in_userTypeDictItem.itemCode", null);
+			context.put("$in_userIdentityDictItem.itemCode", null);
+			context.put("$in_industryDictItem.itemCode", null);
+			context.put("$in_geoDictItem.itemCode", null);
+			context.put("$in_state", null);
+			if ("0".equals(queryType)) {
+				context.put("$eq_userIdentityDictItem.itemCode", null);
+				context.put("$eq_industryDictItem.itemCode", null);
+				context.put("$eq_geoDictItem.itemCode", null);
+				context.put("$eq_state", null);
+				String userAccountTypeFlag = request
+						.getParameter("userAccountTypeFlag");
+				context.put("$eq_userTypeDictItem.itemCode",
+						userAccountTypeFlag);
+			} else if ("1".equals(queryType)) {
+				context.put("$eq_userTypeDictItem.itemCode", null);
+				context.put("$eq_industryDictItem.itemCode", null);
+				context.put("$eq_geoDictItem.itemCode", null);
+				context.put("$eq_state", null);
+				String userIdentityFlag = request
+						.getParameter("userIdentityFlag");
+				context.put("$eq_userIdentityDictItem.itemCode",
+						userIdentityFlag);
+			} else if ("2".equals(queryType)) {
+				context.put("$eq_userTypeDictItem.itemCode", null);
+				context.put("$eq_userIdentityDictItem.itemCode", null);
+				context.put("$eq_industryDictItem.itemCode", null);
+				context.put("$eq_state", null);
+				String geoFlag = request.getParameter("geoFlag");
+				context.put("$eq_geoDictItem.itemCode", geoFlag);
+			} else if ("3".equals(queryType)) {
+				context.put("$eq_userTypeDictItem.itemCode", null);
+				context.put("$eq_userIdentityDictItem.itemCode", null);
+				context.put("$eq_geoDictItem.itemCode", null);
+				context.put("$eq_state", null);
+				String industryFlag = request.getParameter("industryFlag");
+				context.put("$eq_industryDictItem.itemCode", industryFlag);
+			} else {
+				context.put("$eq_userIdentityDictItem.itemCode", null);
+				context.put("$eq_geoDictItem.itemCode", null);
+				context.put("$eq_industryDictItem.itemCode", null);
+				String stateFlag = request.getParameter("stateFlag");
+				context.put("$eq_state", stateFlag);
+			}
+		} else {
+			try{
+			context.put("$eq_userTypeDictItem.itemCode", null);
+			context.put("$eq_userIdentityDictItem.itemCode", null);
+			context.put("$eq_geoDictItem.itemCode", null);
+			context.put("$eq_industryDictItem.itemCode", null);
+			context.put("$eq_state", null);
+			context.put("$in_state", null);
+			context.put("$in_userTypeDictItem.itemCode", null);
+			context.put("$in_userIdentityDictItem.itemCode", null);
+			context.put("$in_industryDictItem.itemCode", null);
+			context.put("$in_geoDictItem.itemCode", null);
+			String[] userAccountTypeArr = request.getParameterValues("userAccountType");
+			String [] userIdentityArr = request.getParameterValues("userIdentity");
+			String [] geoArr = request.getParameterValues("geo");
+			String [] industryArr = request.getParameterValues("industry");
+			String [] stateArr = request.getParameterValues("state");
+			String userAccountTypeStr =basicUserService.getParamByRequest(userAccountTypeArr);
+			String userIdentityStr =basicUserService.getParamByRequest(userIdentityArr);
+			String geoStr =basicUserService.getParamByRequest(geoArr);
+			String industryStr =basicUserService.getParamByRequest(industryArr);
+			String stateStr =basicUserService.getParamByRequest(stateArr);
+			if(StringUtils.isNotBlank(stateStr)){
+				context.put("$in_state", stateStr);
+				context.put("$in_userTypeDictItem.itemCode", null);
+				context.put("$in_userIdentityDictItem.itemCode", null);
+				context.put("$in_industryDictItem.itemCode", null);
+				context.put("$in_geoDictItem.itemCode", null);
+			   request.setAttribute("stateStr",stateStr);
+			   
+			}
+			if(StringUtils.isNotBlank(userAccountTypeStr)){
+				context.put("$in_userTypeDictItem.itemCode", userAccountTypeStr);
+				request.setAttribute("userAccountTypeStr",userAccountTypeStr);
+			}
+			if(StringUtils.isNotBlank(userIdentityStr)){
+				context.put("$in_userIdentityDictItem.itemCode", userIdentityStr);
+				 request.setAttribute("userIdentityStr", userIdentityStr);
+			}
+			if(StringUtils.isNotBlank(geoStr)){
+				context.put("$in_geoDictItem.itemCode", geoStr);
+				 request.setAttribute("geoStr",geoStr);
+			}
+			if(StringUtils.isNotBlank(industryStr)){
+				context.put("$in_industryDictItem.itemCode", industryStr);
+				  request.setAttribute("industryStr",industryStr); 
+			}
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		List<?> users = getService().list(context);
+		context.initTotalRows(modelMap);
+		modelMap.put("list", users);
+		request.setAttribute("queryType", queryType);
+		return getViewPath() + "/accountList";
+	}
+
+	protected void prepareEditView(HttpServletRequest request,
+			ModelMap modelMap, BasicUserVo obj) {
+		super.prepareEditView(request, modelMap, obj);
+		try{
+			String roleIds ="";
+			List<BasicRoleVo> basicAllRoleVoList =null;
+			basicAllRoleVoList = basicUserRoleService.getRoleByUser(obj); 
+			if(null != basicAllRoleVoList){
+				for(BasicRoleVo basicRoleVo : basicAllRoleVoList){
+					roleIds = basicRoleVo.getRoleId()+",";
+					continue;
+				}
+			}
+			
+			List<BasicDictItemVo> userTypeDictItemList = basicDictItemService.getBaiscDictItemListByDictType("userAccountType");
+			List<BasicDictItemVo> userIdentityDictItemList = basicDictItemService.getBaiscDictItemListByDictType("userIdentity");
+			List<BasicDictItemVo> geoDictItemList = basicDictItemService.getBaiscDictItemListByDictType("geo");
+			List<BasicDictItemVo> industryDictItemList = basicDictItemService.getBaiscDictItemListByDictType("industry");
+			Map<String,String> stateMap = new HashMap<String,String>();
+			Map<String,String> userTypeDictItemMap = new HashMap<String,String>();
+			Map<String,String> userIdentityDictItemMap = new HashMap<String,String>();
+			Map<String,String> geoDictItemMap = new HashMap<String,String>();
+			Map<String,String> industryDictItemMap = new HashMap<String,String>();
+			for(BasicDictItemVo basicDictItemVo : userTypeDictItemList){
+				userTypeDictItemMap.put(basicDictItemVo.getDictItemId(), basicDictItemVo.getItemName());
+			}
+			for(BasicDictItemVo basicDictItemVo : userIdentityDictItemList){
+				userIdentityDictItemMap.put(basicDictItemVo.getDictItemId(), basicDictItemVo.getItemName());
+			}
+			for(BasicDictItemVo basicDictItemVo : geoDictItemList){
+				geoDictItemMap.put(basicDictItemVo.getDictItemId(), basicDictItemVo.getItemName());
+			}
+			for(BasicDictItemVo basicDictItemVo : industryDictItemList){
+				industryDictItemMap.put(basicDictItemVo.getDictItemId(), basicDictItemVo.getItemName());
+			}
+			if(StringUtils.isBlank(obj.getUserId())){
+				stateMap.put("1", "待激活");
+				stateMap.put("3", "审批通过");
+			}else{
+			    stateMap.put("0", "停用");
+				stateMap.put("1", "待激活");
+			    stateMap.put("2", "待审批");
+				stateMap.put("3", "审批通过");
+				stateMap.put("-1", "注销");
+				stateMap.put("-2", "审批拒绝");
+			}
+
+			modelMap.put("userTypeDictItemMap", userTypeDictItemMap);
+			modelMap.put("userIdentityDictItemMap", userIdentityDictItemMap);
+			modelMap.put("geoDictItemMap", geoDictItemMap);
+			modelMap.put("industryDictItemMap", industryDictItemMap);
+			modelMap.put("state", stateMap);
+			modelMap.put("roleIds", roleIds);
+			if(null == obj.getUserId()){
+				modelMap.put("createUserFlag","1");
+				obj.setState(1);
+			}
+			
+			//账户余额
+			AccountExpenseVo expVo = this.accountExpenseService.getExpenseByUserId(obj.getUserId());
+			Double remainingAmount = 0d;
+			if(null != expVo){
+				//充值后余额 = 充值总金额  - 费用总金额
+				remainingAmount = expVo.getPayTotalAmount() - expVo.getExpTotalAmount();
+			}
+			modelMap.put("accBalance", remainingAmount);
+			
+		}catch(Exception e ){
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * 账户编辑.
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "editInfo")
+	public String editInfo(HttpServletRequest request,
+			HttpServletResponse response, BasicUserVo vo, ModelMap modelMap) {
+		this.prepareEditView(request, modelMap, vo);
+		return "base/acc_editInfo";
+	}
+	
+	@RequestMapping(method = RequestMethod.POST, value = "save")
+	public String save(HttpServletRequest request, ModelMap modelMap, @Valid BasicUserVo vo, BindingResult errors){
+		String createFlag =vo.getUserId();
+		if (errors.hasErrors()) {
+			prepareEditView(request, modelMap, vo);
+			return "base/acc_editInfo";
+		}
+		try {
+			MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;  
+			MultipartFile file = multipartRequest.getFiles("companyLogoFile").get(0);
+			String onDiskFileName=uploadFile(request,file);
+			if(onDiskFileName!=null && onDiskFileName.trim().length()>0){
+				vo.setCompanyLogoFileURI(onDiskFileName);
+			}
+			if(StringUtils.isBlank(createFlag)){
+				vo.setRegisterDate(new Date());
+			}
+			getService().save(vo);
+			if(StringUtils.isBlank(createFlag) && vo.getState()==Constants.USER_STATE_NOACTIVE){
+				BasicUserActivationCodeVo basicUserActivationCodeVo =new BasicUserActivationCodeVo();
+				basicUserActivationCodeVo.setUserId(vo.getUserId());
+				basicUserActivationCodeVo.setState(1);
+				this.basicUserActivationCodeService.save(basicUserActivationCodeVo);
+				mailService.sendMail(vo.getUserAccount(), "",
+						"瑞云浩天云计算门户账户激活", getActivateMailContent(vo,basicUserActivationCodeVo));
+			}
+		} catch (ValidatorException e) {
+			String errorKey = "errors";
+			if(StringUtils.isNotBlank(e.getErrorKey())){
+				errorKey = e.getErrorKey();
+			}
+			errors.rejectValue(errorKey,null, "保存失败："+e.getMessage());
+			prepareEditView(request, modelMap, vo);
+			return "base/acc_editInfo";
+		} catch (Exception e) {
+			errors.rejectValue("errors",null, "保存失败："+e.getMessage());
+			prepareEditView(request, modelMap, vo);
+			return "base/acc_editInfo";
+		}
+		prepareEditView(request, modelMap, vo);
+		//errors.rejectValue("errors",null, "保存成功！");
+		
+		modelMap.put("saveMsg", "保存成功！");
+		return "base/acc_editInfo";
+		
+//		return getRedirectStr(getCloseView());
+	}
+	
+	
+	@RequestMapping(value = "userActivation")
+	public String userActivation(HttpServletRequest request,HttpServletResponse response, BasicUserVo vo,  ModelMap modelMap) throws ValidatorException{
+		String dealUserId = request.getParameter("userId");
+		String  redirectFlag = request.getParameter("flag");
+		if(StringUtils.isNotBlank(dealUserId)){
+
+			List<BasicUserVo> basicUsers;
+			try {
+				//启用账户
+				BasicUserVo basicUserVo = basicUserService.get(dealUserId);
+				basicUserVo.setState(Constants.USER_STATE_PASS);
+				basicUserService.save(basicUserVo);
+				
+				//调用接口启用账户
+				
+				//启用账户下用户
+				basicUsers = basicUserService .getBaiscUserVoListByParentBaiscUserVo(basicUserVo);
+				for (BasicUserVo user : basicUsers) {
+					user.setState(Constants.USER_STATE_PASS);
+					basicUserService.save(user);
+				}
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+		}
+		int flag = Integer.valueOf(redirectFlag);
+		if (flag==Constants.USER_FLAG_ACCOUNT) {
+			return getRedirectStr("/account/list.do");
+		} else if(flag==Constants.USER_FLAG_ADMIN) {
+			return getRedirectStr("/admin/list.do");
+		}else{
+			return getRedirectStr("/user/list.do");
+		}
+		
+	}
+	
+	/**
+	 * 初始化编辑页面各类数据
+	 * @param request
+	 * @param modelMap
+	 * @throws ValidatorException
+	 */
+	public void initAccountInfo(HttpServletRequest request, ModelMap modelMap) throws ValidatorException {
+		String userId = this.getCurrentUser(request).getUserId();
+		BasicUserVo vo = this.getService().get(userId);
+		
+		this.prepareEditView(request, modelMap, vo);
+		if (vo.getState() == 0) {
+			modelMap.put("stateName", "停用");
+		} else if (vo.getState() == 1) {
+			modelMap.put("stateName", "未激活");
+		} else if (vo.getState() == 2) {
+			modelMap.put("stateName", "待审批");
+		} else if (vo.getState() == 3) {
+			modelMap.put("stateName", "审批通过");
+		} else if (vo.getState() == -1) {
+			modelMap.put("stateName", "注销");
+		} else if (vo.getState() == -2) {
+			modelMap.put("stateName", "审批拒绝");
+		} else {
+			modelMap.put("stateName", "未定义");
+		}
+		String roleNames = "";
+		Iterator<BasicRoleVo> basicRoleIt = basicUserRoleService.getRoleByUser(vo).iterator();
+		while (basicRoleIt.hasNext()) {
+			BasicRoleVo bur = basicRoleIt.next();
+			if (null != bur.getRoleName()) {
+				roleNames = roleNames + bur.getRoleName() + ",";
+			}
+		}
+		if (!"".equals(roleNames)) {
+			roleNames = roleNames.substring(0, roleNames.lastIndexOf(","));
+		}
+		modelMap.put("roleName", roleNames);
+
+		modelMap.put("userAccountShow", vo.getUserAccount());
+		modelMap.put("userIdentityId", vo.getUserIdentityDictItem().getDictItemId());
+		modelMap.put("userIdentity", vo.getUserIdentityDictItem().getItemName());
+//		Map<String,String> geoDictItemMap = new HashMap<String,String>();
+//		Map<String,String> industryDictItemMap = new HashMap<String,String>();
+//		modelMap.put("geoDictItemMap", geoDictItemMap);
+//		modelMap.put("industryDictItemMap", industryDictItemMap);
+		modelMap.put("user", vo);
+		
+	}
+	
+	
+	/**
+	 * 账户 - 我的资料编辑页面初始化
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException
+	 */
+	@RequestMapping(value = "accountDetailInfo")
+	public String accountDetailInfo(HttpServletRequest request, ModelMap modelMap)
+			throws ValidatorException {
+		this.initAccountInfo(request, modelMap);
+		
+		return getViewPath() + "/accountDetailInfo";
+	}
+	
+	/**
+	 * 账户 - 我的资料编辑信息保存
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "saveInfo")
+	public String saveInfo(HttpServletRequest request, ModelMap modelMap,
+			@Valid BasicUserVo vo, BindingResult errors) throws ValidatorException {
+		if (errors.hasErrors()) {
+			prepareEditView(request, modelMap, vo);
+			return getViewPath() + "/userDetailInfo";
+		}
+		String passwrodSave = request.getParameter("passwrodSave");
+		String password = vo.getUserPassword();
+		if (StringUtils.isNotBlank(passwrodSave)) {
+			try {
+				vo = basicUserService.get(vo.getUserId());
+			} catch (ValidatorException e) {
+				e.printStackTrace();
+			}
+		}
+		vo.setUserPassword(password);
+		
+		try {
+			MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+			MultipartFile file = multipartRequest.getFiles("companyLogoFile").get(0);
+			String onDiskFileName = uploadFile(request, file);
+			if (onDiskFileName != null && onDiskFileName.trim().length() > 0) {
+				vo.setCompanyLogoFileURI(onDiskFileName);
+			}
+			getService().save(vo);
+			
+		} catch (ValidatorException e) {
+			modelMap.put("accountMsg", e.getMessage());
+			accountDetailInfo(request, modelMap);
+			return getViewPath() + "/accountDetailInfo";
+			
+		} catch (Exception e) {
+			modelMap.put("accountMsg", e.getMessage());
+			accountDetailInfo(request, modelMap);
+			return getViewPath() + "/accountDetailInfo";
+			
+		}
+		
+		modelMap.put("accountMsg", "保存成功！");
+		this.initAccountInfo(request, modelMap);
+		return getViewPath() + "/accountDetailInfo";
+	}
+
+	
+	/**
+	 * 账户激活邮件内容生成
+	 * @param user
+	 * @param basicUserActivationCodeVo
+	 * @return
+	 */
+	private String getActivateMailContent(BasicUserVo user,BasicUserActivationCodeVo basicUserActivationCodeVo) {
+		String strActivationMethod;
+		if(user.getUserFlag()==Constants.USER_FLAG_ACCOUNT){
+			strActivationMethod="accountRegisterComfirm";
+		} else {
+			strActivationMethod="userRegisterComfirm";
+		}
+		String content = "亲爱的瑞云云计算账户/用户：" + user.getUserName()
+				+ "<br>您好！感谢您成为瑞云云计算门户系统账户/用户，您可以通过点击以下地址来直接激活"
+				+ "<br> <a href='"
+				+ BaseConfigurator.getInstance().getServerAddress()
+				+ "/base/userRegister/"+strActivationMethod+".do?key=" + basicUserActivationCodeVo.getActivationCode() + "' >"
+				+ BaseConfigurator.getInstance().getServerAddress()
+				+ "/base/userRegister/"+strActivationMethod+".do?key=" + basicUserActivationCodeVo.getActivationCode() + "</a>"
+				+ "<br>假如这不是您本人所申请, 请不用理会这封电子邮件, 但是如果您持续收到这类的信件骚扰, 请您尽快联络管理员。";
+		return content;
+	}
+	
+	
+	/**
+	 * 账户 升级页面初始化
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "upgradeAccountRedirect")
+	public String upgradeAccountRedirect(HttpServletRequest request,
+			HttpServletResponse response, ModelMap modelMap) throws ValidatorException{
+		this.initAccountInfo(request, modelMap);
+		
+		return  getViewPath() + "/upgradeAccount";
+		
+	}
+	/**
+	 * 保存账户升级信息
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "saveUpgradeAccount")
+	public String saveUpgradeAccount(HttpServletRequest request,
+			ModelMap modelMap, @Valid BasicUserVo vo, BindingResult errors) throws ValidatorException {
+		if (errors.hasErrors()) {
+			this.initAccountInfo(request, modelMap);
+			return getViewPath() + "/upgradeAccount";
+		}
+		try {
+			MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
+			MultipartFile file = multipartRequest.getFiles("companyLogoFile").get(0);
+			String onDiskFileName = uploadFile(request, file);
+			if (onDiskFileName != null && onDiskFileName.trim().length() > 0) {
+				vo.setCompanyLogoFileURI(onDiskFileName);
+			}
+			vo.setUserTypeDictItem(this.basicDictItemService.get(Constants.USER_TYPE_ZHENGSHI));
+			getService().save(vo);
+			
+		} catch (ValidatorException e) {
+			modelMap.put("errors", e.getMessage());
+			this.initAccountInfo(request, modelMap);
+			return getViewPath() + "/upgradeAccount";
+		} catch (Exception e) {
+			modelMap.put("errors", e.getMessage());
+			this.initAccountInfo(request, modelMap);
+			return getViewPath() + "/upgradeAccount";
+		}
+
+		this.initAccountInfo(request, modelMap);
+		modelMap.put("errors", "保存成功！");
+		return this.upgradeAccountRedirect(request, null, modelMap);
+	}
+}

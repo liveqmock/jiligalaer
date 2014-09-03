@@ -1,0 +1,103 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html id="content">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>角色管理</title>
+<%@ include file="/commons/meta.jsp"%>
+<style type="text/css">
+body {
+	background-color: #F2F2F2;
+	margin-left: 5px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+<script type="text/javascript">
+function doSave(){
+	var result = window.frames.resTree.window.getResult();
+	$("#resIds").val(result.id);
+	$("#basicRoleVo").submit();	
+}
+
+function doReturn(){
+	window.location ="${ctx}/role/list.do";
+}
+</script>
+</head>
+<body>  
+
+<div class="basic_form">
+<form:form modelAttribute="basicRoleVo" action="${ctx}/role/save.do" method="post">
+	<form:hidden path="resIds" id="resIds"/>
+	<form:errors path="errors" cssClass="commomError"/>
+	<table style="width:97%; margin-left: 15px;" border="0">
+		<tr>
+			<td width="2%"></td>
+			<td width="1%" style="white-space: nowrap;"><form:label path="roleName">角色名称:</form:label></td>
+			<td width="1%"><form:input path="roleName" /></td>
+			<td><form:errors path="roleName"  cssClass="error"/></td>
+		</tr>
+		<tr>
+			<td width="2%"></td>
+			<td width="1%" style="white-space: nowrap;"><form:label path="description">描述:</form:label></td>
+			<td width="1%"><form:input path="description" size="50"/></td>
+			<td><form:errors path="description" cssClass="error"/></td>
+		</tr>
+		<tr>
+			<td width="2%"></td>
+			<td width="1%" style="white-space: nowrap;"><form:label path="priority">优先级:</form:label></td>
+			<td width="1%"><form:input path="priority" /></td>
+			<td><form:errors path="priority" cssClass="error"/></td>
+		</tr>
+		<tr>
+			<td width="2%"></td>
+			<td width="1%" style="white-space: nowrap;"><form:label path="roleFlag">适用对象:</form:label></td>
+			<td width="1%"><form:radiobuttons path="roleFlag" items="${roleFlag}" id="roleFlag" /></td>
+			<td><form:errors path="roleFlag" cssClass="error"/></td>
+		</tr>
+		<tr>
+			<td width="2%"></td>
+			<td width="1%" style="white-space: nowrap;"><form:label path="dataAuth">数据权限:</form:label></td>
+			<td width="1%">
+				<form:select path="dataAuth">
+				     <form:option value="" label="--请选择--"/>
+				     <form:options items="${dataAuths}" itemLabel="name" />
+				</form:select>
+			</td>
+			<td><form:errors path="dataAuth" cssClass="error"/></td>
+		</tr>
+		<tr>
+			<td width="2%"></td>
+			<td width="1%" style="white-space: nowrap;"><form:label path="">角色功能权限:</form:label></td>
+			<td></td>
+			<td></td>
+		</tr>
+		<tr>
+			<td colspan="4" width="100%">
+				<div style="border:1px solid black;">
+					<iframe name="resTree" src="${ctx }/resource/tree.do?values=${basicRoleVo.resIds}&model=c&finder=false" 
+						style="border:0px;height:400px;width:100%;overflow-x:hidden;"></iframe>
+				</div>
+			</td>
+		</tr>
+
+		<tr>
+			<td colspan="4" width="100%">
+				<div style="left:45%;position: absolute;">
+					<input  type="button" class="btn_bg" value="保 存" onclick="doSave()"/>
+					&nbsp;&nbsp;&nbsp;&nbsp;
+					<input  type="button" class="btn_bg" value="返 回" onclick="doReturn()"/>
+				</div>
+			</td>
+		</tr>
+	</table>
+</form:form>
+
+</div>
+
+</body>
+</html>

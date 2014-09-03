@@ -1,0 +1,174 @@
+package sy.domain.model.product;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import sy.domain.model.shared.PersistentObject;
+
+/**
+ * 产品管理-产品定价PO
+ * @author luobin
+ *
+ */
+@Entity
+@Table(name = "CLOUD_PRODUCT_PRICE")
+public class CloudProductPrice implements PersistentObject {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -3624971544758545616L;
+
+	private String id;
+	
+	/**
+	 * 产品
+	 */
+	private CloudMdmProduct cloudMdmProduct;
+	/**
+	 * 产品子表
+	 */
+	private CloudMdmProductItem cloudMdmProductItem;
+	/**
+	 * 一次性收费
+	 */
+	private Double oneTimePrice;
+	/**
+	 * 年收费
+	 */
+	private Double yearPrice;
+	/**
+	 * 月收费
+	 */
+	private Double monthPrice;
+	/**
+	 * 天收费
+	 */
+	private Double dayPrice;
+	/**
+	 * 价格方式 （一次性、年、月、日）
+	 */
+	private String priceMode;
+	/**
+	 * 生效日期
+	 */
+	private String effectiveDate;
+	
+	private Date updated;
+	
+	private String updatedBy;
+
+	@Id
+	@Column(name="ID",length = 32)
+	@GeneratedValue(generator = "system-uuid")
+	@GenericGenerator(name = "system-uuid", strategy = "uuid")
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+	
+	@OneToOne
+    @JoinColumn(name = "PROD_ID") 
+	public CloudMdmProduct getCloudMdmProduct() {
+		return cloudMdmProduct;
+	}
+
+	public void setCloudMdmProduct(CloudMdmProduct cloudMdmProduct) {
+		this.cloudMdmProduct = cloudMdmProduct;
+	}
+	
+	@Column(name="ONE_TIME_PRICE")
+	public Double getOneTimePrice() {
+		return oneTimePrice;
+	}
+
+	public void setOneTimePrice(Double oneTimePrice) {
+		this.oneTimePrice = oneTimePrice;
+	}
+
+	@Column(name="YEAR_PRICE")
+	public Double getYearPrice() {
+		return yearPrice;
+	}
+
+	public void setYearPrice(Double yearPrice) {
+		this.yearPrice = yearPrice;
+	}
+
+	@Column(name="MONTH_PRICE")
+	public Double getMonthPrice() {
+		return monthPrice;
+	}
+
+	public void setMonthPrice(Double monthPrice) {
+		this.monthPrice = monthPrice;
+	}
+
+	@Column(name="DAY_PRICE")
+	public Double getDayPrice() {
+		return dayPrice;
+	}
+
+	public void setDayPrice(Double dayPrice) {
+		this.dayPrice = dayPrice;
+	}
+
+	@Column(name="PRICE_MODE")
+	public String getPriceMode() {
+		return priceMode;
+	}
+
+	public void setPriceMode(String priceMode) {
+		this.priceMode = priceMode;
+	}
+
+	@Column(name="EFFECTIVE_DATE")
+	public String getEffectiveDate() {
+		return effectiveDate;
+	}
+
+	public void setEffectiveDate(String effectiveDate) {
+		this.effectiveDate = effectiveDate;
+	}
+
+	@Column(name="UPDATED")
+	public Date getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(Date updated) {
+		this.updated = updated;
+	}
+
+	@Column(name="UPDATED_BY")
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	@OneToOne
+    @JoinColumn(name = "PROD_ITEM_ID")
+	public CloudMdmProductItem getCloudMdmProductItem() {
+		return cloudMdmProductItem;
+	}
+
+	public void setCloudMdmProductItem(CloudMdmProductItem cloudMdmProductItem) {
+		this.cloudMdmProductItem = cloudMdmProductItem;
+	}
+	
+}

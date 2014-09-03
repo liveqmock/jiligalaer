@@ -1,0 +1,190 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>我的资源 - 我的网络 - 高级网络  - IP地址 - 负载均衡</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<link href="${ctx}/css/popup.dialog.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+<!--
+body {
+	background-color: #ffffff;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<script type="text/javascript">
+function add(){
+	if($("#balancerName").val() == ''){
+		alert("请填写名称");
+		return;		
+	}
+	if($("#balancerName").val() == ''){
+		alert("请选择虚拟机");
+		return;		
+	}
+	
+	if($("#publicPort").val() == ''){
+		alert("请输入公用端口");
+		return;		
+	}
+	if($("#privatePort").val() == ''){
+		alert("请输入专用端口");
+		return;		
+	}
+	if($("#vmId").val() == ''){
+		alert("请选择虚拟机");
+		return;
+	}
+
+	
+	var form = document.forms.listForm;
+	form.action="${ctx}/network/saveHighLoad.do";
+	waitloading();
+	form.submit();
+}
+function back(){
+	window.location.href="${ctx}/network/highIpAddr.do";
+}
+
+//选择虚拟机
+function selectVm(){
+	var callback = function(result){
+		if(result){
+			$("input[name='vmId']").val(result.id);
+			$("input[name='vmName']").val(result.name);
+		}
+	};
+	openVmTree("${ctx}","vm",0,"c",$("input[name='vmId']").val(),null,callback,"1");
+}
+
+function config(){
+	return window.openwindow("${ctx}/network/loadConfig.do","选择虚拟机",724,660);
+}
+</script>
+
+</head>
+  <body onLoad="">
+    <form:form modelAttribute="baseVoList" action="${ctx}/network/saveHighLoad.do" method="post" name="listForm">
+		<input type="hidden" name="" id="" value="" />
+		<input type="hidden" name="" id="" value="" />
+		<input type="hidden" name="" id="" value="" />
+		<input type="hidden" name="" id="" value="" />
+		
+					<table width="100%" border="0" cellspacing="0" cellpadding="0">
+					  <tr bgcolor="#ffffff" height="40">
+					  	<td width="10"></td>
+					  	<td class="f16_1">来宾网络01&nbsp;&nbsp;>&nbsp;&nbsp;IP地址&nbsp;&nbsp;>&nbsp;&nbsp;负载均衡</td>
+					  	<td width="10"></td>
+					  </tr>
+                      <tr>
+                      	<td width="10"></td>
+                        <td height="2" align="left" valign="middle"><img src="${ctx}/images/buy_blue_line.jpg" width="100%" height="1" /></td>
+                        <td width="10"></td>
+                      </tr>
+                      <tr>
+                      	<td colspan="3" height="15" ></td>
+                      </tr>	                      
+                  	  <tr>
+                  	    <td width="10"></td>
+                    	<td align="left" valign="top">
+						  <table width="100%" border="0" cellspacing="1" cellpadding="0" bgcolor="#f2f2f2">
+	                      	<tr height="20" bgcolor="#ffffff" >
+                          	  <td>       	  
+                           		<table width="100%" border="0" cellspacing="1" cellpadding="0">
+                                    <tr height="30">
+                                  	  <td width="15%" class="f13_1" align="left">名称：<input type="text" name="balancerName" id="balancerName" value="" size="10"/></td>
+                                      <td width="15%" class="f13_1" align="left">公用端口：<input type="text" name="publicPort" id="publicPort" value="" size="10"/></td>
+                                      
+                                      <td width="30%" class="f13_1" align="right">
+                                      	<input type="button" value="配置" onclick="config()" class="btn_bg" style="width: 60px;"/>
+                                      	&nbsp;&nbsp;
+                                      	<input type="button" value="新增" onclick="add()" class="btn_bg" style="width: 60px;"/>
+                                      	&nbsp;&nbsp;
+                                      	<input type="button" value="返回" onclick="back()" class="btn_bg" style="width: 60px;"/>
+                                      	&nbsp;&nbsp;
+                                      </td>
+                                    </tr> 
+                                    <tr height="30">
+                                  	  <td width="15%" class="f13_1" align="left">算法：
+	                                  	  <select name="arithmetic" style="width: 92px;">
+	                                  	  	<option value="0">轮询</option>
+	                                  	  	<option value="1">最少链接</option>
+	                                  	  	<option value="2">源算法</option>
+	                                  	  </select>
+                                  	  </td>
+                                      <td width="15%" class="f13_1" align="left">专用端口：<input type="text" name="privatePort" id="privatePort" value="" size="10"/></td>
+                                      <td width="30%" class="f13_1" align="left">
+                                      	选择虚拟机：
+										<input type="hidden" name="vmId" id="vmId" />
+										<input type="text" name="vmName" id="vmName" onclick="selectVm()" readonly class="select_but" style="width: 145px;" />                                      
+                                      </td>
+                                    </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                        <td width="10"></td>
+                      </tr>
+		              <tr><td colspan="3" height="20"></td></tr>
+		              
+                      <tr>
+                        <td width="10"></td>
+						<td align="right" valign="top">
+					      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+					        <tr>
+					          <td align="left" valign="top" bgcolor="#FFFFFF" height="250">
+					     		<table width="815" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+					              <tr bgcolor="#92b8c1" height="20">
+					                <td width="7%" align="center" class="f12">序号</td>
+					                <td width="15%" align="center" class="f12">名称</td>
+					                <td width="15%" align="center" class="f12">公用端口</td>
+					                <td width="15%" align="center" class="f12">专用端口</td>
+					                <td width="13%" align="center" class="f12">算法</td>
+					                <td width="10%" align="center" class="f12">粘贴</td>
+					                <td width="15%" align="center" class="f12">VM</td>
+					                <td width="10%" align="center" class="f12">操作</td>
+					              </tr>
+					            </table>
+					            <div id="order" style="height:440px; z-index:1; overflow-y: scroll;overflow-x:hidden;">   
+					              <table width="815" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+					                <tr bgcolor="#deecef" height="20">
+					                  <td width="7%" align="center" class="f12_1">1</td>
+					                  <td width="15%" align="left" class="f12_1"></td>
+					                  <td width="15%" align="center" class="f12_1"></td>
+					                  <td width="15%" align="center" class="f12_1"></td>
+					                  <td width="13%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1">配置</td>
+					                  <td width="15%" align="center" class="f12_1">删除 新增</td>
+					                  <td width="10%" align="center" class="f12_1">删除 编辑</td>					                  
+					                </tr>
+					                				                
+					              </table>
+					            </div>
+					          </td>
+					        </tr>
+					      </table>							
+						</td>
+						<td width="10"></td>
+                      </tr>
+	                  <tr>
+	                    <td height="20" colspan="3" ></td>
+	                  </tr>                      
+                    </table>
+                  
+	</form:form>
+  </body>
+</html>

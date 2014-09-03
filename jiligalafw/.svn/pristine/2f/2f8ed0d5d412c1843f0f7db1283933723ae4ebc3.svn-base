@@ -1,0 +1,383 @@
+package sy.domain.vo.base;
+
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Set;
+
+import sy.common.util.validator.annotations.ValidateNotEmpty;
+import sy.common.util.validator.annotations.ValidatePattern;
+import sy.common.util.validator.annotations.ValidateSize;
+import sy.common.util.valuesetter.Create;
+import sy.common.util.valuesetter.Update;
+import sy.domain.model.base.BasicUserRole;
+import sy.domain.vo.shared.BaseVo;
+
+/**
+ * 
+ * @author lidongbo
+ */
+public class BasicUserVo extends BaseVo{
+	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1026848408699748522L;
+	/**
+	 * 主键
+	 */
+	private String userId;
+	/**
+	 * 用户名
+	 */
+	@ValidateNotEmpty(description="名称")
+	@ValidateSize(description="名称",max=100)
+	private String userName;
+	
+	/**
+	 * 账户名_电子邮箱
+	 */
+	@ValidateNotEmpty(description="用户名")
+	@ValidateSize(description="用户名",max=100)
+    private String userAccount;
+	/**
+	 * 用户密码
+	 */
+	@ValidateNotEmpty(description="密码")
+	@ValidateSize(description="密码",max=10)
+	@ValidatePattern(regexp="(\\d|[a-z]|[A-Z])*",description="密码", regexpName = "只允许输入字母与数字" )
+	private String userPassword;
+	/**
+	 * 确认密码
+	 */
+	private String reUserPassword;
+	
+	/**
+	 * 账户或用户标识. 
+	 * 0表示账户
+	 * 1表示用户
+	 */
+    private Integer userFlag;
+    /**
+     * 联系电话.
+     */
+    @ValidateNotEmpty(description="联系电话")
+	@ValidateSize(description="联系电话",max=100)
+    private String tel;
+    
+    /**
+     *公司名称.
+     */
+    private String companyName;
+    
+    /**
+     * 公司logo文件名.
+     */
+    
+    private String companyLogoFileURI;
+    
+    /**
+     * 营业执照号.
+     */
+    private String businessLicense;
+    
+    /**
+     * 企业组织机构代码.
+     */
+    private String businewssOrgCode;
+    
+    /**
+     * 税务登记证.
+     */
+    private String taxCode;
+    
+    /**
+     * 身份证号.IDENTITY_CARD
+     */
+    
+    private String identityCard;
+    
+    private String birthDate;
+    
+    private String remark;
+    
+    private Date registerDate;
+    
+    private Date approvalDate;
+    
+    private String refuseMemo;
+    
+    private Integer state;
+    
+    @Create
+	private String createdBy;
+	
+	@Create
+	private Date created;
+	
+	@Update
+	private String updatedBy;
+	
+	@Update
+	private Date updated;
+	/**
+	 * 账户类型（正式 、试用）.
+	 */
+	private BasicDictItemVo userTypeDictItem;
+    /**
+     * 账户身份（公司、个人、开发者）.
+     */
+	private BasicDictItemVo userIdentityDictItem;
+	/**
+	 * 所属部门.
+	 */
+	private BasicDictItemVo userDepartmentDictItem;
+	/**
+	 * 账户被邀请账户ID.
+	 */
+	private BasicUserVo inviteBasicUser;
+	/**
+	 * 用户所属账户ID.
+	 */
+	private BasicUserVo parentBasicUser;
+	
+	private BasicDictItemVo geoDictItem;
+	/**
+	 * 行业ID.INDUSTRY
+	 */
+	private BasicDictItemVo industryDictItem;
+	
+	private Set<BasicUserRoleVo> basicUserRole;	
+	
+	
+
+	public Set<BasicUserRoleVo> getBasicUserRole() {
+		return basicUserRole;
+	}
+	public void setBasicUserRole(Set<BasicUserRoleVo> basicUserRole) {
+		this.basicUserRole = basicUserRole;
+	}
+
+	/*
+	 * 用户存放当前用户的角色
+	 * @return
+	 */
+	private String roleIds;
+	
+	private String roleName;
+	
+	private String roleNames;
+	
+	public String getUserId() {
+		return userId;
+	}
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+	public String getUserName() {
+		return userName;
+	}
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
+	public String getUserPassword() {
+		return userPassword;
+	}
+	public void setUserPassword(String userPassword) {
+		this.userPassword = userPassword;
+	}
+	public String getReUserPassword() {
+		return reUserPassword;
+	}
+	public void setReUserPassword(String reUserPassword) {
+		this.reUserPassword = reUserPassword;
+	}
+	public String getUserAccount() {
+		return userAccount;
+	}
+	public void setUserAccount(String userAccount) {
+		this.userAccount = userAccount;
+	}
+	public Integer getUserFlag() {
+		return userFlag;
+	}
+	public void setUserFlag(Integer userFlag) {
+		this.userFlag = userFlag;
+	}
+	public String getTel() {
+		return tel;
+	}
+	public void setTel(String tel) {
+		this.tel = tel;
+	}
+	public String getCompanyName() {
+		return companyName;
+	}
+	public void setCompanyName(String companyName) {
+		this.companyName = companyName;
+	}
+	public String getCompanyLogoFileURI() {
+		return companyLogoFileURI;
+	}
+	public void setCompanyLogoFileURI(String companyLogoFileURI) {
+		this.companyLogoFileURI = companyLogoFileURI;
+	}
+	public String getBusinessLicense() {
+		return businessLicense;
+	}
+	public void setBusinessLicense(String businessLicense) {
+		this.businessLicense = businessLicense;
+	}
+	public String getBusinewssOrgCode() {
+		return businewssOrgCode;
+	}
+	public void setBusinewssOrgCode(String businewssOrgCode) {
+		this.businewssOrgCode = businewssOrgCode;
+	}
+	public String getTaxCode() {
+		return taxCode;
+	}
+	public void setTaxCode(String taxCode) {
+		this.taxCode = taxCode;
+	}
+	public String getIdentityCard() {
+		return identityCard;
+	}
+	public void setIdentityCard(String identityCard) {
+		this.identityCard = identityCard;
+	}
+	public String getBirthDate() {
+		return birthDate;
+	}
+	public void setBirthDate(String birthDate) {
+		this.birthDate = birthDate;
+	}
+	public String getRemark() {
+		return remark;
+	}
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
+	
+	public Date getRegisterDate() {
+		return registerDate;
+	}
+	public void setRegisterDate(Date registerDate) {
+		this.registerDate = registerDate;
+	}
+	public Date getApprovalDate() {
+		return approvalDate;
+	}
+	public void setApprovalDate(Date approvalDate) {
+		this.approvalDate = approvalDate;
+	}
+	public String getRefuseMemo() {
+		return refuseMemo;
+	}
+	public void setRefuseMemo(String refuseMemo) {
+		this.refuseMemo = refuseMemo;
+	}
+	public Integer getState() {
+		return state;
+	}
+	public void setState(Integer state) {
+		this.state = state;
+	}
+	public String getCreatedBy() {
+		return createdBy;
+	}
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+	public Date getCreated() {
+		return created;
+	}
+	public void setCreated(Date created) {
+		this.created = created;
+	}
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+	public Date getUpdated() {
+		return updated;
+	}
+	public void setUpdated(Date updated) {
+		this.updated = updated;
+	}
+	public BasicDictItemVo getUserTypeDictItem() {
+		return userTypeDictItem;
+	}
+	public void setUserTypeDictItem(BasicDictItemVo userTypeDictItem) {
+		this.userTypeDictItem = userTypeDictItem;
+	}
+	public BasicDictItemVo getUserIdentityDictItem() {
+		return userIdentityDictItem;
+	}
+	public void setUserIdentityDictItem(BasicDictItemVo userIdentityDictItem) {
+		this.userIdentityDictItem = userIdentityDictItem;
+	}
+	public BasicDictItemVo getUserDepartmentDictItem() {
+		return userDepartmentDictItem;
+	}
+	public void setUserDepartmentDictItem(BasicDictItemVo userDepartmentDictItem) {
+		this.userDepartmentDictItem = userDepartmentDictItem;
+	}
+	public BasicUserVo getInviteBasicUser() {
+		return inviteBasicUser;
+	}
+	public void setInviteBasicUser(BasicUserVo inviteBasicUser) {
+		this.inviteBasicUser = inviteBasicUser;
+	}
+	public BasicUserVo getParentBasicUser() {
+		return parentBasicUser;
+	}
+	public void setParentBasicUser(BasicUserVo parentBasicUser) {
+		this.parentBasicUser = parentBasicUser;
+	}
+	public BasicDictItemVo getGeoDictItem() {
+		return geoDictItem;
+	}
+	public void setGeoDictItem(BasicDictItemVo geoDictItem) {
+		this.geoDictItem = geoDictItem;
+	}
+	public BasicDictItemVo getIndustryDictItem() {
+		return industryDictItem;
+	}
+	public void setIndustryDictItem(BasicDictItemVo industryDictItem) {
+		this.industryDictItem = industryDictItem;
+	}
+	public String getRoleIds() {
+		return roleIds;
+	}
+	public void setRoleIds(String roleIds) {
+		this.roleIds = roleIds;
+	}
+	public String getRoleName() {
+		return roleName;
+	}
+	public void setRoleName(String roleName) {
+		this.roleName = roleName;
+	}
+	
+	/**
+	 * 获取角色名称集合
+	 */
+	public String getRoleNames(){
+		String roleNames="";
+		Iterator<BasicUserRoleVo> basicUserRoleIt = basicUserRole.iterator();
+		while(basicUserRoleIt.hasNext()){
+			BasicUserRoleVo bur = basicUserRoleIt.next();
+			if(null !=bur.getBasicRole().getRoleName()){
+				roleNames=roleNames+bur.getBasicRole().getRoleName()+",";
+			}
+		}
+		if(!"".equals(roleNames)){
+			roleNames=roleNames.substring(0, roleNames.lastIndexOf(","));
+		}
+		return roleNames;
+	}
+	
+	
+}

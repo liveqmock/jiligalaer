@@ -1,0 +1,1407 @@
+/*==============================================================*/
+/* DBMS name:      MySQL 5.0                                    */
+/* Created on:     2013/8/9 21:06:52                            */
+/*==============================================================*/
+
+DROP PROCEDURE IF EXISTS BASIC_RESOURCE_ADD_RES_TYPE;
+
+drop table if exists BASIC_ROLE_RES;
+
+DROP TABLE IF EXISTS BASIC_RESOURCE;
+
+drop table if exists BASIC_ROLE_MENU;
+
+drop table if exists BASIC_MENU;
+
+drop table if exists BASIC_USER_ROLE;
+
+drop table if exists BASIC_ROLE;
+
+drop table if exists BASIC_USER_LOGIN_LOG;
+
+drop table if exists BASIC_USER;
+
+DROP TABLE IF EXISTS CLOUD_PROMOTION_INFO;
+
+drop table if exists BASIC_DICT_ITEM;
+
+drop table if exists BASIC_DICT;
+
+
+
+
+/*==============================================================*/
+/* Table: BASIC_DICT                                            */
+/*==============================================================*/
+create table BASIC_DICT
+(
+   DICT_ID              varchar(50) not null,
+   DICT_NAME            varchar(100),
+   REMARK               varchar(500),
+   STATE                integer,
+   SORT                 integer,
+   primary key (DICT_ID)
+);
+
+/*==============================================================*/
+/* Table: BASIC_DICT_ITEM                                       */
+/*==============================================================*/
+create table BASIC_DICT_ITEM
+(
+   DICT_ITEM_ID         varchar(32) not null,
+   PARENT_DICT_ITEM_ID  varchar(32),
+   DICT_ID              varchar(50),
+   ITEM_CODE            varchar(100),
+   EXT_CODE             varchar(100),
+   SUB_CODE             varchar(100),
+   LEVEL_CODE           varchar(100),
+   ITEM_NAME            varchar(100),
+   ITEM_ALIAS           varchar(100),
+   MEMO1                varchar(100),
+   MEMO2                varchar(100),
+   MEMO3                varchar(100),
+   MEMO4                varchar(100),
+   MEMO5                varchar(100),
+   MEMO6                varchar(100),
+   REMARK               varchar(500),
+   STATE                integer,
+   SORT                 integer,
+   PI1                  varchar(32),
+   PI2                  varchar(32),
+   PI3                  varchar(32),
+   PI4                  varchar(32),
+   PI5                  varchar(32),
+   PI6                  varchar(32),
+   PI7                  varchar(32),
+   PN1                  varchar(100),
+   PN2                  varchar(100),
+   PN3                  varchar(100),
+   PN4                  varchar(100),
+   PN5                  varchar(100),
+   PN6                  varchar(100),
+   PN7                  varchar(100),
+   PNALL                varchar(200),
+   CREATED_BY           varchar(100),
+   CREATED              datetime,
+   UPDATED_BY           varchar(100),
+   UPDATED              datetime,
+   primary key (DICT_ITEM_ID)
+);
+
+
+
+
+
+
+/*==============================================================*/
+/* Table: BASIC_MENU                                            */
+/*==============================================================*/
+create table BASIC_MENU
+(
+   MENU_ID              varchar(32) not null,
+   PARENT_MENU_ID       varchar(32),
+   MENU_CODE            varchar(50),
+   SUB_CODE             varchar(50),
+   LEVEL_CODE           integer,
+   MENU_NAME            varchar(100),
+   MENU_ALIAS           varchar(100),
+   RES_URL              varchar(200),
+   REMARK               varchar(100),
+   STATE                integer,
+   SORT                 integer,
+   CREATED_BY           varchar(100),
+   CREATED              datetime,
+   UPDATED_BY           varchar(100),
+   UPDATED              datetime,
+   primary key (MENU_ID)
+);
+
+/*==============================================================*/
+/* Table: BASIC_ROLE                                            */
+/*==============================================================*/
+create table BASIC_ROLE
+(
+   ROLE_ID              varchar(32) not null,
+   ROLE_NAME            varchar(50),
+   DESCRIPTION			varchar(100),
+   REMARK               varchar(1000),
+   PRIORITY				integer,
+   DATA_AUTH			varchar(20),
+   STATE                integer,
+   CREATED_BY           varchar(100),
+   CREATED              datetime,
+   UPDATED_BY           varchar(100),
+   UPDATED              datetime,
+   primary key (ROLE_ID)
+);
+
+
+/*针对角色表增加标识来区分是账户角色还是用户角色，其中1表示账户2表示用户*/
+ALTER TABLE  BASIC_ROLE add  ROLE_FLAG varchar(2);
+
+
+/*==============================================================*/
+/* Table: BASIC_ROLE_MENU                                       */
+/*==============================================================*/
+create table BASIC_ROLE_MENU
+(
+   ROLE_MENU_ID         varchar(32) not null,
+   ROLE_ID              varchar(32),
+   MENU_ID              varchar(32),
+   primary key (ROLE_MENU_ID)
+);
+
+/*==============================================================*/
+/* Table: BASIC_USER                                            */
+/*==============================================================*/
+create table BASIC_USER
+(
+   USER_ID              varchar(32) not null,
+   USER_ACCOUNT         varchar(100),
+   USER_NAME            varchar(100),
+   USER_PASSWORD        varchar(50),
+   USER_ACCOUNT_TYPE_ID varchar(32),
+   USER_IDENTITY_ID     varchar(32),
+   USER_DEPART_ID       varchar(32),
+   INVITE_USER_ID       varchar(32),
+   PARENT_USER_ID       varchar(32),
+   USER_FLAG            integer,
+   TEL                  varchar(100),
+   GEO_ID               varchar(32),
+   INDUSTRY_ID          varchar(32),
+   COMPANY_NAME         varchar(200),
+   COMP_LOGO_FILE_URI   varchar(200),
+   BUSINESS_LICENSE     varchar(50),
+   BUSINESS_ORG_CODE    varchar(100),
+   TAX_CODE             varchar(50),
+   IDENTITY_CARD        varchar(50),
+   BIRTH_DATE           datetime,
+   REMARK               varchar(1000),
+   REGISTER_DATE        datetime,
+   APPROVAL_DATE        datetime,
+   REFUSE_MEMO          varchar(500),
+   STATE                integer,
+   CREATED_BY           varchar(100),
+   CREATED              datetime,
+   UPDATED_BY           varchar(100),
+   UPDATED              datetime,
+   primary key (USER_ID)
+);
+
+/*==============================================================*/
+/* Table: BASIC_USER_LOGIN_LOG                                  */
+/*==============================================================*/
+create table BASIC_USER_LOGIN_LOG
+(
+   LOG_ID               varchar(32) not null,
+   USER_ID              varchar(32),
+   LOGIN_TIME           datetime,
+   CLIENT_IP            varchar(50),
+   primary key (LOG_ID)
+);
+
+/*==============================================================*/
+/* Table: BASIC_USER_ROLE                                       */
+/*==============================================================*/
+create table BASIC_USER_ROLE
+(
+   USER_ROLE_ID         varchar(32) not null,
+   USER_ID              varchar(32),
+   ROLE_ID              varchar(32),
+   primary key (USER_ROLE_ID)
+);
+
+
+alter table BASIC_DICT_ITEM add constraint FK_Reference_3 foreign key (DICT_ID)
+      references BASIC_DICT (DICT_ID) on delete restrict on update restrict;
+
+alter table BASIC_DICT_ITEM add constraint FK_Reference_4 foreign key (PARENT_DICT_ITEM_ID)
+      references BASIC_DICT_ITEM (DICT_ITEM_ID) on delete restrict on update restrict;
+
+alter table BASIC_MENU add constraint FK_Reference_5 foreign key (PARENT_MENU_ID)
+      references BASIC_MENU (MENU_ID) on delete restrict on update restrict;
+
+alter table BASIC_ROLE_MENU add constraint FK_Reference_6 foreign key (MENU_ID)
+      references BASIC_MENU (MENU_ID) on delete restrict on update restrict;
+
+alter table BASIC_ROLE_MENU add constraint FK_Reference_7 foreign key (ROLE_ID)
+      references BASIC_ROLE (ROLE_ID) on delete restrict on update restrict;
+
+alter table BASIC_USER add constraint FK_Reference_10 foreign key (GEO_ID)
+      references BASIC_DICT_ITEM (DICT_ITEM_ID) on delete restrict on update restrict;
+
+alter table BASIC_USER add constraint FK_Reference_11 foreign key (USER_IDENTITY_ID)
+      references BASIC_DICT_ITEM (DICT_ITEM_ID) on delete restrict on update restrict;
+
+alter table BASIC_USER add constraint FK_Reference_12 foreign key (USER_ACCOUNT_TYPE_ID)
+      references BASIC_DICT_ITEM (DICT_ITEM_ID) on delete restrict on update restrict;
+
+alter table BASIC_USER add constraint FK_Reference_13 foreign key (PARENT_USER_ID)
+      references BASIC_USER (USER_ID) on delete restrict on update restrict;
+
+alter table BASIC_USER add constraint FK_Reference_14 foreign key (INVITE_USER_ID)
+      references BASIC_USER (USER_ID) on delete restrict on update restrict;
+
+alter table BASIC_USER add constraint FK_Reference_15 foreign key (USER_DEPART_ID)
+      references BASIC_DICT_ITEM (DICT_ITEM_ID) on delete restrict on update restrict;
+      
+alter table BASIC_USER add constraint FK_Reference_9 foreign key (INDUSTRY_ID)
+      references BASIC_DICT_ITEM (DICT_ITEM_ID) on delete restrict on update restrict;
+
+alter table BASIC_USER_LOGIN_LOG add constraint FK_Reference_8 foreign key (USER_ID)
+      references BASIC_USER (USER_ID) on delete restrict on update restrict;
+
+alter table BASIC_USER_ROLE add constraint FK_Reference_1 foreign key (USER_ID)
+      references BASIC_USER (USER_ID) on delete restrict on update restrict;
+
+alter table BASIC_USER_ROLE add constraint FK_Reference_2 foreign key (ROLE_ID)
+      references BASIC_ROLE (ROLE_ID) on delete restrict on update restrict;
+
+      
+      
+create table if not exists BASIC_RESOURCE(
+   RES_ID              	varchar(32) not null,
+   PARENT_RES_ID		varchar(32),
+   SUB_CODE             varchar(50),
+   LEVEL_CODE           integer,
+   
+   RES_NAME       		varchar(100),
+   RES_URL            	varchar(500),
+   SORT					integer,
+   STATE                integer,
+   CREATED_BY           varchar(100),
+   CREATED              datetime,
+   UPDATED_BY           varchar(100),
+   UPDATED              datetime,
+   primary key (RES_ID)
+);
+
+/*
+ * ----------------------------------------------------------------------
+ * add RES_TYPE column for BASIC_RESOURCE start.
+ */
+DELIMITER $$
+
+DROP PROCEDURE IF EXISTS BASIC_RESOURCE_ADD_RES_TYPE $$
+CREATE PROCEDURE BASIC_RESOURCE_ADD_RES_TYPE()
+BEGIN
+
+-- add a column safely
+IF NOT EXISTS( (SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE()
+        AND COLUMN_NAME='RES_TYPE' AND TABLE_NAME='BASIC_RESOURCE') ) THEN
+    ALTER TABLE BASIC_RESOURCE ADD RES_TYPE varchar(32) NOT NULL;
+END IF;
+
+/*
+ * 
+-- rename a table safely
+IF NOT EXISTS( (SELECT * FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE()
+        AND TABLE_NAME='my_old_table_name') ) THEN
+    RENAME TABLE 
+        my_old_table_name TO my_new_table_name,
+END IF;
+ */
+
+END $$
+$$
+CALL BASIC_RESOURCE_ADD_RES_TYPE() $$
+DROP PROCEDURE IF EXISTS BASIC_RESOURCE_ADD_RES_TYPE $$
+DELIMITER ;
+
+;
+/*
+ * add RES_TYPE column for BASIC_RESOURCE end.
+ * ----------------------------------------------------------------------
+ */
+
+CREATE TABLE  if not exists BASIC_ROLE_RES (
+	ID 		VARCHAR(32) not null,
+	ROLE_ID VARCHAR(32),
+	RES_ID 	VARCHAR(32),
+	primary key (ID)
+);
+
+
+
+
+drop table if exists CLOUD_NOTICE_MESSAGES;
+
+/*==============================================================*/
+/* Table: CLOUD_NOTICE_MESSAGES 系统公告信息  	                */
+/*==============================================================*/
+create table CLOUD_NOTICE_MESSAGES
+(
+   MESS_ID              varchar(32) not null,
+   CONTENT              text,
+   MESS_TITLE			varchar(200),
+   STATE                integer,
+   CREATED_BY           varchar(100),	
+   CREATED              datetime,		
+   UPDATED_BY           varchar(100),	
+   UPDATED              datetime,		
+   primary key (MESS_ID)
+);
+
+
+drop table if exists BASIC_USER_QUOTA;
+
+/*==============================================================*/
+/* Table: BASIC_USER_QUOTA 用户信用配置参数 	                		*/
+/*==============================================================*/
+create table BASIC_USER_QUOTA
+(
+   QUOTA_ID             varchar(32) not null,
+   TEST_USER_NUM        integer,	/** 测试用户数量 */
+   TEST_CREDIT			numeric,	/** 测试用户信用额度 */
+   FORMAL_CREDIT		numeric,	/** 正式用户信用额度 */
+   STOP_RUN_DAY			integer,	/** 全局信用停机天数 */
+   DEL_VM_DAY			integer,	/** 全局信用删机天数 */
+   STATE                integer,	
+   CREATED_BY           varchar(100),	
+   CREATED              datetime,		
+   UPDATED_BY           varchar(100),	
+   UPDATED              datetime,		
+   primary key (QUOTA_ID)
+);
+
+
+
+
+/* Table: CLOUD_USER_EXPENSE 账户费用汇总表  */
+drop table if exists CLOUD_USER_EXPENSE;
+
+create table CLOUD_USER_EXPENSE
+(
+   EXP_ID              	varchar(32) not null,
+   USER_ID				varchar(32),	/** 充值账户 */
+   PAY_TOTAL_AMOUNT		decimal,		/** 账户充值总金额 */
+   PAY_UPDATED          datetime,		/** 充值总额更新时间 */
+   EXP_TOTAL_AMOUNT		decimal,		/** 账户费用总额 */
+   EXP_UPDATED          datetime,		/** 费用总额更新时间 */
+   CREDIT_AMOUNT		decimal,		/** 账户授信金额 */
+   
+   IS_BILLING			integer,		/**是否正在计费处理*/
+   USED_STOP_RUN_DAYS	integer,		/**已使用的信用开机天数*/
+   USED_DEL_VM_DAYS		integer,		/**已使用的信用停机天数*/
+   
+   STOP_RUN_DAYS_LAST_WARN_DATE datetime,
+   DEL_VM_DAYS_LAST_WARN_DATE 	datetime,
+   LAST_REMIND_DATE DATETIME,
+   
+   primary key (EXP_ID)
+);
+
+
+/* Table: CLOUD_USER_PAY 账户充值表   */
+drop table if exists CLOUD_USER_PAY;
+
+create table CLOUD_USER_PAY
+(
+   PAY_ID				varchar(32) not null,
+   USER_ID				varchar(32),	/** 充值账户 */
+   PAY_DATE				datetime, 		/** 充值时间 */
+   PAY_AMOUNT			decimal,		/** 充值金额 */
+   REMAINING_AMOUNT		decimal,		/** 充值后余额（充值后那一刻的账户余额） */
+   PAY_TYPE				integer,		/** 充值类型：银联、支付宝、现金、转账、赠送、首次充值、充值返利、推荐返利 */
+   PAY_CARD_NO			varchar(20),	/** 充值卡号 */
+   REMARK               varchar(500),	/** 充值备注*/
+   CREATED_BY           varchar(100),	/** 创建人 */
+   primary key (PAY_ID)
+);
+
+
+/* Table: CLOUD_USER_REFUND 账户退款表  */
+drop table if exists CLOUD_USER_REFUND;
+
+create table CLOUD_USER_REFUND
+(
+   REFUND_ID              	varchar(32) not null,
+   USER_ID					varchar(32), 	/** 申请退款账户 */
+   APPLY_DATE				datetime, 		/** 申请日期 */
+   APPLY_AMOUNT				double,			/** 申请金额 */
+   APPLY_REMARK				varchar(500),	/** 申请备注 */
+   REFUND_DATE				datetime, 		/** 退款日期（处理日期） */
+   REFUND_AMOUNT			double,			/** 退款金额（实际金额） */
+   REFUND_REMAKR			varchar(500),	/** 退款备注 */
+   REFUND_STATE             integer,		/** 退款状态（未退款、已退款） */
+   REFUND_BY				varchar(100),	/** 退款处理人员*/
+   	
+   primary key (REFUND_ID)
+);
+
+
+/* Table: CLOUD_USER_EXPENSE_ITEM 账户费用明细表  */
+drop table if exists CLOUD_USER_EXPENSE_ITEM;
+
+create table CLOUD_USER_EXPENSE_ITEM
+(
+   EXP_ITEM_ID              varchar(32) not null,
+   ORDER_ID					varchar(32), 			/** 购买订单ID */
+   ORDER_ITEM_ID          	varchar(32) not null,   /** 订单子表ID*/
+   USER_ID					varchar(32), 			/** 费用账户 */
+   EXP_AMOUNT				double,					/** 费用金额 */
+   EXP_DATE					datetime, 				/** 费用日期 */
+   BILLING_TYPE				varchar(32),			/** 计费类型（一次性、周期性） */
+   primary key (EXP_ITEM_ID)
+);
+/**推荐返利是否已计算过*/
+alter table CLOUD_USER_EXPENSE_ITEM add column REBATE_FLAG integer;
+
+
+/* Table: CLOUD_USER_ORDER 账户订单表   */
+drop table if exists CLOUD_USER_ORDER;
+
+create table CLOUD_USER_ORDER
+(
+   ORDER_ID              	varchar(32) not null,
+   USER_ID					varchar(32) not null,	/** 购买账户或者用户 */
+   ACCOUNT_ID				varchar(32),			/** 账户ID，计费时根据此此字段取账户费用信息*/
+   ORDER_TIME               datetime,				/** 订单时间*/
+   
+   BILLING_FLAG				integer,				/** 0 未开始计费 ，1 开始计费 */
+   BEGIN_BILLING_TIME		datetime,				/** 开始计费时间  */
+   NEXT_BILLING_TIME		datetime,	            /** 下次计费时间，和计费周期对应配合使用 */
+   
+   VM_ID					varchar(32),			/** 虚拟机ID*/
+   VM_Name					varchar(50),			/** 主机名*/
+   NETWORK_ID				varchar(32),			/** 网络ID*/
+   NETWORK_SOLN_ID			varchar(32),			/** 网络方案ID*/
+   IP_ID					varchar(32),			/** IP表中ID */
+   NET_IDS  				varchar(2000),			/** 网络、安全组ID*/
+   BUY_TYPE	            	varchar(20),			/** 购买类型：自定义购买 、快速购买、单一购买*/
+   
+   ONETIME_REBATE_AMOUNT	double,					/**一次性促销总价格*/
+   ONETIME_ORDER_AMOUNT     double,					/**一次性实际总价格*/
+   CYCLE_REBATE_AMOUNT		double,					/**周期性促销总价格*/
+   CYCLE_ORDER_AMOUNT		double,					/**周期性实际总价格*/
+   
+   BILLING_CYCLE			varchar(32),	        /** 计费周期（年、月、日、时） */
+   ORDER_TYPE				integer,				/** 订单类型,1：网络，2：IP，3：虚拟机，4：磁盘，5：计算方案*/
+   
+   REMARK               	varchar(500),
+   STATE                	integer,
+   CREATED_BY 				varchar(100),
+   CREATED_ID 				varchar(32),
+   CREATED 					datetime,
+   primary key (ORDER_ID)
+);
+
+
+/* Table: CLOUD_USER_ORDER_ITEM 账户订单表明细表 */
+drop table if exists CLOUD_USER_ORDER_ITEM;
+
+create table CLOUD_USER_ORDER_ITEM
+(
+ 	ORDER_ITEM_ID          	varchar(32) not null,
+ 	ORDER_ID              	varchar(32) not null,  	/** 订单主表ID*/
+	PRODUCT_ID				varchar(32),			/** 产品主表ID*/
+	PRODUCT_ITEM_ID			varchar(32),			/** 产品子表ID*/
+   	PROD_TYPE	            varchar(20),			/** 产品类型（单一  or 组合）*/ 
+ 	
+   	ONETIME_BILLING_FLAG	integer,                /** 一次性计费是否已发生*/
+    BILLING_FLAG			integer,				/** 0 未开始计费 ，1 开始计费 */
+    BEGIN_BILLING_TIME		datetime,				/** 开始计费时间 */
+    NEXT_BILLING_TIME		datetime,	            /** 下次计费时间 */
+    RES_DESTROY_TIME		datetime,	            /** 资源销毁时间 */
+    
+ 	/** PROD_DETAIL_PRICE		double,             产品明细实际价格*/
+ 	/** PROD_REBATE_PRICE		double,             产品明细促销价格*/
+    
+   	BILLING_TYPE			varchar(32),	    	/** 计费类型（一次性、周期性） */
+   	DISK_SIZE				decimal(10,0),		 	/** 自定义磁盘大小*/
+   	
+   	PROMOTION_ID         	varchar(32),			/** 促销活动ID（冗余字段，方便日后查看）*/
+   	REBATE_FLAG				integer,				/** 促销方式 */
+   	REBATE_AMOUNT			DECIMAL(12,2),			/** 返利额度或者金额 */
+   	
+   	/** PROMOTION_ID         	varchar(32),		促销活动ID */
+   	/** ACTIVITY_NAME        	varchar(200),		促销活动名称 */
+   	/** REBATE_FLAG				integer,			促销方式 */
+   	/** REBATE_AMOUNT			DECIMAL(12,2),		返利额度或者金额 */
+   	/** PROMOTION_START_DATE	datetime,			促销开始时间 */
+   	/** PROMOTION_END_DATE		datetime,			促销结束时间 */
+   	
+ 	REMARK               	varchar(500),           /** 备注*/
+   	primary key (ORDER_ITEM_ID) 	
+);
+
+
+/*==============================================================*/
+/* Table: CLOUD_PROMOTION_INFO(促销活动信息表)                   */
+/*==============================================================*/
+drop table if exists CLOUD_PROMOTION_INFO;
+
+create table CLOUD_PROMOTION_INFO
+(
+	PROMOTION_ID         	varchar(32) not null,	/** 促销活动ID */
+	PROMOTION_TYPE_ID		varchar(32),			/** 促销活动类型-字典项 */
+	ACTIVITY_NAME        	varchar(200),			/** 促销活动名称 */
+	REBATE_FLAG				integer,				/** 返利方式 */
+	REBATE_AMOUNT			DECIMAL(12,2),			/** 返利额度或者金额 */
+	REBATE_THRESHOLD_VALUE	DECIMAL(12,2),			/** 返利条件 临界值 */
+	START_DATE				datetime,				/** 返利开始时间 */
+	END_DATE				datetime,				/** 返利结束时间 */
+	REMARK               	varchar(500),
+	STATE                	integer,
+	CREATED_BY           	varchar(100),
+	CREATED              	datetime,
+	UPDATED_BY           	varchar(100),
+	UPDATED              	datetime,
+	REBATE_PERCENTAGE 		double,					/**促销活动 每满XX 返利 XX ,统一换算成百分比 存在 REBATE_PERCENTAGE 中*/
+	primary key (PROMOTION_ID)
+);
+alter table CLOUD_PROMOTION_INFO add constraint FK_Promotion_Reference_BasicDict_item foreign key (PROMOTION_TYPE_ID)
+      references BASIC_DICT_ITEM (DICT_ITEM_ID) on delete restrict on update restrict;
+
+      
+
+/*==============================================================*/
+/* Table: BASIC_USER_ACTIVATION_CODE  用户激活码                                                         */
+/*==============================================================*/
+drop table if exists BASIC_USER_ACTIVATION_CODE;
+create table BASIC_USER_ACTIVATION_CODE
+(
+   ACTIVATION_CODE       varchar(100) not null,
+   USER_ID               varchar(50) not null,
+   CREATED               datetime,
+   UPDATED				 datetime,
+   STATE                 integer,
+   primary key (ACTIVATION_CODE)
+);
+
+
+
+/**接口账户表*/
+drop table if exists CLOUD_MDM_ACCOUNT;
+create table CLOUD_MDM_ACCOUNT
+(
+	ID         		varchar(32) not null,	
+	IF_ID			varchar(36) not null,			 
+	
+	NAME			varchar(100) null,
+	ACCOUNTTYPE		varchar(50) null,
+	DOMAINID		varchar(36) null,
+	DOMAIN			varchar(100) null,
+	RECEIVEDBYTES	varchar(200) null,
+	SENTBYTES		varchar(200) null,
+	VMLIMIT			varchar(100) null,
+	VMTOTAL			varchar(100) null,
+	VMAVAILABLE		varchar(200) null,
+	IPLIMIT			varchar(100) null,
+	IPTOTAL			varchar(100) null,
+	IPAVAILABLE		varchar(100) null,
+	VOLUMELIMIT		varchar(100) null,
+	VOLUMETOTAL		varchar(100) null,
+	VOLUMEAVAILABLE			varchar(100) null,
+	SNAPSHOTLIMIT			varchar(100) null,
+	SNAPSHOTTOTAL			varchar(100) null,
+	SNAPSHOTAVAILABLE		varchar(100) null,
+	TEMPLATELIMIT			varchar(100) null,
+	TEMPLATETOTAL			varchar(100) null,
+	TEMPLATEAVAILABLE		varchar(100) null,
+	VMSTOPPED				varchar(100) null,
+	VMRUNNING				varchar(100) null,
+	PROJECTLIMIT			varchar(100) null,
+	PROJECTTOTAL			varchar(100) null,
+	PROJECTAVAILABLE		varchar(100) null,
+	NETWORKLIMIT			varchar(100) null,
+	NETWORKTOTAL			varchar(100) null,
+	NETWORKAVAILABLE		varchar(100) null,
+	STATE					varchar(50) null,
+	
+	
+	SYNC_TIME				datetime,
+	DATA_STATE           	integer,
+	primary key (ID)
+);
+
+
+ALTER TABLE  CLOUD_MDM_ACCOUNT ADD  SYNC_CREATED_TIME DATETIME;
+
+
+/**接口用户表*/
+drop table if exists CLOUD_MDM_USER;
+create table CLOUD_MDM_USER
+(
+	ID         		varchar(32) not null,	
+	IF_ID			varchar(36) not null,			 
+	
+	USERNAME		varchar(100) null,
+	FIRSTNAME		varchar(100) null,
+	LASTNAME		varchar(100) null,
+	EMAIL			varchar(500) null,
+	CREATED			datetime null,
+	STATE			varchar(50) null,
+	ACCOUNT			varchar(100) null,
+	ACCOUNTTYPE		varchar(50) null,
+	DOMAINID		varchar(36) null,
+	DOMAIN			varchar(100) null,
+	TIMEZONE		varchar(100) null,
+	APIKEY			varchar(200) null,
+	SECRETKEY		varchar(500) null,
+	ACCOUNTID		varchar(500) null,
+	
+	SYNC_TIME		datetime,
+	DATA_STATE      integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_USER ADD  SYNC_CREATED_TIME DATETIME;
+
+
+
+/**数据中心表*/
+drop table if exists CLOUD_MDM_ZONE;
+create table CLOUD_MDM_ZONE
+(
+	ID         		varchar(32) not null,	
+	IF_ID			varchar(36) not null,			 
+	NAME     		varchar(200),
+	DISPLAYTEXT     varchar(200),
+	DESCRIPTION     varchar(500),
+	NETWORK_TYPE	varchar(50),
+	SYNC_TIME		datetime,
+	DATA_STATE      integer,
+	primary key (ID)
+);
+
+
+ALTER TABLE  CLOUD_MDM_ZONE ADD  SYNC_CREATED_TIME DATETIME;
+
+
+/**网络方案(带宽)*/
+drop table if exists CLOUD_MDM_NETWORK_SOLN;
+create table CLOUD_MDM_NETWORK_SOLN
+(
+	ID					varchar(32) not null,
+	IF_ID				varchar(36) not null,
+	NAME				varchar(100),
+	DISPLAYTEXT			varchar(200),
+	NETWORKRATE			varchar(200),
+	
+	traffictype 		varchar(200),
+	isdefault			varchar(200),
+	specifyvlan			varchar(200),
+	conservemode		varchar(200),
+	specifyipranges		varchar(200),
+	availability		varchar(200),
+	state				varchar(200),
+	guestiptype			varchar(200),
+	serviceofferingid	varchar(200),
+	forvpc				varchar(200),
+	
+	zoneid				varchar(36),
+	
+	SYNC_TIME			datetime,
+	DATA_STATE      	integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_NETWORK_SOLN ADD  SYNC_CREATED_TIME DATETIME;
+
+/**计算方案表*/
+drop table if exists CLOUD_MDM_CPU_SOLN;
+create table CLOUD_MDM_CPU_SOLN
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	NAME		varchar(100),
+	DISPLAYTEXT varchar(200),
+	CPUNUMBER	varchar(20),
+	CPUSPEED	varchar(20),
+	MEMORY		varchar(100),
+	SYNC_TIME	datetime,
+	DATA_STATE  integer,
+	primary key (ID)
+);
+
+
+ALTER TABLE  CLOUD_MDM_CPU_SOLN ADD  SYNC_CREATED_TIME DATETIME;
+
+/**磁盘方案表*/
+drop table if exists CLOUD_MDM_DISK_SOLN;
+create table CLOUD_MDM_DISK_SOLN
+(
+	ID				varchar(32) not null,
+	IF_ID			varchar(36) not null,
+	DISKSIZE		varchar(100),
+	DISPLAYTEXT 	varchar(200),
+	NAME			varchar(100),
+	ISCUSTOMIZED	varchar(10),
+	STORAGETYPE		varchar(50),
+	SYNC_TIME		datetime,
+	DATA_STATE      integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_DISK_SOLN ADD  SYNC_CREATED_TIME DATETIME;
+
+/**模板表*/
+drop table if exists CLOUD_MDM_TEMPLATE;
+create table CLOUD_MDM_TEMPLATE
+(
+	ID				varchar(32) not null,
+	IF_ID			varchar(36) not null,
+	DISPLAYTEXT 	varchar(200),
+	NAME			varchar(100),
+	MEMORY			varchar(100),
+	
+	created			datetime,
+	isready			varchar(50),
+	ostypeid		varchar(36),
+	ostypename		varchar(200),
+	zoneid			varchar(36),
+	status			varchar(50),
+	size			varchar(50),
+	hypervisor		varchar(50),
+	isextractable	varchar(50),
+	
+	SYNC_TIME		datetime,
+	DATA_STATE      integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_TEMPLATE ADD  SYNC_CREATED_TIME DATETIME;
+
+/**IP表*/
+drop table if exists CLOUD_MDM_IP;
+create table CLOUD_MDM_IP
+(
+	ID					varchar(32) not null,
+	IF_ID				varchar(36) not null,
+	IPADDRESS			varchar(200),
+	VIRTUALMACHINEID 	varchar(36),
+	
+	allocated 			datetime null,
+	zoneid				varchar(36) null,
+	zonename			varchar(200) null,
+	issourcenat			varchar(50) null,
+	account				varchar(200) null,
+	domainid			varchar(36) null,
+	domain				varchar(100) null,
+	forvirtualnetwork	varchar(100) null,
+	vlanid				varchar(36) null,
+	vlanname			varchar(200) null,
+	isstaticnat			varchar(50) null,
+	issystem			varchar(50) null,
+	virtualmachinename	varchar(200) null,
+	virtualmachinedisplayname	varchar(200) null,
+	associatednetworkid			varchar(36) null,
+	associatednetworkname		varchar(200) null,
+	networkid					varchar(36) null,
+	state						varchar(50) null,
+	physicalnetworkid			varchar(36) null,
+	
+	vpcid						varchar(36) null,
+	project						varchar(200) null,
+	projectid					varchar(36) null,
+	purpose						varchar(200) null,
+	
+	SYNC_TIME					datetime,
+	DATA_STATE           		integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_IP ADD  SYNC_CREATED_TIME DATETIME;
+
+/**网卡表*/
+drop table if exists CLOUD_MDM_NIC;
+create table CLOUD_MDM_NIC
+(
+	ID					varchar(32) not null,
+	IF_ID				varchar(36) not null,
+	
+	NETWORKID			varchar(36) null,
+	NETMASK				varchar(100) null,
+	GATEWAY				varchar(100) null,
+	IPADDRESS			varchar(100) null,
+	ISOLATIONURI		varchar(200) null,
+	BROADCASTURI		varchar(200) null,
+	TRAFFICTYPE			varchar(50) null,
+	TYPE				varchar(50) null,
+	ISDEFAULT			varchar(10) null,
+	MACADDRESS			varchar(100) null,
+	NETWORKNAME			varchar(100) null,
+	
+	VIRTUALMACHINEID 	varchar(36) not null,
+	SYNC_TIME			datetime,
+	DATA_STATE          integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_NIC ADD  SYNC_CREATED_TIME DATETIME;
+
+
+/**虚拟机安全组表*/
+drop table if exists CLOUD_VM_SECURITYGROUP;
+create table CLOUD_VM_SECURITYGROUP
+(
+	ID					varchar(32) not null,
+	
+	SECURITYGROUPID		varchar(36) not null,
+	VIRTUALMACHINEID 	varchar(36) not null,
+	
+	SYNC_TIME			datetime,
+	DATA_STATE          integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_VM_SECURITYGROUP ADD  SYNC_CREATED_TIME DATETIME;
+
+/**网络表*/
+drop table if exists CLOUD_MDM_NETWORK;
+create table CLOUD_MDM_NETWORK
+(
+	ID					varchar(32) not null,
+	IF_ID				varchar(36) not null,
+	
+	NAME				varchar(100) null,
+	DISPLAYTEXT 		varchar(200) null,
+	TRAFFICTYPE 		varchar(50) null,
+	GATEWAY				varchar(100) null,
+	NETMASK				varchar(100) null,
+	CIDR				varchar(100) null,
+	ZONEID				varchar(36) null,
+	NETWORKOFFERINGID 	varchar(36) null,
+	ISSYSTEM			varchar(20) null,
+	STATE				varchar(20) null,
+	RELATED				varchar(50) null,
+	BROADCASTURI		varchar(200) null,
+	DNS1				varchar(100) null,
+	TYPE				varchar(100) null,
+	VLAN				varchar(100) null,
+	ACLTYPE				varchar(100) null,
+	PHYSICALNETWORKID	varchar(36) null,
+	RESTARTREQUIRED		varchar(100) null,
+	SPECIFYIPRANGES		varchar(100) null,
+	CANUSEFORDEPLOY		varchar(100) null,
+
+	broadcastdomaintype	varchar(100) null,
+	zonename			varchar(200) null,
+	networkofferingname	varchar(200) null,
+	networkofferingdisplaytext	varchar(200) null,
+	networkofferingavailability	varchar(100) null,
+	account				varchar(200) null,
+	domainid			varchar(36) null,
+	domain				varchar(200) null,
+	networkdomain		varchar(200) null,
+	
+	SYNC_TIME			datetime,
+	DATA_STATE          integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_NETWORK ADD  SYNC_CREATED_TIME DATETIME;
+
+/**卷表*/
+drop table if exists CLOUD_MDM_VOLUME;
+create table CLOUD_MDM_VOLUME
+(
+	ID					varchar(32) not null,
+	IF_ID				varchar(36) not null,
+	
+	NAME				varchar(100) null,
+	ZONEID				varchar(36) null,
+	TYPE				varchar(100) null,
+	DEVICEID			varchar(36) null,
+	VIRTUALMACHINEID	varchar(36) null,
+	SIZE				varchar(100) null,
+	CREATED				datetime,
+	ATTACHED			datetime,
+	STATE				varchar(50) null,
+	ACCOUNT				varchar(100) null,
+	DOMAINID			varchar(36) null,
+	DOMAIN				varchar(50) null,
+	STORAGETYPE			varchar(100) null,
+	HYPERVISOR			varchar(100) null,
+	STORAGE				varchar(100) null,
+	DESTROYED			varchar(100) null,
+	SERVICEOFFERINGID	varchar(36) null,
+	ISEXTRACTABLE		varchar(100) null,
+	DISKOFFERINGID		varchar(36) null,
+	SNAPSHOTID			varchar(36) null,
+	
+	SYNC_TIME			datetime,
+	DATA_STATE          integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_VOLUME ADD  SYNC_CREATED_TIME DATETIME;
+
+/**虚拟机表*/
+drop table if exists CLOUD_MDM_VM;
+create table CLOUD_MDM_VM
+(
+	ID					varchar(32) not null,
+	IF_ID				varchar(36) not null,
+
+	account				varchar(100) null,
+	domainid			varchar(36) null,
+	domain				varchar(200) null,
+	CREATED				datetime,
+	
+	zoneid				varchar(36),
+	hostid				varchar(36),
+	hypervisor			varchar(50),
+	haenable			varchar(50),
+	
+	NAME				varchar(100),
+	DISPLAYNAME			varchar(100),
+	SERVICEOFFERINGID	varchar(36),
+	CPUNUMBER			varchar(20),
+	CPUSPEED			varchar(20),
+	MEMORY				varchar(100),
+	CPUUSED				varchar(20),
+	NETWORKKBSREAD		varchar(100),
+	NETWORKKBSWRITE		varchar(100),
+	PUBLICIPID			varchar(36),
+	PUBLICIP			varchar(100),
+	TEMPLATE_ID			varchar(36),
+	TEMPLATENAME		varchar(100),
+	TEMPLATEDISPLAYTEXT	varchar(100),
+	ZONENAME			varchar(100),
+	STATE				varchar(50),
+	
+	STOPTIME			datetime,
+	SYNC_TIME			datetime,
+	DATA_STATE          integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_VM ADD  SYNC_CREATED_TIME DATETIME;
+
+/**网络出口规则表*/
+drop table if exists CLOUD_MDM_EGRESS_FIREWALL_RULE;
+create table CLOUD_MDM_EGRESS_FIREWALL_RULE
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	cidrlist	varchar(100) null,
+	protocol	varchar(50) null,
+	startport	varchar(20) null,
+	endport		varchar(20) null,
+	networkid	varchar(36) null,
+	state		varchar(20) null,
+	ipaddress	varchar(50) null,
+	ipaddressid	varchar(36) null,
+	icmpcode	varchar(200) null,
+	icmptype	varchar(100) null,
+	
+	SYNC_TIME	datetime,
+	DATA_STATE	integer,
+	primary key (ID)
+);
+
+
+ALTER TABLE  CLOUD_MDM_EGRESS_FIREWALL_RULE ADD  SYNC_CREATED_TIME DATETIME;
+
+/**防火墙规则表*/
+drop table if exists CLOUD_MDM_FIREWALL_RULE;
+create table CLOUD_MDM_FIREWALL_RULE
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	protocol	varchar(50) null,
+	startport	varchar(20) null,
+	endport		varchar(20) null,
+	ipaddressid	varchar(36) null,
+	ipaddress	varchar(50) null,
+	state		varchar(20) null,
+	cidrlist	varchar(100) null,
+	networkid	varchar(36) null,
+	icmpcode	varchar(200) null,
+	icmptype	varchar(100) null,
+	
+	SYNC_TIME		datetime,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_MDM_FIREWALL_RULE ADD  SYNC_CREATED_TIME DATETIME;
+
+/**安全组表*/
+drop table if exists CLOUD_SECURITY_GROUP;
+create table CLOUD_SECURITY_GROUP
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	name		varchar(200) null,
+	description	varchar(200) null,
+	account		varchar(100) null,
+	domainid	varchar(36) null,
+	domain		varchar(200) null,
+	
+	SYNC_TIME		datetime,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+
+ALTER TABLE  CLOUD_SECURITY_GROUP ADD  SYNC_CREATED_TIME DATETIME;
+
+/**安全组出口规则*/
+drop table if exists CLOUD_EGRESSRULE;
+create table CLOUD_EGRESSRULE
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	protocol	varchar(200) null,
+	startport	varchar(20) null,
+	endport		varchar(20) null,
+	cidr		varchar(100) null,		
+	icmptype	varchar(100) null,
+	icmpcode	varchar(200) null,
+	account		varchar(100) null,
+	securitygroupname varchar(200) null,
+	securityGroupId	  varchar(36) null,
+	
+	SYNC_TIME		datetime,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_EGRESSRULE ADD  SYNC_CREATED_TIME DATETIME;
+
+
+/**安全组入口规则*/
+drop table if exists CLOUD_INGRESSRULE;
+create table CLOUD_INGRESSRULE
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	protocol	varchar(200) null,
+	startport	varchar(20) null,
+	endport		varchar(20) null,
+	cidr		varchar(100) null,		
+	icmptype	varchar(100) null,
+	icmpcode	varchar(200) null,
+	account		varchar(100) null,
+	securitygroupname varchar(200) null,
+	securityGroupId	  varchar(36) null,
+	
+	SYNC_TIME		datetime,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_INGRESSRULE ADD  SYNC_CREATED_TIME DATETIME;
+
+
+/**端口转发表*/
+drop table if exists CLOUD_PORT_FORWARDING_RULE;
+create table CLOUD_PORT_FORWARDING_RULE
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	privateport			varchar(20) null,
+	privateendport		varchar(20) null,
+	protocol			varchar(20) null,
+	publicport			varchar(20) null,
+	publicendport		varchar(20) null,
+	virtualmachineid	varchar(36) null,
+	ipaddressid			varchar(36) null,
+	ipaddress			varchar(50) null,
+	state				varchar(20) null,
+	cidrlist			varchar(100) null,
+	
+	SYNC_TIME		datetime,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_PORT_FORWARDING_RULE ADD  SYNC_CREATED_TIME DATETIME;
+
+
+/**VPN表*/
+drop table if exists CLOUD_VPN_REMOTEACCESS;
+create table CLOUD_VPN_REMOTEACCESS
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	publicipid	varchar(36) not null,
+	publicip	varchar(100) null,
+	iprange		varchar(200) null,
+	presharedkey	varchar(200) null,
+	account		varchar(200) null,
+	domainid	varchar(36) null,
+	domain		varchar(200) null,
+	state		varchar(50) null,
+	
+	SYNC_TIME		datetime,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_VPN_REMOTEACCESS ADD  SYNC_CREATED_TIME DATETIME;
+
+
+
+/**VPN用户表*/
+drop table if exists CLOUD_VPN_USER;
+create table CLOUD_VPN_USER
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	username	varchar(200) null,
+	password	varchar(200) null,
+	account		varchar(200) null,
+	domainid	varchar(36) null,
+	domain		varchar(200) null,
+	
+	
+	SYNC_TIME		datetime,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+ALTER TABLE  CLOUD_VPN_USER ADD  SYNC_CREATED_TIME DATETIME;
+
+/**接口事件*/
+drop table if exists CLOUD_EVENT;
+create table CLOUD_EVENT
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	username	varchar(200) null,
+	type		varchar(50) null,
+	level		varchar(50) null,
+	description varchar(500) null,
+	account		varchar(200) null,
+	domainid	varchar(36) null,
+	domain		varchar(200) null,
+	created		datetime null,
+	state		varchar(50) null,		
+	/** 上级事件 */
+	parentid	varchar(36) null,
+	
+	
+	SYNC_TIME		datetime,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+
+ALTER TABLE  CLOUD_EVENT ADD  SYNC_CREATED_TIME DATETIME;
+
+
+
+
+
+/**负载均衡规则*/
+drop table if exists CLOUD_LOAD_BALANCER_RULE;
+create table CLOUD_LOAD_BALANCER_RULE
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	name		varchar(200) null,
+	description	varchar(500) null,
+	publicipid	varchar(36) null,
+	publicip	varchar(100) null,
+	publicport	varchar(20) null,
+	privateport	varchar(20) null,
+	algorithm	varchar(200) null,
+	cidrlist	varchar(100) null,
+	account		varchar(100) null,
+	domainid	varchar(36) null,
+	domain		varchar(100) null,
+	state		varchar(50) null,
+	zoneid		varchar(36) null,
+	
+	SYNC_TIME			datetime,
+	SYNC_CREATED_TIME 	DATETIME,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+
+
+/**负载均衡粘性*/
+drop table if exists LB_STICKINESS_POLICY;
+create table LB_STICKINESS_POLICY
+(
+	ID			varchar(32) not null,
+	IF_ID		varchar(36) not null,
+	
+	name		varchar(200) null,
+	lbruleid	varchar(36) null,
+	methodname	varchar(200) null,
+	params		varchar(2000) null,
+	
+	SYNC_TIME			datetime,
+	SYNC_CREATED_TIME 	DATETIME,
+	DATA_STATE           integer,
+	primary key (ID)
+);
+
+
+
+/**负载均衡虚拟机表*/
+drop table if exists CLOUD_LOAD_BALANCER_RULE_INSTANCE;
+create table CLOUD_LOAD_BALANCER_RULE_INSTANCE
+(
+	ID			varchar(32) not null,
+	lbruleid			varchar(36) null,
+	virtualmachineid	varchar(36) null,
+	SYNC_TIME			datetime,
+	primary key (ID)
+);
+
+
+/**产品主表*/
+drop table if exists CLOUD_MDM_PRODUCT;
+create table CLOUD_MDM_PRODUCT
+(
+	ID			varchar(32) not null,
+	PROD_NAME 	varchar(100), 
+	DESCRIPTION varchar(200),
+	PROD_TYPE	varchar(20),
+	CREATED		DATETIME,
+	STATE       integer,
+	primary key (ID)
+);
+
+/**产品明细项表*/
+drop table if exists CLOUD_MDM_PRODUCT_ITEM;
+create table CLOUD_MDM_PRODUCT_ITEM
+(
+	ID			 	varchar(32) not null,
+	PROD_ID 		varchar(32), 
+	ITEM_ID			varchar(32),
+	ITEM_TYPE		varchar(20),
+	ZONE_ID		 	varchar(32),
+	CPU_SOLN_ID	 	varchar(32),
+	DISK_SOLN_ID 	varchar(32),
+	TEMPLATE_ID  	varchar(32),
+	NETWORK_SOLN_ID varchar(32),
+	IP_ID			varchar(32),
+	CREATED			DATETIME,
+	STATE       	integer,
+	primary key (ID)
+);
+
+
+drop table if exists CLOUD_PROMOTION_PRODUCT;
+CREATE TABLE  if not exists CLOUD_PROMOTION_PRODUCT (
+	ID 				VARCHAR(32) not null,
+	PROMOTION_ID 	VARCHAR(32),
+	PROD_ID 		VARCHAR(32),
+	primary key (ID)
+);
+
+
+
+/**组合产品分元素价格保存*/
+drop table if exists CLOUD_PRODUCT_COMBINATION_PRICE;
+create table CLOUD_PRODUCT_COMBINATION_PRICE
+(
+	ID					varchar(32) not null,
+	PROD_ID 			varchar(32), 	/** 组合产品ID */
+    CELL_TYPE       	varchar(20),	
+	CELL_ID 			varchar(32),    /**各元素ID */
+    SINGLE_PROD_ID      varchar(32),    /**单一产品ID*/
+	PRICE_ID    		varchar(32),   	/*产品价格iD*/
+	primary key (ID)
+);
+
+
+/**产品定价*/
+drop table if exists CLOUD_PRODUCT_PRICE;
+create table CLOUD_PRODUCT_PRICE
+(
+	ID			 	varchar(32) not null,
+	PROD_ID 	 	varchar(32), 	/** 产品ID */
+	PROD_ITEM_ID	varchar(32), 	/** 产品子表ID */
+	ONE_TIME_PRICE	double,			/** 产品价格:一次性收费 */
+	YEAR_PRICE		double,			/** 产品价格:年收费 */
+	MONTH_PRICE		double,			/** 产品价格:月收费 */
+	DAY_PRICE		double,			/** 产品价格:日收费 */
+	HOUR_PRICE		double,			/** 产品价格:小时收费 */
+	PRICE_MODE	 	varchar(10),	/** 价格方式 （一次性、年、月、日、小时）*/
+	EFFECTIVE_DATE  datetime,		/** 生效日期 */
+	INVALID_DATE    datetime,		/** 失效日期 */
+	UPDATED			datetime,
+	UPDATED_BY		varchar(32),
+	primary key (ID)
+);
+
+
+
+drop table if exists CLOUD_ORDER_APPROVAL;
+
+create table CLOUD_ORDER_APPROVAL
+(
+	ID			 	varchar(32) not null,
+	ORDER_ID 	 	varchar(32), 	/** 订单ID */
+	ACCOUNT_ID	    varchar(32),	/**账户ID*/
+	USER_ID		    varchar(32), 	/**用户ID */
+	APPROVAL_FLAG	integer,		/**审核状态*/
+	
+	ZONE_ID		 	varchar(32),
+	CPU_SOLN_ID	 	varchar(32),
+	DISK_SOLN_ID 	varchar(32),
+	DISK_SIZE		decimal(10,0),
+	TEMPLATE_ID  	varchar(32),
+	NETWORK_SOLN_ID varchar(32),
+	
+	VM_NAME			varchar(50),
+	STOP_TIME		datetime,
+	NET_IDS  		varchar(2000),
+
+	IP_ID			varchar(32),
+	CREATED			DATETIME,
+	CREATED_BY		varchar(32),
+	UPDATED			datetime,
+	UPDATED_BY		varchar(32),
+	primary key (ID)
+);
+
+
+
+
+/**提醒表*/
+drop table if exists BASIC_REMIND;
+create table BASIC_REMIND
+(
+	ID			 	varchar(32) not null,
+	ACCOUNT_ID	    varchar(32),	/**账户ID*/
+	USER_ID		    varchar(32), 	/**用户ID */
+	
+	TYPE 	 		varchar(32),	/**提醒类型，比如费用不足提醒，停机提醒，销毁提醒*/
+	MESSAGE			varchar(3500),	/**消息*/
+	
+	CREATED			DATETIME,
+	CREATED_BY		varchar(32),	/**系统提醒，计费功能*/
+	primary key (ID)
+);
+
+
+
+/**邮件发送日志表*/
+drop table if exists BASIC_MAIL_SEND_LOG;
+create table BASIC_MAIL_SEND_LOG
+(
+	ID			 	varchar(32) not null,
+	ACCOUNT_ID	    varchar(32),		/**账户ID*/
+	USER_ID		    varchar(32), 		/**用户ID */
+	ADDRESS	    	varchar(1000),		/**邮箱地址清单*/
+	CC_ADDRESS	    varchar(1000),		/**抄送地址清单*/
+	BCC_ADDRESS	    varchar(1000),		/**密送地址清单*/
+	CONTENT			varchar(3500),		/**消息*/
+	SENT_SUCCESS	varchar(50),		/**是否发送成功,0:失败;1:成功;*/
+	ERROR_MESSAGE	TEXT,				/**消息*/
+	CREATED			DATETIME,
+	primary key (ID)
+);
+
+
+

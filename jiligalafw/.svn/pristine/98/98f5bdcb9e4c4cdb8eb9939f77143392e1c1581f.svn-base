@@ -1,0 +1,249 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html id="content">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>产品管理-单一产品列表</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+body {
+	margin:0px auto;
+	background-color:#F2F2F2;
+	background-repeat:repeat;
+	background-position:left;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+<script type="text/javascript">
+function selectResource(){
+	window.open("${ctx}/index/singleProd/selectResource.do","选择资源");
+}
+//新增：获取子页面选择的产品
+function selectedProduct(id,prodType,prodName){
+	var form = document.forms.listForm;
+	$("#prodName").val(prodName);
+	$("#id").val(id);//基础产品表：产品ID
+	$("#prodType").val(prodType);
+	$("#saveFlag").val("0");
+	document.getElementById("prodAttrForm").src="${ctx}/singleProd/prodAttr.do?id=" + id + "&prodType=" + prodType;
+}
+//编辑
+function editProd(id,name,description,rowNo){
+	var form = document.forms.listForm;
+	$("#id").val(id);//产品主表：产品ID
+	$("#prodName").val(name);
+	$("#description").val(description);
+	$("#saveFlag").val("1");
+	document.getElementById("prodAttrForm").src="${ctx}/singleProd/prodAttr.do?id=" + id + "&idFlag=1";
+	setBgColor(rowNo);
+}
+//设置选择背景颜色
+function setBgColor(rowNo){
+	var rows = document.getElementById("tableId").rows.length;
+	for(var i=0; i<=rows; i++){
+		if(rowNo == i){
+			document.getElementById("leftTd"+i).style.backgroundColor ="#1C9DBA";
+			document.getElementById("rightTd"+i).style.backgroundColor ="#1C9DBA";
+		}else{
+			document.getElementById("leftTd"+i).style.backgroundColor ="";
+			document.getElementById("rightTd"+i).style.backgroundColor ="";
+		}
+	}
+}
+
+//保存
+function doSave(){
+	var form = document.forms.listForm;
+	if(form.prodName.value == ''){
+		alert("请输入产品名称！");
+		return;
+	}
+	if($("#saveFlag").val() == '1'){
+		//编辑保存
+		form.action="${ctx}/singleProd/editSave.do";
+	}else{
+		form.action="${ctx}/singleProd/save.do";
+		//新增保存
+	}
+	form.submit();
+}
+//查询
+function query(){
+	var form = document.forms.listForm;
+	form.submit();
+}
+function ipAddr(ipNum,prodType){
+	var form = document.forms.listForm;
+	$("#ipNum").val(ipNum);
+	$("#prodType").val(prodType);
+	$("#saveFlag").val("0");
+	document.getElementById("prodAttrForm").src="${ctx}/singleProd/prodAttr.do?ipNum=" + ipNum + "&prodType=" + prodType;
+}
+</script>
+<script type="text/javascript">
+var msg = '${prodSaveMsg}';
+if(msg!=''){
+	alert(msg);
+	window.location.href="${ctx}/singleProd/list.do";
+	//var form = document.forms.listForm;
+	//form.submit();
+}
+</script>
+</head>
+  <body onLoad="">
+    <form:form modelAttribute="cloudMdmProductVo" action="${ctx}/singleProd/list.do" method="post" name="listForm">
+		  <input type="hidden" name="saveFlag" id="saveFlag" value="0"/>
+		  
+          <table width="962" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="center"  valign="top" bgcolor="#F2F2F2">
+              	
+              	<!-- 左侧列表 -->
+                <div id="middle_sheet_myR_01">
+                  <table width="172" height="268" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="38" height="38" align="center" valign="middle"><img src="${ctx}/images/myR_ico_01.png" width="20" height="21" /></td>
+                      <td width="132" align="left" valign="middle" class="f16_1">
+                      	已有产品<img src="${ctx}/images/btn6.png" width="62" height="22" border="0" align="absmiddle" style="cursor:pointer;" onclick="selectResource()"/>
+                      </td>
+                    </tr>
+
+                    <tr valign="top">
+                      <td colspan="2">
+                      	<div id="order" style="height:180px; z-index:1; overflow-y: scroll;overflow-x:hidden; width: 100%;">
+                      		<table width="100%" border="0" cellpadding="0" cellspacing="0" id="tableId">
+								<%int i=0; %>
+								<c:forEach var="item" items="${prodList}" >                      		
+				                    <tr height="26" valign="top" style="cursor:pointer;" onclick="editProd('${item.id}','${item.prodName }','${item.description }','<%=i%>');">
+				                      <td width="15" height="26" id="leftTd<%=i %>">&nbsp;</td>
+				                      <td height="26" align="left" class="f13_1" id="rightTd<%=i %>" title="${item.prodName }">
+				                      	${fn:substring(item.prodName,0,15)}
+				                      </td>
+				                    </tr>
+				                    <%i++; %>
+			                    </c:forEach>
+								<!--
+			                    <tr style="cursor:pointer;" onclick="" height="26">
+			                      <td width="15" height="26">&nbsp;</td>
+			                      <td height="26" align="left" bgcolor="#1C9DBA" class="f13_2">大型计算方案</td>
+			                    </tr>
+								-->
+                      		</table>
+                      	</div>
+					  </td>
+                    </tr>
+
+                    <tr>
+                      <td height="5" colspan="2" align="center" valign="middle"><img src="${ctx}/images/buy_blue_line.jpg" width="160" height="1" /></td>
+                    </tr>
+                    <!-- 搜索 -->
+                    <tr>
+                      <td align="center" valign="middle" colspan="2">
+                      	<input type="text" class="text13" id="keyword" name="keyword" value="${keyword }" size="13" style="height: 18px;"/>
+                      	<img src="${ctx}/images/btn7.png" width="62" height="22" border="0" align="absmiddle" style="cursor:pointer;" onclick="query()"/>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                 
+                <!-- 右侧内容 -->
+                <div id="middle_sheet_myR_02">
+                  <table border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td width="12"><img src="${ctx}/images/buy_sheet_border_01.png" width="12" height="35" /></td>
+                      <td width="744" background="${ctx}/images/buy_sheet_border_02.png" align="left" class="f18_1">产品维护</td>
+                      <td width="10"><img src="${ctx}/images/buy_sheet_border_03.png" width="10" height="35" /></td>
+                    </tr>
+                    <tr>
+                      <td background="${ctx}/images/buy_sheet_border_04.png">&nbsp;</td>
+                      <td align="left" valign="top" bgcolor="#F0F1F2">
+                        <table width="336" border="0" cellspacing="0" cellpadding="0">
+                          <tr  height="40">
+                            <td colspan="2" width="687" align="left" valign="middle" class="f13_1">
+                            	产品名称：
+                            	<input type="text" name="prodName" id="prodName" size="30" value=""/>
+                            	<input type="hidden" name="id" value="" id="id" />
+                            	<input type="hidden" name="prodType" value="" id="prodType"/>
+                            	<input type="hidden" name="ipNum" value="" id="ipNum"/>
+                            	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            	
+                            	<!-- 如果是编辑产品时，就不需要选择资源按钮了，因为编辑产品不可以修改产品配置 -->
+                            	<!-- 如果是添加产品时，产品属性框没有内容，点击选择资源按钮，弹出选择资源画面 -->
+                            	<!--<img src="${ctx}/images/btn5.png" id="selRes" width="101" height="30" border="0" align="absmiddle" style="cursor:pointer; display: none;" onclick="selectResource()"/>-->
+                            	&nbsp;&nbsp;&nbsp;&nbsp;
+                            	<img src="${ctx}/images/btns1.png" alt="保存" width="101" height="30" border="0" align="absmiddle" style="cursor:pointer;" onclick="doSave();"/>
+                            </td>
+                          </tr>
+						  <tr  height="35">
+                            <td colspan="2" width="687" align="left" valign="middle" class="f13_1">
+                            	产品描述：
+                            	<input type="text" name="description" id="description" size="60" value=""/>
+                            </td>
+                          </tr>
+                          
+                          <tr>
+                            <td height="5" colspan="2" align="left" valign="middle"><img src="${ctx}/images/buy_blue_line.jpg" width="740" height="1" /></td>
+                          </tr>
+                          <tr  height="30">
+                            <td colspan="2" width="687" align="left" class="f15_1">产品属性：</td>
+                          </tr>
+                          <tr>
+                            <td height="5" colspan="2">
+                              <!-- 产品属性 -->
+                              <div id="middle_sheet_myR_s">
+                              	<table width="742" border="0" cellpadding="0" cellspacing="0">
+                                  <tr>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_1.jpg" width="14" height="14" /></td>
+                                    <td width="714" height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_2.jpg"></td>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_3.jpg" width="14" height="14" /></td>
+                                  </tr>
+                                  <tr>
+                                    <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_4.jpg"></td>
+                                    <td align="center" valign="top" bgcolor="#FFFFFF" height="320">
+                                      
+                                      <iframe id="prodAttrForm" name="prodAttrForm" src="" frameborder="0" scrolling="no" height="100%" width="100%"></iframe>
+                                       
+                                    </td>
+                                    <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_5.jpg"></td>
+                                  </tr>
+                                  <tr>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_6.jpg" width="14" height="14" /></td>
+                                    <td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_7.jpg"></td>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_8.jpg" width="14" height="14" /></td>
+                                  </tr>
+                                </table>
+                              </div>
+                              
+                            </td>
+                          </tr>                          
+                        </table>
+                      </td>
+                      <td background="${ctx}/images/buy_sheet_border_05.png"></td>
+                    </tr>
+                    <tr>
+                      <td><img src="${ctx}/images/buy_sheet_border_06.png" width="12" height="13" /></td>
+                      <td height="13" background="${ctx}/images/buy_sheet_border_07.png"></td>
+                      <td><img src="${ctx}/images/buy_sheet_border_08.png" width="10" height="13" /></td>
+                    </tr>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </table>
+
+        
+	</form:form>
+  </body>
+</html>

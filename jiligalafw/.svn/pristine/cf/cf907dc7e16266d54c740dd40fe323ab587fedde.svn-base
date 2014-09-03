@@ -1,0 +1,102 @@
+package sy.common.util.cloudstack;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.w3c.dom.Document;
+
+import sy.common.util.cloudstack.entity.LBStickinessPolicy;
+import sy.common.util.cloudstack.entity.StickinessMethod;
+import sy.common.util.cloudstack.entity.StickinessMethodType;
+
+/**
+ * 
+ * @author lidongbo
+ * 
+ */
+public class LBStickinessPolicyRepository extends
+		AbstractServiceSupport<LBStickinessPolicy> {
+
+	public LBStickinessPolicyRepository(ProviderContext provider) {
+		super(provider);
+	}
+
+	public List<LBStickinessPolicy> list(CSQuqeyContext context) {
+		List<LBStickinessPolicy> result = super.list(context);
+		Param lbruleid = context.getFirst("lbruleid");
+		if(lbruleid == null){
+			throw new CloudException("lbruleid参数不允许为空!");
+		}
+		for (LBStickinessPolicy lbStickinessPolicy : result) {
+			lbStickinessPolicy.setLbruleid(lbruleid.getValue());
+		}
+		return result;
+	}
+	
+	
+	@Override
+	protected String getListCommand() {
+		return "listLBStickinessPolicies";
+	}
+
+	@Override
+	protected String getTagName() {
+		return "stickinesspolicy";
+	}
+	
+	
+	public LBStickinessPolicy setStickinessPolicy(String lbruleid,String name,
+			StickinessMethod method, Object paramMap) {
+		
+		CSQuqeyContext context = new CSQuqeyContext();
+		context.addParameter(new Param("lbruleid",lbruleid));
+		List<LBStickinessPolicy> policies = list(context);
+		for (LBStickinessPolicy policy : policies) {
+			executeAsyncCMD("deleteLBStickinessPolicy", new Param("id",policy.getId()));
+		}
+		
+		if(method == null
+					|| StickinessMethodType.NONE.equals(method)){
+			return null;
+		}
+		
+		List<Param> params = method.toParams(paramMap);
+		params.add(new Param("lbruleid", lbruleid));
+		params.add(new Param("name",name));
+		Document doc = executeAsyncCMD("createLBStickinessPolicy",
+				params.toArray(new Param[] {}));
+		
+		List<LBStickinessPolicy> beans = doc2beans(doc, "stickinesspolicy");
+		if (beans != null) {
+			LBStickinessPolicy policy = beans.get(0);
+			if(policy!=null){
+				policy.setLbruleid(lbruleid);
+				return policy;
+			}
+		}
+		return null;
+	}
+	
+	
+	public static void main(String[] args) {
+		
+		ProviderContext context = new ProviderContext();
+		LBStickinessPolicyRepository service = new LBStickinessPolicyRepository(context);
+		
+		
+		Map<String,String> params = new HashMap<String,String>();
+		
+		params.put("indirect", "true");
+		params.put("cookie-name", "cookie_name2");
+		params.put("domain", "domain_");
+		params.put("nocache", "true");
+		params.put("postonly", "true");
+		params.put("mode", "a");
+		
+		service.setStickinessPolicy("8893984d-e48e-466f-8ea5-738dd64c0793","nnnnnmmmm1",
+				StickinessMethodType.NONE, params);
+		
+	}
+
+}

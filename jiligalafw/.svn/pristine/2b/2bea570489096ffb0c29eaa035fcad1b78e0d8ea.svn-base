@@ -1,0 +1,270 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+
+<html id="content">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>产品管理-产品定价</title>
+<link href="css/css_main.css" rel="stylesheet" />
+<link href="css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/scripts/autoheight.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<style type="text/css">
+<!--
+body {
+	background-color: #F2F2F2;
+	margin-left: 10px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<%@ include file="/commons/meta.jsp"%>
+<script type="text/javascript">
+function changePriceMode_cpu(rowNum,selVal){
+	if(selVal == '0'){
+		document.getElementById("disposable_cpu"+rowNum).style.display="block";
+		document.getElementById("cycle_cpu"+rowNum).style.display="none";	
+	}else{
+		document.getElementById("disposable_cpu"+rowNum).style.display="none";
+		document.getElementById("cycle_cpu"+rowNum).style.display="block";		
+	}
+}
+
+function doSave(){
+	var priceMode = document.getElementsByName("priceMode");
+	var oneTimePrice = document.getElementsByName("oneTimePrice");
+	var yearPrice = document.getElementsByName("yearPrice");
+	var monthPrice = document.getElementsByName("monthPrice");
+	var dayPrice = document.getElementsByName("dayPrice");
+	var effectiveDate = document.getElementsByName("effectiveDate");
+	if(priceMode){
+		for(var i=0; i<priceMode.length; i++){
+			//0：一次性，1：周期性
+			if(priceMode[i].value=='0'){
+				if(oneTimePrice[i].value == ''){
+					alert("请输入产品价格！");
+					oneTimePrice[i].focus();
+					return;
+				}
+				if(!checkAmount(oneTimePrice[i].value)){
+					alert("产品价格输入不正确！");
+					oneTimePrice[i].focus();
+					return;
+				}
+			}else{
+				if(yearPrice[i].value == ''){
+					alert("请输入产品年收费价格！");
+					yearPrice[i].focus();
+					return;
+				}
+				if(!checkAmount(yearPrice[i].value)){
+					alert("产品年收费价格输入不正确！");
+					yearPrice[i].focus();
+					return;
+				}
+				if(monthPrice[i].value == ''){
+					alert("请输入产品月收费价格！");
+					monthPrice[i].focus();
+					return;
+				}
+				if(!checkAmount(monthPrice[i].value)){
+					alert("产品月收费价格输入不正确！");
+					monthPrice[i].focus();
+					return;
+				}
+				if(dayPrice[i].value == ''){
+					alert("请输入产品日收费价格！");
+					dayPrice[i].focus();
+					return;
+				}
+				if(!checkAmount(dayPrice[i].value)){
+					alert("产品日收费价格输入不正确！");
+					dayPrice[i].focus();
+					return;
+				}
+			}
+			
+			if(effectiveDate[i].value==''){
+				alert("请选择生效日期！");
+				effectiveDate[i].focus();
+				return;
+			}
+		}
+	}
+
+	/**
+	if(effectiveDate){
+		for(var i=0; i<effectiveDate.length; i++){
+			if(effectiveDate[i].value==''){
+				alert("请选择生效日期！");
+				effectiveDate[i].focus();
+				return;
+			}
+		}
+	}*/
+	var form = document.forms.listForm;
+	form.action="${ctx}/makePrice/save.do";
+	form.submit();
+}
+function getProdList(prodType){
+	var form = document.forms.listForm;
+	form.action="${ctx}/makePrice/list.do?prodType="+prodType;
+	form.submit();
+}
+</script>
+</head>
+<body>  
+
+  <form:form modelAttribute="cloudMdmProductVoList" action="${ctx}/makePrice/list.do" method="post" id="listForm" >
+   
+   <div id="middle_sheet_myInfo_content">
+	  <table width="100%" border="0" cellpadding="0" cellspacing="0">
+		<tr>
+		  <td height="30" align="left" valign="middle">
+		  	<span class="f16b2">产品类型：</span>
+				<select name="prodType" onchange="getProdList(this.value)">
+				  <c:forEach var="item" items="${prodTypeList}" >
+				     <option value="${item.itemCode }" <c:if test="${item.itemCode == prodType}">selected</c:if> >${item.itemName }</option>
+				  </c:forEach>
+				</select>
+		  </td>
+		  <td align="left" valign="middle">&nbsp;</td>
+		</tr>
+        <tr><td height="5"></td></tr>
+        <tr>
+          <td height="2" align="center" valign="middle"><img src="${ctx}/images/sheet_line_2.jpg" width="940" height="2" /></td>
+        </tr>
+        <tr><td height="20"></td></tr>
+                
+		<tr>
+		  <td align="center" valign="top" bgcolor="#F2F2F2">
+
+			<fieldset style="text-align: left;">
+			    <legend><span class="f14b2">产品列表</span></legend>
+	 			<table width="100%"  border="0" cellpadding="0" cellspacing="0">		
+	                 <tr>
+	                   <td align="center" valign="top" colspan="2">
+	                  	  <table width="100%"  border="0" cellpadding="0" cellspacing="0">
+	                  	    <%int i=0; %>
+	                  	    <c:forEach var="item" items="${prodList}" >
+	                  	    	<%i++; %>
+		                  		<tr height="30" style="padding-top: 10px; ">
+									<td width="3%"></td>
+									<td width="25%" align="left" class="f12_1" title="${item[1] }">
+										${fn:substring(item[1] ,0, 25)}
+										<input type="hidden" name="prodId" value="${item[0] }"/>
+										<input type="hidden" name="priceId" value="${item[2] }"/>
+										<input type="hidden" name="prodItemId" value="${item[10] }"/>
+									</td>
+									<td width="15%" align="left" class="f12_1">
+										<select name="priceMode" id="priceMode" onchange="changePriceMode_cpu('<%=i %>',this.value)">
+											<c:choose>
+												<c:when test="${item[7] == '1' }">
+													<option value="0">一次性定价</option>
+													<c:if test="${item[9] != true }">
+														<option value="1" selected>周期性定价</option>												
+													</c:if>
+												</c:when>
+												<c:otherwise>
+													<option value="0" selected>一次性定价</option>
+													<c:if test="${item[9] != true }">
+														<option value="1">周期性定价</option>
+													</c:if>
+													<SCRIPT>
+														changePriceMode_cpu('<%=i %>','0');
+													</SCRIPT>
+												</c:otherwise>
+											</c:choose>										
+										</select>
+									</td>
+									<!-- 一次性 -->
+									<td width="18%" align="left" class="f12_1">
+										<c:choose>
+											<c:when test="${item[7] != '1' }">
+												<span id="disposable_cpu<%=i %>" style="display: block; margin-left: 5px;">
+													价格 <input type="text" name="oneTimePrice" id="oneTimePrice" size="7" style="text-align: right;" maxlength="10" value="${item[3] }"/>
+													<c:if test="${item[9] == true }"><span id="unit">元/10G </span></c:if>
+													<c:if test="${item[9] != true }"><span id="unit">元 </span></c:if>
+												</span>
+											</c:when>
+											<c:otherwise>
+												<span id="disposable_cpu<%=i %>" style="display: none; margin-left: 5px;">
+													价格 <input type="text" name="oneTimePrice" id="oneTimePrice" size="7" style="text-align: right;" maxlength="10" value="${item[3] }"/>
+													<c:if test="${item[9] == true }"><span id="unit">元/10G </span></c:if>
+													<c:if test="${item[9] != true }"><span id="unit">元 </span></c:if>
+												</span>
+											</c:otherwise>
+										</c:choose>
+										
+										<c:choose>
+											<c:when test="${item[7] == '1' }">
+											  <span id="cycle_cpu<%=i %>" style="display: block; margin-left: 5px;">
+												价格 <input type="text" name="yearPrice" id="yearPrice" size="7" style="text-align: right;" maxlength="10" value="${item[4] }"/> 元/年
+												</br>
+												价格 <input type="text" name="monthPrice" id="monthPrice" size="7" style="text-align: right;" maxlength="10" value="${item[5] }"/> 元/月
+												</br>
+												价格 <input type="text" name="dayPrice" id="dayPrice" size="7" style="text-align: right;" maxlength="10" value="${item[6] }"/> 元/日
+											  </span>
+											</c:when>
+											<c:otherwise>
+											  <span id="cycle_cpu<%=i %>" style="display: none; margin-left: 5px;">
+												价格 <input type="text" name="yearPrice" id="yearPrice" size="7" style="text-align: right;" maxlength="10" value="${item[4] }"/> 元/年
+												</br>
+												价格 <input type="text" name="monthPrice" id="monthPrice" size="7" style="text-align: right;" maxlength="10" value="${item[5] }"/> 元/月
+												</br>
+												价格 <input type="text" name="dayPrice" id="dayPrice" size="7" style="text-align: right;" maxlength="10" value="${item[6] }"/> 元/日
+											  </span>
+											</c:otherwise>
+										</c:choose>									  
+
+
+									</td>
+									<!-- 周期性 -->
+									<td width="10%" align="left" class="f12_1" >
+
+									</td>
+									<td width="20%" align="left" class="f12_1">
+										生效日期：<input type="text" name="effectiveDate" id="effectiveDate" value="<fmt:formatDate value="${item[8] }" pattern="yyyy-MM-dd"/>" onfocus="WdatePicker()" readonly class="date_but"/>
+									</td>
+		                        </tr>
+		                    </c:forEach>
+					  	  </table>
+	                   </td>
+	                 </tr>
+	            </table>    
+	  		</fieldset>
+                        
+            <table>
+                 <tr>
+                   <td height="35" colspan="2" ></td>
+                 </tr>
+                 
+                 <tr>
+                   <td colspan="2" align="center" valign="middle">
+                  	  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                       <tr>
+                         <td width="45%" align="right" valign="top">
+                         	<a href="javascript:doSave()"><img src="${ctx}/images/btns1.png" alt="保存" width="101" height="30" border="0" /></a>
+                         </td>
+                       </tr>
+                     </table>
+                   </td>
+                 </tr>
+
+                 <tr>
+                   <td height="50" colspan="2" ></td>
+                 </tr>
+               </table>
+             </td>
+           </tr>
+         </table>
+       </div>
+     </form:form>
+        
+</body>
+</html>

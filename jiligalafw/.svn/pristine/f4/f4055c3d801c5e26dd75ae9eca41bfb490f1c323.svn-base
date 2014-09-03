@@ -1,0 +1,156 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>我的资源 - 我的网络 - 高级网络 - IP地址 - NAT</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+<!--
+body {
+	background-color: #ffffff;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<script type="text/javascript">
+function query(){
+	
+}
+function save(){
+	window.location.href="${ctx}/network/saveHighNat.do";
+}
+function back(){
+	window.location.href="${ctx}/network/highIpAddr.do";
+}
+
+</script>
+
+</head>
+  <body onLoad="">
+    <form:form modelAttribute="baseVoList" action="${ctx}/network/saveHighNat.do" method="post" name="listForm">
+
+					<table width="806" border="0" cellspacing="0" cellpadding="0">
+					  <tr bgcolor="#ffffff" height="40">
+					  	<td width="20"></td>
+					  	<td colspan="2" class="f16_1">来宾网络01&nbsp;&nbsp;>&nbsp;&nbsp;IP地址&nbsp;&nbsp;>&nbsp;&nbsp;NAT</td>
+					  </tr>
+                      <tr>
+                      	<td width="20"></td>
+                        <td height="2" align="left" valign="middle"><img src="${ctx}/images/buy_blue_line.jpg" width="100%" height="1" /></td>
+                      </tr>
+                      <tr>
+                      	<td colspan="2" height="15" ></td>
+                      </tr>	                      
+                  	  <tr>
+                  	    <td width="20"></td>
+                    	<td align="left" valign="top">
+						  <table width="100%" border="0" cellspacing="1" cellpadding="0" bgcolor="#f2f2f2">
+	                      	<tr height="20" bgcolor="#ffffff" >
+                          	  <td>       	  
+                           		<table width="100%" border="0" cellspacing="1" cellpadding="0">
+                                    <tr height="30">
+                                  	  <td width="25%" class="f13_1" align="left">NAT名称：<input type="text" name="" value="" size="10"/></td>
+                                      <td width="25%" class="f13_1" align="left">来源端口：<input type="text" name="" value="" size="10"/></td>
+                                      <td width="25%" class="f13_1" align="left">目的端口：<input type="text" name="" value="" size="10"/></td>
+                                      <td width="25%" class="f13_1" align="right">
+                                      	<input type="button" value="查询" onclick="query()" class="btn_bg" style="width: 50px;"/>
+                                      	&nbsp;
+                                      	<input type="button" value="保存" onclick="save()" class="btn_bg" style="width: 50px;"/>
+                                      	&nbsp;
+                                      	<input type="button" value="返回" onclick="back()" class="btn_bg" style="width: 50px;"/>
+                                      	&nbsp;
+                                      </td>
+                                    </tr> 
+                                    <tr height="30">
+                                      <td width="25%" class="f13_1" align="left">IP地址：&nbsp;&nbsp;&nbsp;&nbsp;<input type="text" name="" value="" size="10"/></td>
+                                  	  <td width="25%" class="f13_1" align="left">协&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;议：
+	                                  	  <select name="" >
+	                                  	  	<option>TCP</option>
+	                                  	  	<option>UDP</option>
+	                                  	  	<option>ICMP</option>
+	                                  	  </select>
+                                  	  </td>
+                                      <td width="25%" class="f13_1" align="left">状&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;态：
+	                                  	  <select name="" >
+	                                  	  	<option>启用</option>
+	                                  	  	<option>禁用</option>
+	                                  	  </select>                                      
+									  </td>
+                                      <td width="25%" class="f13_1" align="left"></td>
+                                    </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                              
+                        </td>
+                      </tr>
+		              <tr><td height="20"></td></tr>
+		              
+                      <tr>
+                        <td width="20"></td>
+						<td align="right" valign="top">
+					      <table width="100%" border="0" cellpadding="0" cellspacing="0">
+					        <tr>
+					          <td align="left" valign="top" bgcolor="#FFFFFF" height="250">
+					     		<table width="100%" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+					              <tr bgcolor="#92b8c1" height="20">
+					                <td width="10%" align="center" class="f12">序号</td>
+					                <td width="10%" align="center" class="f12">名称</td>
+					                <td width="10%" align="center" class="f12">来源端口</td>
+					                <td width="10%" align="center" class="f12">协议</td>
+					                <td width="10%" align="center" class="f12">IP地址</td>
+					                <td width="10%" align="center" class="f12">目的端口 </td>
+					                <td width="10%" align="center" class="f12">状态</td>
+					                <td width="10%" align="center" class="f12">操作</td>
+					              </tr>
+					            </table>
+					            <div id="order" style="height:320px; z-index:1; overflow-y: scroll;overflow-x:no;">   
+					              <table width="98%" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+					                <tr bgcolor="#deecef" height="20">
+					                  <td width="10%" align="center" class="f12_1">1</td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="left" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1">删除</td>					                  
+					                </tr>
+					                <tr bgcolor="#eef6f7" height="20">
+					                  <td width="10%" align="center" class="f12_1">1</td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="left" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1"></td>
+					                  <td width="10%" align="center" class="f12_1">删除</td>	
+					               </tr>					                
+					              </table>
+					            </div>
+					          </td>
+					        </tr>
+					      </table>							
+						</td>
+                      </tr>
+	                  <tr>
+	                    <td height="20" colspan="2" ></td>
+	                  </tr>                      
+                    </table>
+                  
+	</form:form>
+  </body>
+</html>

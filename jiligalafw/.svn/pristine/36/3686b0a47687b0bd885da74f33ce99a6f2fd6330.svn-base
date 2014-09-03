@@ -1,0 +1,255 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>粘性配置</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+body {
+	background-color:#F2F2F2;
+	background-repeat:repeat;
+	background-position:left;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+form {
+	margin: 0px;
+	padding: 0px;
+}
+</style>
+<script type="text/javascript">
+function selProd(prodId,priceId,prodItemId){
+	$("#prodId").val(prodId);
+	$("#priceId").val(priceId);
+	$("#prodItemId").val(prodItemId);
+}
+
+function displayConfig(val){
+	$("#SourceBased").hide();
+	$("#AppCookie").hide();
+	$("#LbCookie").hide();
+	if(val == 'SourceBased'){
+		$("#SourceBased").show();
+	}else if(val == 'AppCookie'){
+		$("#AppCookie").show();
+	}else{
+		$("#LbCookie").show();
+	}
+}
+</script>
+</head>
+  <body onLoad="">
+    <form:form modelAttribute="baseVoList" action="${ctx}/network/loadConfig" method="post" name="listForm">
+		<input type="hidden" name="configId" id="configId" value="${configId }"/>
+		
+          <table width="500" border="0" cellpadding="0" cellspacing="0" align="center">
+            <tr>
+              <td align="center"  valign="top" bgcolor="#F2F2F2">
+                <table border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td height="40" align="left" valign="bottom"><span class="f16b2">配置</span></td>
+                    <td align="left" valign="middle">&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td height="2" colspan="2" align="center" valign="middle"><hr /></td>
+                  </tr>
+                  <tr>
+                    <td height="10" colspan="2" ></td>
+                  </tr>
+                  
+                  <tr>
+                    <td colspan="2" >
+                    
+                      	<table width="476" border="0" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_1.jpg" width="14" height="14" /></td>
+                            <td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_2.jpg"></td>
+                            <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_3.jpg" width="14" height="14" /></td>
+                          </tr>
+                          <tr>
+                            <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_4.jpg"></td>
+                            <td align="left" valign="top" bgcolor="#FFFFFF" height="480">
+                            
+					       	  <table width="460" border="0" cellpadding="0" cellspacing="0">
+								<tr height="40">
+									<td width="40.5%" align="right" height="30" class="f12_1">类型：</td>
+									<td width="60%" align="left" height="30">
+                                  	  <select name="arithmetic" style="width: 155px; height: 24px;" onchange="displayConfig(this.value)">
+                                  	  	<option value="SourceBased">SourceBased</option>
+                                  	  	<option value="AppCookie">AppCookie</option>
+                                  	  	<option value="LbCookie">LbCookie</option>
+                                  	  </select>
+									</td>
+								</tr>
+								
+								<tr id="SourceBased" style="display: ;" valign="top">
+								  <td valign="top" colspan="2">
+									<table width="460" border="0" cellpadding="0" cellspacing="0" >
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">名称：</td>
+											<td width="60%" align="left" height="30">
+												<input type="text" name="configName" id="configName" value="" maxlength="25"/>
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">表大小：</td>
+											<td align="left" height="30">
+												<input type="text" name="tableSize" id="tableSize" value="" maxlength="15"/>
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">过期时间：</td>
+											<td align="left" height="30">
+												<input type="text" name="validDate" id="validDate" value="" onfocus="WdatePicker()" readonly class="date_but" style="width: 150px;"/>
+											</td>
+										</tr>										
+									</table>
+								  </td>
+								</tr>
+
+								<tr id="AppCookie" style="display: none;">
+								  <td valign="top" colspan="2">
+									<table width="460" border="0" cellpadding="0" cellspacing="0" style="line-height: 30px;">
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">名称：</td>
+											<td width="60%" align="left" height="30">
+												<input type="text" name="configName" id="configName" value="" maxlength="25"/>
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">Cookie名称：</td>
+											<td align="left" height="30">
+												<input type="text" name="cookieName" id="cookieName" value="" maxlength="25"/>
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">模式：</td>
+											<td align="left" height="30">
+												<input type="text" name="modeName" id="modeName" value="" maxlength="25"/>
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">长度：</td>
+											<td align="left" height="30">
+												<input type="text" name="lengthOrArea" id="lenOrArea" value="" maxlength="25"/>
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">持续时间：</td>
+											<td align="left" height="30">
+												<input type="text" name="validDate" id="validDate" value="" onfocus="WdatePicker()" readonly class="date_but" style="width: 150px;"/>
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">request-learn：</td>
+											<td align="left" height="30">
+												<input type="checkbox" name="r-n" id="r-n" value="true" />
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">prefix：</td>
+											<td align="left" height="30">
+												<input type="checkbox" name="p-i" id="p-i" value="true" />
+											</td>
+										</tr>									
+									</table>
+								  </td>									
+								</tr>
+								
+								<tr id="LbCookie" style="display: none;">
+								  <td valign="top" colspan="2">
+									<table width="460" border="0" cellpadding="0" cellspacing="0" style="line-height: 30px;">
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">名称：</td>
+											<td width="60%" align="left" height="30">
+												<input type="text" name="configName" id="configName" value="" maxlength="25"/>
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">Cookie名称：</td>
+											<td align="left" height="30">
+												<input type="text" name="cookieName" id="cookieName" value="" maxlength="25"/>
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">模式：</td>
+											<td align="left" height="30">
+												<input type="text" name="modeName" id="modeName" value="" maxlength="25"/>
+											</td>
+										</tr>								
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">nocache：</td>
+											<td align="left" height="30">
+												<input type="checkbox" name="r-n" id="r-n" value="true" />
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">indirect：</td>
+											<td align="left" height="30">
+												<input type="checkbox" name="p-i" id="p-i" value="true" />
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">postonly：</td>
+											<td align="left" height="30">
+												<input type="checkbox" name="postonly" id="postonly" value="postonly" />
+											</td>
+										</tr>
+										<tr height="30" valign="top">
+											<td width="40%" align="right" height="30" class="f12_1">域：</td>
+											<td align="left" height="30">
+												<input type="text" name="lengthOrArea" id="lenOrArea" value="" maxlength="25"/>
+											</td>
+										</tr>									
+									</table>
+								  </td>									
+								</tr>															  						  							  
+
+								<tr height="50">
+				                    <td colspan="2" align="center" valign="middle">
+				                      <table width="294" border="0" cellspacing="0" cellpadding="0">
+				                        <tr>
+				                          <td align="center" valign="top"><a href="javascript:save()">
+				                          	<img src="${ctx}/images/btn11.png" alt="确定" width="101" height="30" border="0" align="absmiddle"/></a>
+				                          </td>
+				                          <td align="center" valign="top">
+				                          	<a href="javascript:window.close()"><img src="${ctx}/images/btn8.png" alt="关闭" width="101" height="30" border="0" align="absmiddle"/></a>
+				                          </td>
+				                        </tr>
+				                      </table>
+				                    </td>
+				                </tr> 							
+					          </table>
+
+                            </td>
+                            <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_5.jpg"></td>
+                          </tr>
+                          <tr>
+                            <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_6.jpg" width="14" height="14" /></td>
+                            <td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_7.jpg"></td>
+                            <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_8.jpg" width="14" height="14" /></td>
+                          </tr>
+                        </table>
+
+                    </td>
+                  </tr>
+                  
+                </table>
+              </td>
+            </tr>
+          </table>
+                                         
+	</form:form>
+  </body>
+</html>

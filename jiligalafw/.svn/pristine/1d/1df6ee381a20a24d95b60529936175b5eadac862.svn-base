@@ -1,0 +1,341 @@
+package sy.domain.vo.product;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import sy.common.util.cloudstack.entity.Virtualmachine;
+
+/**
+ * 产品-虚拟机表VO
+ * 
+ * @author luobin
+ * 
+ */
+public class CloudMdmVmVo extends CloudDataSyncBuilder<Virtualmachine> {
+
+	private static final long serialVersionUID = 6615363709143182939L;
+
+	/**
+	 * 接口产品创建时间
+	 */
+	private Date created;
+
+	/**
+	 * 虚拟机名称
+	 */
+	private String name;
+	/**
+	 * 虚拟机显示名称
+	 */
+	private String displayName;
+	/**
+	 * 计算方案ID
+	 */
+	private String serviceOfferingId;
+	/**
+	 * CPU个数
+	 */
+	private String cpuNumber;
+	/**
+	 * CPU频率
+	 */
+	private String cpuSpeed;
+	/**
+	 * 内存大小
+	 */
+	private String memory;
+	/**
+	 * CPU使用率
+	 */
+	private String cpuUsed;
+	/**
+	 * 网络读取速度
+	 */
+	private String networkKbsRead;
+	/**
+	 * 网络写入速度
+	 */
+	private String networkKbsWrite;
+	/**
+	 * 公网IP ID
+	 */
+	private String publicIpId;
+	/**
+	 * 公网IP
+	 */
+	private String publicIp;
+	/**
+	 * 模板ID
+	 */
+	private String templateId;
+	/**
+	 * 模板名称
+	 */
+	private String templateName;
+	/**
+	 * 模板显示内容
+	 */
+	private String templateDisplayText;
+	/**
+	 * 数据中心名称
+	 */
+	private String zoneName;
+	
+	private String account;
+	private String domainid;
+	private String domain;
+	
+	private Date stoptime;
+	
+	private CloudMdmCPUSolnVo cloudMdmCPUSoln;
+	
+	private CloudMdmTemplateVo cloudMdmTemplate;
+
+	private String state;
+	
+	private String zoneid;
+	private String hostid;
+	private String hypervisor;
+	private String haenable;
+	
+	
+	@CloudDataSyncBuilderClass(beanClass = CloudMdmNicVo.class)
+	private List<CloudMdmNicVo> nic = new ArrayList<CloudMdmNicVo>();
+
+	@CloudDataSyncBuilderClass(beanClass = CloudSecurityGroupVo.class)
+	private List<CloudSecurityGroupVo> securitygroup = new ArrayList<CloudSecurityGroupVo>();
+	
+	public Date getCreated() {
+		return created;
+	}
+
+	public void setCreated(Date created) {
+		this.created = created;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDisplayName() {
+		return displayName;
+	}
+
+	public void setDisplayName(String displayName) {
+		this.displayName = displayName;
+	}
+
+	public String getServiceOfferingId() {
+		return serviceOfferingId;
+	}
+
+	public void setServiceOfferingId(String serviceOfferingId) {
+		this.serviceOfferingId = serviceOfferingId;
+	}
+
+	public String getCpuNumber() {
+		return cpuNumber;
+	}
+
+	public void setCpuNumber(String cpuNumber) {
+		this.cpuNumber = cpuNumber;
+	}
+
+	public String getCpuSpeed() {
+		return cpuSpeed;
+	}
+
+	public void setCpuSpeed(String cpuSpeed) {
+		this.cpuSpeed = cpuSpeed;
+	}
+
+	public String getMemory() {
+		return memory;
+	}
+
+	public void setMemory(String memory) {
+		this.memory = memory;
+	}
+
+	public String getCpuUsed() {
+		return cpuUsed;
+	}
+
+	public void setCpuUsed(String cpuUsed) {
+		this.cpuUsed = cpuUsed;
+	}
+
+	public String getNetworkKbsRead() {
+		return networkKbsRead;
+	}
+
+	public void setNetworkKbsRead(String networkKbsRead) {
+		this.networkKbsRead = networkKbsRead;
+	}
+
+	public String getNetworkKbsWrite() {
+		return networkKbsWrite;
+	}
+
+	public void setNetworkKbsWrite(String networkKbsWrite) {
+		this.networkKbsWrite = networkKbsWrite;
+	}
+
+	public String getPublicIpId() {
+		return publicIpId;
+	}
+
+	public void setPublicIpId(String publicIpId) {
+		this.publicIpId = publicIpId;
+	}
+
+	public String getPublicIp() {
+		return publicIp;
+	}
+
+	public void setPublicIp(String publicIp) {
+		this.publicIp = publicIp;
+	}
+
+	public String getTemplateId() {
+		return templateId;
+	}
+
+	public void setTemplateId(String templateId) {
+		this.templateId = templateId;
+	}
+
+	public String getTemplateName() {
+		return templateName;
+	}
+
+	public void setTemplateName(String templateName) {
+		this.templateName = templateName;
+	}
+
+	public String getTemplateDisplayText() {
+		return templateDisplayText;
+	}
+
+	public void setTemplateDisplayText(String templateDisplayText) {
+		this.templateDisplayText = templateDisplayText;
+	}
+
+	public String getZoneName() {
+		return zoneName;
+	}
+
+	public void setZoneName(String zoneName) {
+		this.zoneName = zoneName;
+	}
+
+	public List<CloudMdmNicVo> getNic() {
+		return nic;
+	}
+
+	public void setNic(List<CloudMdmNicVo> nic) {
+		this.nic = nic;
+	}
+
+	public List<CloudSecurityGroupVo> getSecuritygroup() {
+		return securitygroup;
+	}
+
+	public void setSecuritygroup(List<CloudSecurityGroupVo> securitygroup) {
+		this.securitygroup = securitygroup;
+	}
+
+	public String getAccount() {
+		return account;
+	}
+
+	public void setAccount(String account) {
+		this.account = account;
+	}
+
+	public String getDomainid() {
+		return domainid;
+	}
+
+	public void setDomainid(String domainid) {
+		this.domainid = domainid;
+	}
+
+	public String getDomain() {
+		return domain;
+	}
+
+	public void setDomain(String domain) {
+		this.domain = domain;
+	}
+
+	public CloudMdmCPUSolnVo getCloudMdmCPUSoln() {
+		return cloudMdmCPUSoln;
+	}
+
+	public void setCloudMdmCPUSoln(CloudMdmCPUSolnVo cloudMdmCPUSoln) {
+		this.cloudMdmCPUSoln = cloudMdmCPUSoln;
+	}
+
+	public CloudMdmTemplateVo getCloudMdmTemplate() {
+		return cloudMdmTemplate;
+	}
+
+	public void setCloudMdmTemplate(CloudMdmTemplateVo cloudMdmTemplate) {
+		this.cloudMdmTemplate = cloudMdmTemplate;
+	}
+
+	public Date getStoptime() {
+		return stoptime;
+	}
+
+	public void setStoptime(Date stoptime) {
+		this.stoptime = stoptime;
+	}
+
+	public String getState() {
+		return state;
+	}
+
+	public void setState(String state) {
+		this.state = state;
+	}
+
+	public String getZoneid() {
+		return zoneid;
+	}
+
+	public void setZoneid(String zoneid) {
+		this.zoneid = zoneid;
+	}
+
+	public String getHostid() {
+		return hostid;
+	}
+
+	public void setHostid(String hostid) {
+		this.hostid = hostid;
+	}
+
+	public String getHypervisor() {
+		return hypervisor;
+	}
+
+	public void setHypervisor(String hypervisor) {
+		this.hypervisor = hypervisor;
+	}
+
+	public String getHaenable() {
+		return haenable;
+	}
+
+	public void setHaenable(String haenable) {
+		this.haenable = haenable;
+	}
+	
+}

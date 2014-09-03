@@ -1,0 +1,127 @@
+package sy.common.util.cloudstack;
+
+import java.lang.reflect.Constructor;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import sy.common.util.cloudstack.entity.Account;
+import sy.common.util.cloudstack.entity.Diskoffering;
+import sy.common.util.cloudstack.entity.EgressFirewallRule;
+import sy.common.util.cloudstack.entity.Event;
+import sy.common.util.cloudstack.entity.Firewallrule;
+import sy.common.util.cloudstack.entity.Network;
+import sy.common.util.cloudstack.entity.Networkoffering;
+import sy.common.util.cloudstack.entity.PortForwardingRule;
+import sy.common.util.cloudstack.entity.Publicipaddress;
+import sy.common.util.cloudstack.entity.RemoteaccessVpn;
+import sy.common.util.cloudstack.entity.SecurityGroup;
+import sy.common.util.cloudstack.entity.Serviceoffering;
+import sy.common.util.cloudstack.entity.Template;
+import sy.common.util.cloudstack.entity.User;
+import sy.common.util.cloudstack.entity.Virtualmachine;
+import sy.common.util.cloudstack.entity.Volume;
+import sy.common.util.cloudstack.entity.VpnUser;
+import sy.common.util.cloudstack.entity.Zone;
+
+/**
+ * 
+ * @author lidongbo
+ * 
+ */
+public class RepositoryFactory {
+
+	private static Map<Class<? extends CloudBean>, Class<? extends AbstractServiceSupport<? extends CloudBean>>> mappings = new HashMap<Class<? extends CloudBean>, Class<? extends AbstractServiceSupport<? extends CloudBean>>>();
+
+	static {
+		mappings.put(Zone.class, ZoneRepository.class);
+		mappings.put(Template.class, TemplateRepository.class);
+		mappings.put(Virtualmachine.class, VirtualmachineRepository.class);
+		mappings.put(Account.class, AccountRepository.class);
+		mappings.put(Diskoffering.class, DiskofferingRepository.class);
+		mappings.put(Serviceoffering.class, ServiceofferingRepository.class);
+		mappings.put(Publicipaddress.class, PublicipaddressRepository.class);
+		mappings.put(SecurityGroup.class, SecurityGroupRepository.class);
+		mappings.put(Networkoffering.class, NetworkofferingRepository.class);
+		mappings.put(Network.class, NetworkRepository.class);
+		mappings.put(Volume.class, VolumeRepository.class);
+		mappings.put(User.class, UserRepository.class);
+		mappings.put(EgressFirewallRule.class, EgressFirewallRuleRepository.class);
+		mappings.put(Firewallrule.class, FirewallruleRepository.class);
+		mappings.put(PortForwardingRule.class, PortForwardingRuleRepository.class);
+		mappings.put(RemoteaccessVpn.class, RemoteaccessVpnRepository.class);
+		mappings.put(VpnUser.class, VpnUserRepository.class);
+		mappings.put(Event.class, EventRepository.class);
+	}
+
+	public static AbstractServiceSupport<? extends CloudBean> getRepository(
+			Class<? extends CloudBean> clzz,ProviderContext context) {
+		try {
+
+			Class<? extends AbstractServiceSupport<? extends CloudBean>> tar = mappings
+					.get(clzz);
+			if (tar != null) {
+				Constructor<? extends AbstractServiceSupport<? extends CloudBean>> contor = tar
+						.getConstructor(ProviderContext.class);
+				return contor.newInstance(context);
+			}
+
+			throw new CloudException("unmapped " + clzz);
+		} catch (Exception e) {
+			throw new CloudException(e);
+		}
+	}
+
+	public static void main(String[] args) {
+		
+		ProviderContext context = new ProviderContext();
+		
+		CSQuqeyContext qc = new CSQuqeyContext(new Param("listall", "true"));
+		List<? extends CloudBean> result = RepositoryFactory.getRepository(
+				Diskoffering.class,context).list(qc);
+		System.out.println(result);
+		if (result != null) {
+			System.out.println(result.size());
+		}
+		
+		result = RepositoryFactory.getRepository(
+				Serviceoffering.class,context).list(qc);
+		System.out.println(result);
+		if (result != null) {
+			System.out.println(result.size());
+		}
+		
+		result = RepositoryFactory.getRepository(
+				Publicipaddress.class,context).list(qc);
+		System.out.println(result);
+		if (result != null) {
+			System.out.println(result.size());
+		}
+		
+		System.out.println("====================");
+		
+		result = RepositoryFactory.getRepository(
+				SecurityGroup.class,context).list(qc);
+		System.out.println(result);
+		if (result != null) {
+			System.out.println(result.size());
+		}
+		
+		System.out.println("====================");
+		result = RepositoryFactory.getRepository(
+				Networkoffering.class,context).list(qc);
+		System.out.println(result);
+		if (result != null) {
+			System.out.println(result.size());
+		}
+		
+		System.out.println("====================");
+		result = RepositoryFactory.getRepository(
+				Virtualmachine.class,context).list(qc);
+		System.out.println(result);
+		if (result != null) {
+			System.out.println(result.size());
+		}
+
+	}
+}

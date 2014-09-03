@@ -1,0 +1,43 @@
+
+
+var autoHeightValue;
+
+$(document).ready(function(){
+	autoHeight();
+});
+
+var autoHeight = function(){
+	var height = 0;
+	if($('#content') && $('#content')[0]){
+		height = $('#content')[0].scrollHeight;
+	}else if($('#middle_sheet_s') && $('#middle_sheet_s')[0]){
+		height = $('#middle_sheet_s')[0].scrollHeight; //($("html").height());
+	}
+
+	if(height<680){
+		height = 680+'px';
+	}
+
+	var mainFrame = window.parent.parent.document.getElementById("mainForm");
+	var innerMainForm =window.parent.document.getElementById("innerMainForm");
+	var noNavMainForm = window.parent.document.getElementById("noNavMainForm");
+
+	autoHeightValue = height;
+
+	if(mainFrame){
+		mainFrame.style.height=(autoHeightValue +80) +"px";
+	}
+	
+	if(innerMainForm 
+			&& innerMainForm.src){
+		innerMainForm.style.height=autoHeightValue +"px";
+		
+	}else if(noNavMainForm){
+		noNavMainForm.style.height=autoHeightValue +"px";
+	}
+	
+	return true;
+};
+
+
+document.onclick = autoHeight;

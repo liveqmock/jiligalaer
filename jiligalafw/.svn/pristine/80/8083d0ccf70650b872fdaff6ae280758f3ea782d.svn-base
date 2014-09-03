@@ -1,0 +1,435 @@
+@charset "utf-8";
+/* CSS Document */
+/**
+body {
+	background-color: #F2F2F2;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+*/
+
+#header
+{
+margin:0px auto;
+width:1004px;
+height:60px;
+padding:8px 0px 8px 20px;
+background-color:#424242;
+}
+
+#header img
+{
+float:left;
+margin-top:5px;
+}
+
+#header_link
+{
+float:right;
+padding:6px 0px 0px 0px;
+width:400px;
+height:30px;
+margin:0px 25px 0px 0px;
+}
+
+#menu
+{
+margin:0px auto;
+width:1024px;
+height:34px;
+background-image:url(../images/menu_bg.jpg);
+background-color:#6aa900;
+background-repeat:repeat-x;
+background-position:left;
+}
+
+#menu img
+{
+margin:0px 5px 0px 5px;
+}
+
+#middle_bg
+{
+margin:0px auto;
+width:1024px;
+background-image:url(../images/middle_bg.jpg);
+background-repeat:repeat;
+background-position:left;
+}
+
+#middle_sheet
+{
+margin:0px 0px 0px 22px;
+}
+
+#middle_sheet_name
+{
+float:left;
+margin:20px 0px 0px 50px;
+height:23px;
+}
+
+#middle_sheet_name img
+{
+float:left;
+margin:0px 10px 0px 0px;
+}
+
+#middle_sheet_content
+{
+float:left;
+width:1000px;
+}
+
+#middle_sheet_s
+{
+float:left;
+vertical-align: left;
+background-repeat:no-repeat;
+padding-top: 10px;
+padding-bottom: 10px;
+}
+
+#middle_sheet_s_name
+{
+float:left;
+margin:30px 0px 0px 20px;
+width:63px;
+}
+
+#middle_sheet_s_name img
+{
+margin:10px 0px 0px 0px;
+}
+
+
+#middle_control_1
+{
+float:left;
+width:274px;
+height:205px;
+margin:10px 10px 0px 30px;
+background-image:url(../images/graybg_03.png);
+background-position:bottom;
+background-repeat:no-repeat;
+text-align:left;
+}
+
+#middle_control_2
+{
+float:left;
+width:595px;
+height:205px;
+margin:10px 10px 0px 30px;
+text-align:left;
+}
+
+#middle_control_3
+{
+float:left;
+width:850px;
+height:530px;
+}
+
+#middle_control_4
+{
+float:left;
+width:274px;
+height:205px;
+margin:10px 10px 0px 30px;
+text-align:left;
+}
+
+#middle_sheet_left01
+{
+float:left;
+margin:30px 0px 0px 0px;
+width:210px;
+height:413px;
+background-image:url(../images/buy_bg_01.png);
+background-position:bottom;
+background-repeat:no-repeat;
+}
+
+#middle_sheet_left02
+{
+float:left;
+margin:30px 0px 0px 0px;
+width:174px;
+height:388px;
+background-image:url(../images/xuji_bg_01.png);
+background-position:bottom;
+background-repeat:no-repeat;
+}
+
+
+#middle_sheet_right01
+{
+float:left;
+margin:30px 0px 0px 20px;
+width:750px;
+height:613px;
+}
+
+#middle_sheet_right01_s
+{
+float:left;
+margin:20px 40px 0px 45px;
+width:154px;
+height:180px;
+background-image:url(../images/buy_bg_02.png);
+background-position:bottom;
+background-repeat:no-repeat;
+}
+
+#middle_sheet_right01_s02
+{
+float:left;
+margin:20px 0px 0px 20px;
+width:152px;
+height:289px;
+background-image:url(../images/xuji_bg_16.png);
+background-position:left;
+background-repeat:no-repeat;
+}
+
+#middle_sheet_right01_s03
+{
+float:left;
+margin:20px 20px 0px 0px;
+width:513px;
+height:293px;
+background-image:url(../images/xuji_bg_18.png);
+background-position:bottom;
+background-repeat:no-repeat;
+}
+
+
+
+#middle_sheet_right01_button
+{
+float:left;
+width:720px;
+height:80px;
+}
+
+#footer
+{
+margin:0 auto;
+background-color:#424242;
+width:1024px;
+height:40px;
+}
+
+#footer_nav
+{
+float:left;
+padding:12px 0px 0px 0px;
+width:300px;
+height:28px;
+margin:0px 0px 0px 22px;
+}
+
+#footer_content
+{
+float:right;
+padding:12px 0px 0px 0px;
+width:240px;
+height:28px;
+margin:0px 22px 0px 0px;
+}
+
+#control_1
+{
+float:left;
+width:274px;
+height:205px;
+margin:10px 10px 0px 30px;
+background-image:url(../images/control_bg_01.png);
+background-position:bottom;
+background-repeat:no-repeat;
+text-align:left;
+}
+
+#control_2
+{
+float:left;
+width:271px;
+height:205px;
+margin:10px 10px 0px 30px;
+text-align:left;
+}
+
+#control_3
+{
+float:left;
+width:274px;
+margin:10px 10px 10px 30px;
+text-align:left;
+}
+
+#control_4
+{
+float:left;
+margin:20px 0px 10px 30px;
+width:900px;
+}
+
+
+#middle_sheet_buy_01
+{
+float:left;
+margin:20px 0px 0px 0px;
+width:210px;
+height:523px;
+background-image:url(../images/buy_bg_03.png);
+background-position:bottom;
+background-repeat:no-repeat;
+}
+
+#middle_sheet_buy_02
+{
+float:left;
+margin:20px 0px 0px 20px;
+width:750px;
+}
+
+#middle_sheet_buy_02_s
+{
+float:left;
+margin:20px 5px 0px 15px;
+width:219px;
+height:180px;
+background-image:url(../images/buy_bg_02.png);
+background-position:bottom;
+background-repeat:no-repeat;
+}
+#middle_sheet_buy_02_sp
+{
+float:left;
+margin:20px 5px 0px 15px;
+width:300px;
+height:210px;
+background-image:url(../images/buy_bg_02.png);
+background-size:300px 210px;
+background-position:bottom;
+background-repeat:no-repeat;
+}
+
+#middle_sheet_myR_01
+{
+float:left;
+margin:5px 0px 0px 0px;
+width:230px;
+height:510px;
+background-image:url(../images/myR_bg_01.png);
+background-position:bottom;
+
+}
+
+#middle_sheet_myR_02
+{
+float:left;
+margin:5px 0px 0px 10px;
+width:716px;
+}
+
+#middle_sheet_myR_s
+{
+float:left;
+margin:0px 0px 0px 0px;
+}
+
+#middle_sheet_myR_s_name
+{
+float:left;
+margin:30px 0px 0px 5px;
+width:63px;
+}
+
+#middle_sheet_myR_s_name img
+{
+margin:10px 0px 0px 0px;
+}
+
+#middle_sheet_myB_s
+{
+float:left;
+margin:0px 0px 0px 0px;
+}
+
+#middle_sheet_myB_s_name
+{
+float:left;
+margin:30px 0px 0px 20px;
+width:150px;
+}
+
+#middle_sheet_myInfo_content
+{
+float:left;
+margin:20px 0px 0px 0px;
+}
+
+#middle_sheet_pm_s
+{
+float:left;
+margin:0px 0px 0px 0px;
+}
+
+#middle_sheet_pm_s_name
+{
+float:left;
+margin:30px 0px 0px 10px;
+width:63px;
+}
+
+#middle_sheet_pm_s_name img
+{
+margin:10px 0px 0px 0px;
+}
+
+.buttonBg_1{
+	font-size:15px; 
+	font-weight:800;
+	font-family:微软雅黑; 
+	color:#715201;
+	background: url(../images/btns.png);
+	width:101px; 
+	height:29px;
+	border:0px;
+	cursor: pointer;
+}
+.buttonBg_2{
+	font-size:14px; 
+	font-weight: bold; 
+	font-family:微软雅黑; 
+	background: url(../images/btnc.png);
+	width:101px; 
+	height:30px;
+	border:0px;
+	cursor: pointer;
+}
+.select_but {
+	background: url(../images/list.gif) no-repeat right #fff; 
+	cursor:pointer;
+	border:1px;
+	border-bottom-color:#ABADB3;
+	border-left-color:#ABADB3;
+	height: 18px;
+	outline: 1px solid #ABADB3 !important;
+}
+
+#div_view{
+	display:none;
+	background-color :#f6f7f7;
+	color:#333333;
+	font-size:12px;
+	line-height:18px;
+	border:1px solid #e1e3e2;
+	width:150px;
+	height:50px;
+	padding: 5px;
+}

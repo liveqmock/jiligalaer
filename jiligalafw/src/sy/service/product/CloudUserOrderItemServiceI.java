@@ -1,0 +1,39 @@
+package sy.service.product;
+
+import java.util.List;
+
+import sy.common.model.QueryContext;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.vo.product.CloudUserOrderItemVo;
+import sy.service.shared.BasicServiceI;
+
+
+/**
+ * 用户订单明细
+ * @author cs
+ *
+ */
+public interface CloudUserOrderItemServiceI extends BasicServiceI<CloudUserOrderItemVo> {
+	/**
+	 * 根据订单ID和产品类型获取子订单信息。
+	 * @param orderId
+	 * @param prodType
+	 * @return
+	 */
+	public CloudUserOrderItemVo getOrderItemByOrderIdAndProdType(String orderId, String prodType);
+
+	/**
+	 * 根据VmID和产品类型获取子订单信息。
+	 * @param orderId
+	 * @param prodType
+	 * @return
+	 */
+	public CloudUserOrderItemVo getOrderItemByVmIdAndProdType(String vmId, String prodType);
+	
+	/**获取可以计费的订单列表,用户、创建时间进行排序*/
+	public List<CloudUserOrderItemVo> getStartBillingOrderItems();
+	
+	public List<CloudUserOrderItemVo> getOrderItemsByOrderId(String orderId);
+	
+	public List<CloudUserOrderItemVo> list(QueryContext context) throws ValidatorException;
+}

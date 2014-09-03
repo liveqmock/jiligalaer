@@ -1,0 +1,78 @@
+package sy.service.product;
+
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+
+import sy.common.model.QueryContext;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.product.CloudMdmDiskSoln;
+import sy.domain.vo.product.CloudMdmDiskSolnVo;
+import sy.domain.vo.product.CloudProductDetail;
+
+
+/**
+ * 磁盘方案表
+ * @author cs
+ *
+ */
+@Service("cloudMdmDiskSolnService")
+public class CloudMdmDiskSolnService extends
+		SynchronizeDataService<CloudMdmDiskSoln, CloudMdmDiskSolnVo> implements
+		CloudMdmDiskSolnServiceI {
+
+	@Override
+	public List<CloudProductDetail> getCloudMdmDiskSolnListByItemId(
+			String itemId, QueryContext context) throws ValidatorException {
+		String sql ="SELECT mp.id as prodId,mp.PROD_NAME as prodName, mds.id as cellId,mds.DISKSIZE as distSize,mds.DISPLAYTEXT as displayText,mds.NAME as cellName,pp.id as priceId "
+				   +" FROM cloud_mdm_product_item pi "
+				   +" inner join cloud_mdm_product mp on mp.ID=pi.PROD_ID "
+				   +"  inner join cloud_mdm_disk_soln mds on mds.id=pi.item_id   "
+				   +" inner join cloud_product_price pp on pp.PROD_ID=mp.ID "
+				   +"      where pi.item_type='DISKSOLN' AND pi.state='1' and mds.DATA_STATE=1 and mds.iscustomized='false' and now()>=  pp.EFFECTIVE_DATE  and now() <=pp.INVALID_DATE  ";
+		if(StringUtils.isNotBlank(itemId)){
+			sql =sql+" and pi.ITEM_ID='"+itemId+"'";
+		}
+		// TODO Auto-generated method stub
+		return this.listBySql(CloudProductDetail.class,context,sql);
+	}
+
+	@Override
+	public CloudProductDetail getCloudMdmDiskSolnByProdId(String prodId)
+			throws ValidatorException {
+		// TODO Auto-generated method stub
+		String sql ="SELECT mp.id as prodId,mp.PROD_NAME as prodName,mp.description as prodDesc,pi.item_type as itemType,pp.hour_price as hourPrice, mds.id as cellId,mds.DISKSIZE as distSize,mds.DISPLAYTEXT as displayText,mds.NAME as cellName,pp.id as priceId ,pp.one_time_price as oneTimePrice,pp.year_price as yearPrice,pp.month_price as monthPrice,pp.day_price as dayPrice,pp.price_mode as priceMode,mds.iscustomized as customized,pi.id as prodItemId,mds.if_id as interfaceId"
+				   +" FROM cloud_mdm_product_item pi "
+				   +" inner join cloud_mdm_product mp on mp.ID=pi.PROD_ID "
+				   +"  inner join cloud_mdm_disk_soln mds on mds.id=pi.item_id   "
+				   +" inner join cloud_product_price pp on pp.PROD_ID=mp.ID "
+				   +"      where pi.item_type='DISKSOLN' AND pi.state='1' and mds.DATA_STATE=1  and now()>=  pp.EFFECTIVE_DATE  and now() <=pp.INVALID_DATE  and mp.id='"+prodId+"'";
+		return this.findUniqueBySql(CloudProductDetail.class, sql);
+	}
+
+	@Override
+	public CloudProductDetail getCloudMdmDiskSolnByCombProdId(
+			String combProdId) throws ValidatorException {
+		// TODO Auto-generated method stub
+		String sql ="SELECT mp.id as prodId,mp.PROD_NAME as prodName, mds.id as cellId,mds.DISKSIZE as distSize,mds.DISPLAYTEXT as displayText,mds.NAME as cellName,pp.id as priceId "
+				   +" FROM cloud_mdm_product_item pi "
+				   +" inner join cloud_mdm_product mp on mp.ID=pi.PROD_ID "
+				   +"  inner join cloud_mdm_disk_soln mds on mds.id=pi.item_id   "
+				   +" inner join cloud_product_price pp on pp.PROD_ID=mp.ID "
+				   +" inner join cloud_product_combination_price cpcp on cpcp.SINGLE_PROD_ID=mp.id"
+				   +"      where pi.item_type='DISKSOLN' AND pi.state='1' and mds.DATA_STATE=1 and mds.iscustomized='false' and now()>=  pp.EFFECTIVE_DATE  and now() <=pp.INVALID_DATE  and cpcp.prod_id='"+combProdId+"' and  cpcp.cell_type='DISKSOLN'";
+		return this.findUniqueBySql(CloudProductDetail.class, sql);
+	}
+
+	@Override
+	public CloudMdmDiskSolnVo getMdmDiskSolnByid(String id) {
+		return findUnique("From  CloudMdmDiskSoln Where  id = ?", id);
+	}
+
+	@Override
+	public CloudMdmDiskSolnVo getMdmDiskSolnByInterfaceId(String interfaceId) {
+		return findUnique("From  CloudMdmDiskSoln Where  interfaceId = ?", interfaceId);
+	}
+
+}

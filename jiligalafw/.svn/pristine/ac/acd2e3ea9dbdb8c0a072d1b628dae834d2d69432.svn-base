@@ -1,0 +1,76 @@
+package sy.service.promotion;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
+import sy.common.util.Constants;
+import sy.common.util.DateUtil;
+import sy.domain.model.promotion.CloudPromotionInfo;
+import sy.domain.vo.promotion.CloudPromotionInfoVo;
+import sy.service.shared.BaseServiceTemplate;
+
+@Service("cloudPromotionInfoService")
+public class CloudPromotionInfoService extends BaseServiceTemplate<CloudPromotionInfo, CloudPromotionInfoVo>
+		implements CloudPromotionInfoServiceI {
+
+	/**
+	 * 获取单一产品列表
+	 */
+	public List<Object[]> getSingleProdList(String promotionId,String prodName){
+		
+		StringBuilder sqlBuilder = new StringBuilder();
+		sqlBuilder.append("select p.id,i.item_type,p.prod_name,case when pr.price_mode='0' then CONCAT(' 一次性收费:' , pr.one_time_price , ' 元') else CONCAT(pr.year_price,'元/年 ',pr.month_price,'元/月 ',pr.day_price,'元/天') end price,p.state,p.prod_type,case when pp.promotion_id is not null then 1 else '0' end chk ");
+		sqlBuilder.append("from cloud_mdm_product p ");
+		sqlBuilder.append("inner join cloud_mdm_product_item i on i.prod_id=p.id ");
+		sqlBuilder.append("left join cloud_product_price pr on pr.prod_id=p.id ");
+		sqlBuilder.append("left join cloud_promotion_product pp on pp.prod_id=p.id and pp.promotion_id='" + promotionId +"'");
+		sqlBuilder.append("where p.prod_type='0' ");
+		
+		if(null != prodName && prodName.length()>0) {
+			sqlBuilder.append(" and p.prod_name like '%" + prodName +"%'");
+		}
+		
+		//System.out.println(sqlBuilder.toString());
+		
+		return super.getBaseDao().findBySQL(sqlBuilder.toString());
+	}
+	
+	/**
+	 * 获取单一产品列表
+	 */
+	public List<Object[]> getcombProdList(String promotionId,String prodName){
+		
+		StringBuilder sqlBuilder = new StringBuilder();
+		sqlBuilder.append("select p.id,p.prod_name,zone.displaytext zone,cpu.displaytext cpu,cpu.memory memory,disk.disksize disk,templ.displaytext template,case when pr.price_mode='0' then CONCAT(' 一次性收费:' , pr.one_time_price , ' 元') else CONCAT(pr.year_price,'元/年 ',pr.month_price,'元/月 ',pr.day_price,'元/天') end price,p.state,p.prod_type ,case when pp.promotion_id is not null then 1 else '0' end chk ");
+		sqlBuilder.append("from cloud_mdm_product p ");
+		sqlBuilder.append("inner join cloud_mdm_product_item i on i.prod_id=p.id ");
+		sqlBuilder.append("left join cloud_mdm_zone zone on zone.id=i.zone_id ");
+		sqlBuilder.append("left join cloud_mdm_cpu_soln cpu on cpu.id=i.cpu_soln_id ");
+		sqlBuilder.append("left join cloud_mdm_disk_soln disk on disk.id=i.disk_soln_id ");
+		sqlBuilder.append("left join cloud_mdm_template templ on templ.id=i.template_id ");
+		sqlBuilder.append("left join cloud_mdm_network_soln netsol on netsol.id=i.network_soln_id ");
+		sqlBuilder.append("left join cloud_mdm_ip ip on ip.id=i.ip_id ");
+		sqlBuilder.append("left join cloud_product_price pr on pr.prod_id=p.id ");
+		sqlBuilder.append("left join cloud_promotion_product pp on pp.prod_id=p.id and pp.promotion_id='" + promotionId +"'");
+		sqlBuilder.append("where p.prod_type='1' ");
+		
+		if(null != prodName && prodName.length()>0) {
+			sqlBuilder.append(" and p.prod_name like '%" + prodName +"%'");
+		}
+		
+		return super.getBaseDao().findBySQL(sqlBuilder.toString());
+	}
+	
+	public CloudPromotionInfoVo getUniqueRecommendRebateInfo(String currDate){
+		if(currDate == null){
+			currDate = DateUtil.format(new Date(), "yyyy-MM-dd");
+		}
+		StringBuilder sqlBuilder = new StringBuilder();
+		sqlBuilder.append("from CloudPromotionInfo where startDate<='"+currDate+"' and endDate>='"+currDate+"' " +
+				"and basicPromotionType.itemCode='"+Constants.PROMOTIONTYPE_RECOMMEND+"' order by updated desc");
+		
+		return this.findUnique(sqlBuilder.toString());
+	}
+}

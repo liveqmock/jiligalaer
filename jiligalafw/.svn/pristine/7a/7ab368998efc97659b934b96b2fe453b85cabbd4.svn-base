@@ -1,0 +1,252 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>产品管理-组合产品定制-模板</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript"
+	src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript"
+	src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript"
+	src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+body {
+	margin: 0px auto; background-color : #F2F2F2; background-repeat : repeat;
+	background-position : left;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	background-color: #F2F2F2;
+	background-repeat: repeat;
+	background-position: left;
+}
+</style>
+<script type="text/javascript">
+	function next() {
+		var mdmTemplates =  document.getElementsByName("mdmTemplate");
+		var mdmTemplateId = "";
+		var tag = false;
+		for ( var i = 0; i < mdmTemplates.length; i++) {
+			if (mdmTemplates.item(i).checked) {
+				tag = true;
+				mdmTemplateId = mdmTemplateId + mdmTemplates.item(i).getAttribute("value");
+				continue;
+			}
+		}
+		if(mdmTemplateId == ''){
+			alert("请选择模板!");
+			return ;
+		}
+		var form = document.forms.listForm;
+		form.action = "${ctx}/combinProd/computResource.do?mdmTemplateId="+mdmTemplateId;
+		form.submit();
+	}
+	function previous() {
+		var form = document.forms.listForm;
+		form.action = "${ctx}/combinProd/selectDc.do";
+		form.submit();
+	}
+</script>
+
+</head>
+<body onLoad="">
+	<form:form modelAttribute="baseVoList"
+		action="${ctx}/combinProd/selectTemplate.do" method="post"
+		name="listForm">
+
+					<table width="962" border="0" cellpadding="0" cellspacing="0">
+						<tr>
+							<td align="center" valign="top" bgcolor="#F2F2F2">
+								<table border="0" cellpadding="0" cellspacing="0">
+									<tr>
+										<td height="43" align="left" valign="middle"><span
+											class="f18b2">定制流程</span></td>
+										<td align="left" valign="middle">&nbsp;</td>
+									</tr>
+									<tr>
+										<td height="5" colspan="2"></td>
+									</tr>
+									<tr>
+										<td height="2" colspan="2" align="center" valign="middle"><img
+											src="${ctx}/images/sheet_line_2.jpg" width="940" height="2" /></td>
+									</tr>
+									<tr>
+										<td height="10" colspan="2"></td>
+									</tr>
+									<tr>
+										<td colspan="2">
+											<div id="middle_sheet_pm_s_name">
+												<img src="${ctx}/images/menu_s_11.jpg" border="0"
+													align="absmiddle" id="" /><img
+													src="${ctx}/images/menu_s_6_s.png" border="0"
+													align="absmiddle" id="" /> <img
+													src="${ctx}/images/menu_s_21.png" border="0"
+													align="absmiddle" id="" /> <img
+													src="${ctx}/images/menu_s_22.png" border="0"
+													align="absmiddle" id="" /> <img
+													src="${ctx}/images/menu_s_14.png" border="0"
+													align="absmiddle" id="" /> <img
+													src="${ctx}/images/menu_s_24.png" border="0"
+													align="absmiddle" id="" />
+											</div>
+
+											<div id="middle_sheet_pm_s">
+
+												<table width="855" border="0" cellpadding="0"
+													cellspacing="0">
+													<tr>
+														<td width="14" height="14" align="left" valign="top"><img
+															src="${ctx}/images/sheet_s_border_1.jpg" width="14"
+															height="14" /></td>
+														<td height="14" align="left" valign="top"
+															background="${ctx}/images/sheet_s_border_2.jpg"></td>
+														<td width="14" height="14" align="left" valign="top"><img
+															src="${ctx}/images/sheet_s_border_3.jpg" width="14"
+															height="14" /></td>
+													</tr>
+													<tr>
+														<td width="14" align="left" valign="top"
+															background="${ctx}/images/sheet_s_border_4.jpg"></td>
+														<td align="left" valign="top" bgcolor="#FFFFFF"
+															height="380">
+															<!-- 定制流程页面 -->
+															<table width="336" border="0" cellspacing="0"
+																cellpadding="0">
+																<tr>
+																	<td width="35" align="left" valign="middle"><img
+																		src="${ctx}/images/buy_ico_04.gif" width="25"
+																		height="26" /></td>
+																	<td width="301" align="left" valign="middle"
+																		class="f18b2">请选择模板</td>
+																</tr>
+																<tr>
+																	<td height="5" colspan="2" align="left" valign="middle"><img
+																		src="${ctx}/images/buy_blue_line.jpg" width="280"
+																		height="1" /></td>
+																</tr>
+															</table>
+
+															<table width="100%" border="0" cellpadding="0"
+																cellspacing="0">
+																<tr height="30">
+																	<td width="6%"></td>
+																	<td align="left" class="f15_1"></td>
+																</tr>
+																<tr height="30">
+																	<td width="5%"></td>
+																	<td>
+
+																		<table width="763" border="0" cellspacing="1"
+																			cellpadding="1" bgcolor="#eeeeee">
+																			<tr bgcolor="#92b8c1" height="20">
+																				<td width="40%" align="center" class="f12">模板名称</td>
+																				<td width="50%" align="center" class="f12">介绍</td>
+																				<td width="10%" align="center" class="f12">选择</td>
+																			</tr>
+																		</table>
+																		<%int i=0; %>
+																		<div
+																			style="height: 250px; z-index: 1; overflow-y: scroll; overflow-x: hidden;">
+																			<table width="763" border="0" cellspacing="1"
+																				cellpadding="1" bgcolor="#eeeeee">
+																				<c:forEach var="item" items="${cloudMdmTemplateVoList}">
+																					<%
+																			        String bgcolor="#deecef";
+																			        if(i++ % 2 == 0){bgcolor="#eef6f7"; }
+																			        %>
+																					<c:choose>
+																						<c:when test="${item.selectFlag==1}">
+																							<tr bgcolor="<%=bgcolor %>" height="20">
+																								<td width="40%" align="left" class="f12_1">${item.prodName}</td>
+																								<td width="50%" align="left" class="f12_1">${item.displayText}</td>
+																								<td width="10%" align="center" class="f12_1"><input
+																									type="radio" value="${item.cellId}__${item.prodId}__${item.priceId}" name="mdmTemplate" checked="checked"/></td>
+																							</tr>
+																						</c:when>
+																						<c:otherwise>
+																							<tr bgcolor="<%=bgcolor %>" height="20">
+																								<td width="40%" align="left" class="f12_1">${item.prodName}</td>
+																								<td width="50%" align="left" class="f12_1">${item.displayText}</td>
+																								<td width="10%" align="center" class="f12_1"><input
+																									type="radio" value="${item.cellId}__${item.prodId}__${item.priceId}" name="mdmTemplate"/></td>
+																							</tr>
+																						</c:otherwise>
+																					</c:choose>
+
+																				</c:forEach>
+																			</table>
+																		</div>
+
+																	</td>
+																</tr>
+															</table>
+
+															<table align="right" width="352" height="33" border="0"
+																cellpadding="0" cellspacing="0">
+																<tr>
+																	<td colspan="3" height="25">&nbsp;</td>
+																</tr>
+																<tr>
+																	<td width="117" align="right" valign="middle"><img
+																		src="${ctx}/images/btn2.png" width="117" height="32"
+																		style="cursor: pointer;" onclick="previous()" /></td>
+																	<td width="185" align="right" valign="middle"><img
+																		src="${ctx}/images/btn3.png" width="117" height="32"
+																		style="cursor: pointer;" onclick="next()" /></td>
+																	<td width="15" align="right" valign="middle">&nbsp;</td>
+																</tr>
+																<tr>
+																	<td colspan="3" height="100">&nbsp;</td>
+																</tr>
+															</table>
+
+
+														</td>
+														<td width="14" align="left" valign="top"
+															background="${ctx}/images/sheet_s_border_5.jpg"></td>
+													</tr>
+													<tr>
+														<td width="14" height="14" align="left" valign="top"><img
+															src="${ctx}/images/sheet_s_border_6.jpg" width="14"
+															height="14" /></td>
+														<td height="14" align="left" valign="top"
+															background="${ctx}/images/sheet_s_border_7.jpg"></td>
+														<td width="14" height="14" align="left" valign="top"><img
+															src="${ctx}/images/sheet_s_border_8.jpg" width="14"
+															height="14" /></td>
+													</tr>
+													<tr>
+														<td colspan=3 height="10"></td>
+													</tr>
+												</table>
+											</div>
+
+										</td>
+									</tr>
+									<tr>
+										<td height="2" colspan="2" align="center" valign="middle"><img
+											src="${ctx}/images/sheet_line_2.jpg" width="940" height="2" /></td>
+									</tr>
+									<tr>
+										<td height="10" colspan="2"></td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+
+					</table>
+		
+
+
+	</form:form>
+</body>
+</html>

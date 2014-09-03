@@ -1,0 +1,42 @@
+package sy.service.product;
+
+import java.util.List;
+
+import sy.common.util.cloudstack.CloudException;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.vo.product.CloudMdmNetworkVo;
+import sy.service.shared.BasicServiceI;
+
+/**
+ * 
+ * @author lidongbo
+ * 
+ */
+public interface CloudMdmNetworkServiceI extends
+		BasicServiceI<CloudMdmNetworkVo>, SynchronizeDataServiceI {
+
+	public CloudMdmNetworkVo create(String accountName, String zoneid,
+			String networkofferingid, String networkName,
+			String networkDisplaytext) throws ValidatorException,CloudException;
+	
+	public void delete(String networkid) throws ValidatorException,CloudException;
+	
+	public List<CloudMdmNetworkVo> getNetworkByZoneAccount(String zoneId, String account)
+			throws Exception;
+	public CloudMdmNetworkVo getMdmNetworkVoByid(String id);
+	
+	public CloudMdmNetworkVo getBasicNetByZone(String zoneId) throws Exception;
+	
+	/**
+	 * 用于查询该账户下所有创建的网络。
+	 */
+	public List<CloudMdmNetworkVo> getUserNetWorksByZoneAccount(String userAccount,String zoneId) throws Exception;
+
+	/**
+	 * 检查网络名称是否占用
+	 * @param networkName
+	 * @param accountId
+	 * @return
+	 */
+	public boolean checkNetworkNameIsExist(String networkName, String accountId);
+}

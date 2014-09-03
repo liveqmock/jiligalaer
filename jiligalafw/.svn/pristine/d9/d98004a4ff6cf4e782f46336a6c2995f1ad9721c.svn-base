@@ -1,0 +1,148 @@
+package sy.service.product;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import sy.common.util.Constants;
+import sy.common.util.DateUtil;
+import sy.common.util.move.Mover;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.product.CloudUserOrder;
+import sy.domain.model.product.CloudUserOrderItem;
+import sy.domain.vo.product.CloudUserOrderItemVo;
+import sy.domain.vo.product.CloudUserOrderVo;
+import sy.service.shared.BaseServiceTemplate;
+
+
+
+/**
+ * 用户订单
+ * @author cs
+ *
+ */
+@Service("cloudUserOrderService")
+public class CloudUserOrderService extends
+		BaseServiceTemplate<CloudUserOrder, CloudUserOrderVo> implements
+		CloudUserOrderServiceI {
+
+	@Autowired
+	private CloudUserOrderItemServiceI cloudUserOrderItemService;
+	
+	
+	public CloudUserOrderItemServiceI getCloudUserOrderItemService() {
+		return cloudUserOrderItemService;
+	}
+
+
+	public void setCloudUserOrderItemService(
+			CloudUserOrderItemServiceI cloudUserOrderItemService) {
+		this.cloudUserOrderItemService = cloudUserOrderItemService;
+	}
+
+
+	/**
+	 * 根据用户 查询购买的模板产品
+	 */
+	public List<Object[]> getTemplateOrderInfo(String userId){
+		String sql = "select 	t.IF_ID, t.NAME, t.MEMORY, t.DISPLAYTEXT, o.ORDER_TIME,o.ORDER_AMOUNT " +
+				"	from 	cloud_user_order o " +
+				"			inner join cloud_mdm_product p on o.PRODUCT_ID=p.ID " +
+				"			inner join cloud_mdm_product_item i on p.ID=i.PROD_ID " +
+				"			inner join cloud_mdm_template t on t.ID=i.TEMPLATE_ID " +
+				"	where	o.USER_ID=? ";
+		List<Object[]> list = super.getBaseDao().findBySQL(sql, userId);
+		return list;
+	}
+	
+	
+	public void saveOrder(CloudUserOrderVo vo, CloudUserOrderItemVo itemVo) throws ValidatorException{
+		if(vo.getBasicUser().getUserFlag() == Constants.USER_FLAG_ACCOUNT){
+			//账户
+			vo.setBasicAccount(vo.getBasicUser());
+		}else{
+			vo.setBasicAccount(vo.getBasicUser().getParentBasicUser());
+		}
+		
+		//设置收费时间为下一个小时
+		vo.setBeginBillingTime(DateUtil.getNextHourOfCurrHour());
+		vo.setNextBillingTime(vo.getBeginBillingTime());
+		itemVo.setBeginBillingTime(vo.getBeginBillingTime());
+		itemVo.setNextBillingTime(vo.getBeginBillingTime());
+		
+		this.save(vo);
+		itemVo.setCloudUserOrder(vo);
+		this.cloudUserOrderItemService.save(itemVo);
+	}
+	
+	public void saveOrderAndItems(CloudUserOrderVo orderVo, List<CloudUserOrderItemVo> items) throws ValidatorException{
+		this.save(orderVo);
+		for(CloudUserOrderItemVo orderItem : items) {
+			orderItem.setCloudUserOrder(orderVo);
+			this.cloudUserOrderItemService.save(orderItem);
+		}
+	}
+	public void updateDestroyDateById(String id, String prodType) throws ValidatorException{
+		CloudUserOrderVo vo = null;
+		if("ip".equals(prodType)){
+			//主表：订单状态
+			vo = findUnique("From CloudUserOrder Where cloudMdmIP.id=?", id);
+		}else{
+			//主表：订单状态
+			vo = findUnique("From CloudUserOrder Where cloudMdmNetwork.id=?", id);
+		}
+		vo.setState(String.valueOf(Constants.INVALID_STATE));
+		
+		//子表：资源销毁时间
+		CloudUserOrderItemVo itemVo = Mover.getInstance().move(
+				findUnique(CloudUserOrderItem.class, "From CloudUserOrderItem Where cloudUserOrder.orderId=?", vo.getOrderId()), CloudUserOrderItemVo.class);
+		itemVo.setResDestroyTime(new Date());
+		
+		this.cloudUserOrderItemService.save(itemVo);
+		this.save(vo);
+		
+	}
+	
+	public void savePordChange(CloudUserOrderVo vo, CloudUserOrderItemVo oldItemVo, CloudUserOrderItemVo newItemVo) throws ValidatorException{
+		if(oldItemVo != null){
+			//修改计算方案时销毁资源
+			this.cloudUserOrderItemService.save(oldItemVo);
+		}
+		this.saveOrder(vo, newItemVo);
+	}
+
+	@Override
+	public List<CloudUserOrderVo> getStartBillingOrders() {
+		String hql =
+				  " From 	CloudUserOrder " 
+				+ " Where 	billingFlag = " + Constants.BILLING_FALG_START	//处于开始计费状态
+				+ " And 	state=" + Constants.VALID_STATE  //账单处于有效状态
+				+ " Order by basicAccount asc,basicUser asc,created asc";
+		return find(hql);
+	}
+	
+	@Override
+	public void destroyVmOrder(String vmId) throws ValidatorException{
+		//修改订单状态、后来增加的磁盘、更换计算方案订单状态
+		List<CloudUserOrderVo> listVo = this.getUserOrderByVmId(vmId);
+		for(CloudUserOrderVo vo : listVo){
+			//修改订单子表资源销毁时间、后来增加的磁盘、更换计算方案订单子表资源销毁时间
+			List<CloudUserOrderItemVo> listItemVo = this.cloudUserOrderItemService.getOrderItemsByOrderId(vo.getOrderId());
+			for(CloudUserOrderItemVo itemVo : listItemVo){
+				itemVo.setResDestroyTime(new Date());
+				this.cloudUserOrderItemService.save(itemVo);
+			}
+			
+			vo.setState(String.valueOf(Constants.INVALID_STATE));
+			this.save(vo);
+		}
+	}
+	
+	@Override
+	public List<CloudUserOrderVo> getUserOrderByVmId(String vmId) throws ValidatorException{
+		return this.find("from CloudUserOrder where cloudMdmVm.id=?", vmId);
+	}
+
+}

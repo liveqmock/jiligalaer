@@ -1,0 +1,209 @@
+/*
+ * 创建日期 2005-6-21
+ *
+ */
+package sy.util2;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.SocketException;
+
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTP;
+
+import org.apache.log4j.Logger;
+
+import com.cits.online.common.ioc.IoC;
+
+/**
+ * FTP文件上传工具
+ */
+public class CITFTPClientUtil {
+	/** 日志 */
+	// protected static Logger logger = Logger.getLogger(CITFTPClientUtil.class);//(Logger)
+	protected static Logger logger = (Logger) IoC.get("Logger");
+
+	// IoC.get("Logger");
+
+	/** 系统PDF文件的路径 */
+	private String ROOT_FILE_PATH = CITFTPClientFactory.getROOTFILEPATH();
+
+	/** 目标文件路径 */
+	private String DEST_FILE_PATH = "";
+
+	/** FTPClient 实例 */
+	private FTPClient client;
+
+	/**
+	 * Creates a new CITFtpClientUtil object.
+	 * 
+	 * @throws IOException
+	 */
+	public CITFTPClientUtil() throws IOException {
+		client = CITFTPClientFactory.getFTPClient();
+	}
+
+	/**
+	 * 上传文件到FTP服务器
+	 * 
+	 * 
+	 * @param fileName 要上传的文件名
+	 * 
+	 * 
+	 * @return 文件上传成功：true/失败：false
+	 */
+	public boolean storeFile(String fileName) {
+		return storeFile(fileName, fileName);
+	}
+
+	/**
+	 * 上传文件到FTP服务器
+	 * 
+	 * 
+	 * @param fileName 要上传的文件名
+	 * 
+	 * @param targetFilename 目标文件名
+	 * 
+	 * 
+	 * @return 文件上传成功：true/失败：false
+	 */
+	public synchronized boolean storeFile(String fileName, String targetFilename) {
+		boolean result = false;
+
+		File fromFile = new File(getFullFileName(fileName));
+
+		if (fromFile.exists() && fromFile.isFile()) {
+			InputStream inputStream = null;
+
+			try {
+				inputStream = new FileInputStream(fromFile);
+
+				result = client.storeFile(getFullDestFileName(targetFilename), inputStream);
+
+				logger.debug("上传文件 " + getFullFileName(fileName) + " TO " + getFullDestFileName(targetFilename) + (result ? " 成功" : " 失败"));
+			} catch (IOException e) {
+				try {
+					logger.debug("FTP到指定目录失败 " + e.getMessage());
+					logger.debug("重新登录FTP服务器。");
+					CITFTPClientFactory.reLogin(client);
+				} catch (SocketException e1) {
+					logger.debug("重新登录FTP服务器错误。" + e1.getMessage());
+				} catch (IOException e1) {
+					logger.debug("重新登录FTP服务器错误。" + e1.getMessage());
+				}
+				logger.debug(e.getMessage());
+			} finally {
+				try {
+					inputStream.close();
+				} catch (IOException e1) {
+				}
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * 上传文件到FTP服务器(饭店用)
+	 * 
+	 * 
+	 * @param fileName 要上传的文件名全路径
+	 * 
+	 * @param targetFilename 目标文件名
+	 * 
+	 * 
+	 * 
+	 * @return 文件上传成功：true/失败：false
+	 */
+	public synchronized boolean storeFile_new(String fileName, String targetFilename) {
+		boolean result = false;
+
+		File fromFile = new File(fileName);
+
+		System.err.println(client.getControlEncoding());
+
+		if (fromFile.exists() && fromFile.isFile()) {
+			InputStream inputStream = null;
+
+			try {
+				inputStream = new FileInputStream(fromFile);
+
+				client.setFileType(FTP.IMAGE_FILE_TYPE);
+
+				result = client.storeFile(getFullDestFileName(targetFilename), inputStream);
+
+				client.setFileType(FTP.ASCII_FILE_TYPE);
+
+				logger.debug("上传文件 " + fileName + " TO " + getFullDestFileName(targetFilename) + (result ? " 成功" : " 失败"));
+			} catch (IOException e) {
+				try {
+					logger.debug("FTP到指定目录失败 " + e.getMessage());
+					logger.debug("重新登录FTP服务器。");
+					CITFTPClientFactory.reLogin(client);
+				} catch (SocketException e1) {
+					logger.debug("重新登录FTP服务器错误。" + e1.getMessage());
+				} catch (IOException e1) {
+					logger.debug("重新登录FTP服务器错误。" + e1.getMessage());
+				}
+				logger.debug(e.getMessage());
+			} finally {
+				try {
+					inputStream.close();
+				} catch (IOException e1) {
+				}
+			}
+		}
+
+		return result;
+	}
+
+	/**
+	 * 取得完整的源文件路径
+	 * 
+	 * @param fileName 源文件名
+	 * 
+	 * @return 完整的源文件路径
+	 */
+	private String getFullFileName(String fileName) {
+		return ROOT_FILE_PATH + fileName;
+	}
+
+	/**
+	 * 取得完整的目标文件路径
+	 * 
+	 * 
+	 * @param fileName 目标文件名
+	 * 
+	 * 
+	 * @return 完整的目标文件路径
+	 * 
+	 */
+	private String getFullDestFileName(String fileName) {
+		return DEST_FILE_PATH + fileName;
+	}
+
+	/**
+	 * 上传多个文件到FTP服务器
+	 * 
+	 * 
+	 * @param fileNames 要上传的文件名数组
+	 * 
+	 * 
+	 * @return 文件上传成功：true/失败：false
+	 */
+	public boolean storeFile(String[] fileNames) {
+		boolean isSuccess = false;
+
+		for (int i = 0; i < fileNames.length; i++) {
+			isSuccess = storeFile(fileNames[i], fileNames[i]);
+
+			if (!isSuccess) {
+				return isSuccess;
+			}
+		}
+
+		return isSuccess;
+	}
+}

@@ -1,0 +1,137 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>IP地址申请</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/scripts/basic.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+body {
+	margin: 0px auto;
+	background:#f2f2f2;
+	background-repeat: repeat;
+	background-position: left;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+<script type="text/javascript">
+function applyAddr(){
+	var val=$('input:radio[name="selValue"]:checked').val();
+	if(val==null){
+		alert("请选择计费方式!");
+		return false;
+	}
+	
+	if(confirm("确定申请IP地址吗？")){
+		var form = document.forms.listForm;
+		form.action="${ctx}/network/applyAddr.do";
+		waitloading();
+		form.submit();
+	}
+}
+</script>
+<script type="text/javascript">
+var msg = '${ipOperationMsg}';
+if(msg!=''){
+	alert(msg);
+	window.opener.query();
+	window.close();
+}
+</script>
+</head>
+<body onLoad="">
+	<form:form modelAttribute="baseVoList" action="${ctx}/network/saveHighNet.do" method="post" name="listForm">
+          <input type="hidden" name="prodId" value="${ipPriceVo.cloudMdmProduct.id }" />
+          <input type="hidden" name="prodItemId" value="${ipPriceVo.cloudMdmProductItem.id }" />
+          <input type="hidden" name="networkId" value="${networkId }" />
+                  
+          <table width="100%" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+				<td style="height: 10px" colspan="2"></td>
+			</tr>
+            <tr><td valign="bottom" align="center" height="20" class="f18b2">计费方式选择</td></tr>
+            <tr>
+				<td style="height: 10px" colspan="2"></td>
+			</tr>
+			<tr>
+                 <td height="2" align="center" valign="middle" colspan="5"><hr /></td>
+            </tr>
+			<tr>
+				<td style="height: 10px" colspan="2"></td>
+			</tr>
+            <tr>
+              <td valign="top">
+				
+                <table width="100%" border="0" cellspacing="1" cellpadding="0" bgcolor="f2f2f2">
+
+                  <c:choose>
+	                  <c:when test="${ipPriceVo.priceMode == '0' }">
+	                  	<tr height="30" align="left">
+	                  	    <td width="30%" class="f12_1" align="left"></td>
+	                    	<td class="f12_1" align="left">
+	                    		<input type="radio" name="selValue" value="${ipPriceVo.oneTimePrice }_0" />&nbsp;&nbsp;${ipPriceVo.oneTimePrice } 元/一次性收费
+	                    	</td>
+	                  	</tr>
+	                  </c:when>
+	                  <c:otherwise>
+	                  	<tr height="30">
+	                  		<td width="30%" class="f12_1" align="left"></td>
+	                    	<td class="f12_1">
+	                    		<input type="radio" name="selValue" value="${ipPriceVo.yearPrice }_2" />&nbsp;&nbsp;${ipPriceVo.yearPrice } 元/年收费
+	                    	</td>
+	                  	</tr>
+	                  	<tr height="30">
+	                  		<td width="30%" class="f12_1" align="left"></td>
+	                    	<td class="f12_1">
+	                    		<input type="radio" name="selValue" value="${ipPriceVo.monthPrice }_3" />&nbsp;&nbsp;${ipPriceVo.monthPrice } 元/月收费
+	                    	</td>
+	                  	</tr>
+	                  	<tr height="30">
+	                  		<td width="30%" class="f12_1" align="left"></td>
+	                    	<td class="f12_1">
+	                    		<input type="radio" name="selValue" value="${ipPriceVo.dayPrice }_4" />&nbsp;&nbsp;${ipPriceVo.dayPrice } 元/天收费
+	                    	</td>
+	                  	</tr>
+	                  	<tr height="30">
+	                  		<td width="30%" class="f12_1" align="left"></td>
+	                    	<td class="f12_1">
+	                    		<input type="radio" name="selValue" value="${ipPriceVo.hourPrice }_5" />&nbsp;&nbsp;${ipPriceVo.hourPrice } 元/小时收费
+	                    	</td>
+	                  	</tr>	                  		                  		                  		                  
+	                  </c:otherwise>
+				  </c:choose>
+                                              
+                </table>
+              </td>
+            </tr>
+            <tr>
+				<td style="height: 10px" colspan="2"></td>
+			</tr>
+			<tr>
+                 <td height="2" align="center" valign="middle" colspan="5"><hr /></td>
+            </tr>
+            <tr>
+	            <td align="center" height="50">
+	            	<img src="${ctx}/images/btn30.png" alt="申 请" width="101" height="30" border="0" align="absmiddle" style="cursor:pointer;" onclick="applyAddr()"/>
+	            	&nbsp;&nbsp;&nbsp;&nbsp;
+				    <img src="${ctx}/images/btn8.png" alt="关  闭" width="101" height="30" border="0" align="absmiddle" style="cursor:pointer;" onclick="window.close()"/>
+	            </td>
+            </tr>
+			
+          </table>
+
+	</form:form>
+</body>
+</html>

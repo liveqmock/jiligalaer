@@ -1,0 +1,103 @@
+package sy.service.cloud;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import sy.common.util.cloudstack.AccountRepository;
+import sy.common.util.cloudstack.ProviderContext;
+import sy.common.util.cloudstack.entity.Account;
+import sy.common.util.cloudstack.entity.User;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.cloud.CloudMdmAccount;
+import sy.domain.vo.cloud.CloudMdmAccountVo;
+import sy.domain.vo.cloud.CloudMdmUserVo;
+import sy.service.product.SynchronizeDataService;
+
+/**
+ * 
+ * @author lidongbo
+ * 
+ */
+@Service("cloudMdmAccountService")
+public class CloudMdmAccountService extends
+		SynchronizeDataService<CloudMdmAccount, CloudMdmAccountVo> implements
+		CloudMdmAccountServiceI {
+
+	@Autowired
+	private CloudMdmUserServiceI cloudMdmUserService;
+
+	@Override
+	public void create(String userName,String email) throws ValidatorException {
+		ProviderContext context = new ProviderContext();
+		AccountRepository service = new AccountRepository(context);
+
+		Account account = new Account();
+		account.setAccounttype("2"); //Specify 0 for user, 1 for root admin, and 2 for domain admin
+		account.setPassword("1");
+
+		account.setEmail(email);
+		account.setFirstname(userName);
+		account.setLastname(userName);
+		account.setUsername(userName);
+		account.setTimezone("Asia/Shanghai");
+		
+		Account accountResult = service.create(account);
+		CloudMdmAccountVo accountVo = createVo(accountResult);
+
+		save(accountVo);
+
+		List<User> users = accountResult.getUser();
+		for (User user : users) {
+			CloudMdmUserVo vo = cloudMdmUserService.createVo(user);
+			vo.setAccountid(accountResult.getId());
+			cloudMdmUserService.save(vo);
+		}
+	}
+
+//	public void update(String id, String newAccountname,
+//			String currentAccountname) throws ValidatorException {
+//		CloudMdmAccountVo accountVo = findUnique("From CloudMdmAccount Where id = ? and state = 1", id);
+//		
+//		ProviderContext context = new ProviderContext();
+//		AccountRepository service = new AccountRepository(context);
+//		String interfaceId = accountVo.getInterfaceId();
+//		
+//		service.update(interfaceId, newAccountname, currentAccountname);
+//		
+//		update("Update CloudMdmAccount set name = ? Where id = ?", newAccountname,id);
+//		update("Update CloudMdmUser set username = ? Where id = ?", newAccountname,id);
+//		
+//	}
+
+	@Override
+	public void disable(String interfaceAccountId) throws ValidatorException {
+		ProviderContext context = new ProviderContext();
+		AccountRepository service = new AccountRepository(context);
+		service.disable(interfaceAccountId);
+	}
+	
+	@Override
+	public void enable(String interfaceAccountId) throws ValidatorException {
+		ProviderContext context = new ProviderContext();
+		AccountRepository service = new AccountRepository(context);
+		service.enable(interfaceAccountId);
+	}
+
+	
+	public CloudMdmAccountVo findAccountByName(String name) throws ValidatorException {
+		return findUnique(
+				"From CloudMdmAccount Where name = ? And state = 'enabled' And dataState = 1",
+				name);
+	}
+	
+	public CloudMdmUserServiceI getCloudMdmUserService() {
+		return cloudMdmUserService;
+	}
+
+	public void setCloudMdmUserService(CloudMdmUserServiceI cloudMdmUserService) {
+		this.cloudMdmUserService = cloudMdmUserService;
+	}
+
+}

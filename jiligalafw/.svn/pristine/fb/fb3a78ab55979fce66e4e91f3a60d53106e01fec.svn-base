@@ -1,0 +1,233 @@
+package sy.domain.vo.product;
+
+import java.util.Date;
+
+import sy.domain.vo.shared.BaseVo;
+
+/**
+ * 用户订单子表.
+ * @author cs
+ *
+ */
+public class CloudUserOrderItemVo extends BaseVo {
+	
+	private static final long serialVersionUID = -3624971544758545616L;
+	
+	/**
+	 * 订单子ID
+	 */
+	private String orderItemId;
+	/**
+	 * 订单主表ID
+	 */
+
+	private CloudUserOrderVo cloudUserOrder;
+	/**
+	 * 产品主表ID.
+	 */
+	private CloudMdmProductVo cloudMdmProduct;
+	/**
+	 * 产品子表ID.
+	 */
+	private CloudMdmProductItemVo cloudMdmProductItem;
+	/**
+	 * 产品类型（单一  or 组合）.
+	 */
+	private String prodType;
+	
+	
+	/**
+	 *一次性计费是否已发生.ONETIME_BILLING_FLAG
+	 */
+	private Integer oneTimeBillingFlag;
+	/**
+	 *  0 未开始计费 ，1 开始计费 .
+	 */
+	private Integer billingFlag;
+	/**
+	 *开始计费时间. BEGIN_BILLING_TIME
+	 */
+	private Date beginBillingTime;
+	
+	/**
+	 *下次计费时间. NEXT_BILLING_TIME
+	 */
+	private Date nextBillingTime;
+	/**
+	 * 资源销毁时间
+	 */
+	private Date resDestroyTime;
+	
+	/**
+	 * PROD_DETAIL_AMOUNT产品明细实际价格.
+	 */
+	private Double prodDetailPrice;
+	/**
+	 * PROD_DETAIL_PRICE产品明细促销价格
+	 */
+	private Double prodRebatePrice;
+	
+	private Double diskSize;
+	
+	/**
+	 * BILLING_TYPE计费类型（一次性、周期性）.
+	 */
+	private String billingType;
+	/**
+	 * PROMOTION_ID 促销活动ID
+	 */
+	private String promotionId;
+	/**
+	 * ACTIVITY_NAME促销活动名称
+	 */
+	private String activityName;
+	/**
+	 * 促销方式
+	 */
+	private Integer rebateFlag;
+	/**
+	 * 返利额度或者金额
+	 */
+	private Double rebateAmount;
+	/**
+	 * PROMOTION_START_DATE促销开始时间
+	 */
+	private Date promotionStartDate;
+	/**
+	 * PROMOTION_END_DATE促销结束时间
+	 */
+	private Date promotionEndDate;
+	/**
+	 * 备注
+	 */
+	private String remark;
+	
+	
+	public String getOrderItemId() {
+		return orderItemId;
+	}
+	public void setOrderItemId(String orderItemId) {
+		this.orderItemId = orderItemId;
+	}
+	public CloudUserOrderVo getCloudUserOrder() {
+		return cloudUserOrder;
+	}
+	public void setCloudUserOrder(CloudUserOrderVo cloudUserOrder) {
+		this.cloudUserOrder = cloudUserOrder;
+	}
+	public CloudMdmProductVo getCloudMdmProduct() {
+		return cloudMdmProduct;
+	}
+	public void setCloudMdmProduct(CloudMdmProductVo cloudMdmProduct) {
+		this.cloudMdmProduct = cloudMdmProduct;
+	}
+	public String getProdType() {
+		return prodType;
+	}
+	public void setProdType(String prodType) {
+		this.prodType = prodType;
+	}
+	public Integer getOneTimeBillingFlag() {
+		return oneTimeBillingFlag;
+	}
+	public void setOneTimeBillingFlag(Integer oneTimeBillingFlag) {
+		this.oneTimeBillingFlag = oneTimeBillingFlag;
+	}
+	public Integer getBillingFlag() {
+		return billingFlag;
+	}
+	public void setBillingFlag(Integer billingFlag) {
+		this.billingFlag = billingFlag;
+	}
+	public Date getBeginBillingTime() {
+		return beginBillingTime;
+	}
+	public void setBeginBillingTime(Date beginBillingTime) {
+		this.beginBillingTime = beginBillingTime;
+	}
+	public Date getNextBillingTime() {
+		return nextBillingTime;
+	}
+	public void setNextBillingTime(Date nextBillingTime) {
+		this.nextBillingTime = nextBillingTime;
+	}
+	public Date getResDestroyTime() {
+		return resDestroyTime;
+	}
+	public void setResDestroyTime(Date resDestroyTime) {
+		this.resDestroyTime = resDestroyTime;
+	}
+	public Double getProdDetailPrice() {
+		return prodDetailPrice;
+	}
+	public void setProdDetailPrice(Double prodDetailPrice) {
+		this.prodDetailPrice = prodDetailPrice;
+	}
+	public Double getDiskSize() {
+		return diskSize;
+	}
+	public void setDiskSize(Double diskSize) {
+		this.diskSize = diskSize;
+	}
+	public Double getProdRebatePrice() {
+		return prodRebatePrice;
+	}
+	public void setProdRebatePrice(Double prodRebatePrice) {
+		this.prodRebatePrice = prodRebatePrice;
+	}
+	public String getBillingType() {
+		return billingType;
+	}
+	public void setBillingType(String billingType) {
+		this.billingType = billingType;
+	}
+	public String getPromotionId() {
+		return promotionId;
+	}
+	public void setPromotionId(String promotionId) {
+		this.promotionId = promotionId;
+	}
+	public String getActivityName() {
+		return activityName;
+	}
+	public void setActivityName(String activityName) {
+		this.activityName = activityName;
+	}
+	public Integer getRebateFlag() {
+		return rebateFlag;
+	}
+	public void setRebateFlag(Integer rebateFlag) {
+		this.rebateFlag = rebateFlag;
+	}
+	public Double getRebateAmount() {
+		return rebateAmount;
+	}
+	public void setRebateAmount(Double rebateAmount) {
+		this.rebateAmount = rebateAmount;
+	}
+	public Date getPromotionStartDate() {
+		return promotionStartDate;
+	}
+	public void setPromotionStartDate(Date promotionStartDate) {
+		this.promotionStartDate = promotionStartDate;
+	}
+	public Date getPromotionEndDate() {
+		return promotionEndDate;
+	}
+	public void setPromotionEndDate(Date promotionEndDate) {
+		this.promotionEndDate = promotionEndDate;
+	}
+	public String getRemark() {
+		return remark;
+	}
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
+	public CloudMdmProductItemVo getCloudMdmProductItem() {
+		return cloudMdmProductItem;
+	}
+	public void setCloudMdmProductItem(CloudMdmProductItemVo cloudMdmProductItem) {
+		this.cloudMdmProductItem = cloudMdmProductItem;
+	}
+
+}

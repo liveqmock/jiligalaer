@@ -1,0 +1,117 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>资源管理</title>
+<%@ include file="/commons/meta.jsp"%>
+<style type="text/css">
+body {
+	background-color: #F2F2F2;
+	margin-left: 5px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+<script type="text/javascript">
+function doSave(){
+	$("#basicResourceVo").submit();
+}
+function doReturn(){
+	window.location ="${ctx}/resource/list.do";
+}
+function parendResHandle(val){
+	var pri = $("input[name='parentRes.resId']");
+	var prn = $("input[name='parentRes.resName']");
+	if(val == 'navigation'){
+		//pri.removeAttr('disabled');
+		//prn.removeAttr('disabled');
+		$("#parResTr").show();
+	}else{
+		//pri.attr('disabled','disabled');
+		//prn.attr('disabled','disabled');
+		pri.val("");
+		prn.val("");
+		$("#parResTr").hide();
+	}
+}
+
+function selectResType(){
+	var callback = function(result){
+		if(result){
+			parendResHandle(result.id);
+			$("input[name='resType.dictItemId']").val(result.id);
+			$("input[name='resType.itemName']").val(result.name);
+		}
+	}
+	openDictTree("${ctx}","resource",0,"r",$("input[name='resType.dictItemId']").val(),null,callback);
+}
+
+function selectNavRes(){
+	var callback = function(result){
+		if(result){
+			$("input[name='parentRes.resId']").val(result.id);
+			$("input[name='parentRes.resName']").val(result.name);
+		}
+	};
+	openResTree("${ctx}",0,"r",$("input[name='parentRes.resId']").val(),"$eq_resType_dictItemId=navigation",callback);
+}
+
+$(document).ready(function(){
+	parendResHandle($("input[name='resType.dictItemId']").val());
+});
+</script>
+</head>
+<body>  
+
+<div class="basic_form">
+<form:form modelAttribute="basicResourceVo" action="${ctx}/resource/save.do" method="post">
+	<form:errors path="errors" cssClass="commomError"/>
+	<table style="margin-left: 15px; margin-top: 10px; width: 400px;" border="0">
+		<tr>
+			<td><form:label path="resType.dictItemId">资源分类：</form:label></td>
+			<td>
+				<form:hidden path="resType.dictItemId"/>
+				<form:input path="resType.itemName" onclick="selectResType()" readonly="true" class="select_but"/>
+			</td>
+			<td><form:errors path="resType" cssClass="error"/>&nbsp;</td>
+		</tr>
+		<tr style="display: none" id="parResTr">
+			<td><form:label path="parentRes.resId">上级资源：</form:label></td>
+			<td>
+				<form:hidden path="parentRes.resId"  />
+				<form:input path="parentRes.resName" onclick="selectNavRes()" readonly="true" class="select_but"/>
+			</td>
+			<td><form:errors path="parentRes" cssClass="error"/>&nbsp;</td>
+		</tr>
+		<tr>
+			<td><form:label path="resName">资源名称：</form:label></td>
+			<td><form:input path="resName" /></td>
+			<td><form:errors path="resName"  cssClass="error"/>&nbsp;</td>
+		</tr>
+		<tr>
+			<td><form:label path="resUrl">地址：</form:label></td>
+			<td><form:input path="resUrl" /></td>
+			<td><form:errors path="resUrl" cssClass="error"/>&nbsp;</td>
+		</tr>
+		<tr>
+			<td><form:label path="sort">排序：</form:label></td>
+			<td><form:input path="sort" /></td>
+			<td><form:errors path="sort" cssClass="error"/>&nbsp;</td>
+		</tr>
+		<tr>
+			<td colspan="3" style="text-align: left; height: 50px; padding-left: 80px;" height="50">
+				<input  type="button" class="btn_bg" value="保 存" onclick="doSave()"/>
+				&nbsp;&nbsp;&nbsp;&nbsp;
+				<input  type="button" class="btn_bg" value="返 回" onclick="doReturn()"/>			
+			</td>
+		</tr>
+	</table>
+	
+</form:form>
+</div>
+</body>
+</html>

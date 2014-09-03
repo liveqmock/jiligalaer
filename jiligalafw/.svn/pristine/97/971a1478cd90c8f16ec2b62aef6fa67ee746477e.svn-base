@@ -1,0 +1,88 @@
+package sy.service.expense;
+
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+
+import sy.common.model.QueryContext;
+import sy.common.util.Constants;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.expense.AccountExpenseItem;
+import sy.domain.vo.expense.AccountExpenseItemVo;
+import sy.domain.vo.expense.BillQueryParameterVo;
+import sy.service.shared.BaseServiceTemplate;
+
+/**
+ * 账户费用明细
+ * @author luobin
+ * 
+ */
+@Service("accountExpenseItemService")
+public class AccountExpenseItemService extends BaseServiceTemplate<AccountExpenseItem, AccountExpenseItemVo> implements AccountExpenseItemServiceI{
+
+	@Override
+	public List<Object[]> getAccountExpenseTotalList(
+			BillQueryParameterVo queryParaVo) {
+
+		StringBuilder sqlBuilder = new StringBuilder();
+		sqlBuilder.append("SELECT cast(item.exp_date as char(10)) exp_date,sum(item.exp_amount) amount ");
+		sqlBuilder.append("FROM cloud_user_expense_item item ");
+		sqlBuilder.append("inner join cloud_user_order uOrder on uOrder.order_id=item.order_id ");
+		sqlBuilder.append("inner join basic_user orderUser on orderUser.user_id=uOrder.user_id ");
+		sqlBuilder.append("where 1=1 ");
+		
+		//管理员、账户、用户 不同数据范围
+		if (queryParaVo.getBasicUserVo().getUserFlag().equals(Constants.USER_FLAG_ACCOUNT)) {
+			sqlBuilder.append(" AND uOrder.account_id='" + queryParaVo.getBasicUserVo().getUserId() +"'");
+		} if (queryParaVo.getBasicUserVo().getUserFlag().equals(Constants.USER_FLAG_USER)) {
+			sqlBuilder.append(" AND orderUser.user_id='" + queryParaVo.getBasicUserVo().getUserId() +"'");
+		}
+		
+		//计费查询区间
+		if(StringUtils.isNotBlank(queryParaVo.getExpDateStart())) {
+			sqlBuilder.append(" and item.exp_date>='" + queryParaVo.getExpDateStart() + "'");
+		}
+		
+		if(StringUtils.isNotBlank(queryParaVo.getExpDateEnd())) {
+			sqlBuilder.append(" and item.exp_date<='" + queryParaVo.getExpDateEnd() + "'");
+		}
+		
+		sqlBuilder.append("group by cast(item.exp_date as char(10))");
+		
+		
+		return super.getBaseDao().findBySQL(sqlBuilder.toString());
+	}
+
+	@Override
+	public Double getExpenseAmoutTotal(BillQueryParameterVo queryParaVo) {
+
+		StringBuilder sqlBuilder = new StringBuilder();
+		sqlBuilder.append("SELECT 1, sum(item.exp_amount) amount ");
+		sqlBuilder.append("FROM cloud_user_expense_item item ");
+		sqlBuilder.append("inner join cloud_user_order uOrder on uOrder.order_id=item.order_id ");
+		sqlBuilder.append("inner join basic_user orderUser on orderUser.user_id=uOrder.user_id ");
+		sqlBuilder.append("where 1=1 ");
+		
+		//管理员、账户、用户 不同数据范围
+		if (queryParaVo.getBasicUserVo().getUserFlag().equals(Constants.USER_FLAG_ACCOUNT)) {
+			sqlBuilder.append(" AND uOrder.account_id='" + queryParaVo.getBasicUserVo().getUserId() +"'");
+		} if (queryParaVo.getBasicUserVo().getUserFlag().equals(Constants.USER_FLAG_USER)) {
+			sqlBuilder.append(" AND orderUser.user_id='" + queryParaVo.getBasicUserVo().getUserId() +"'");
+		}
+		
+		//计费查询区间
+		if(StringUtils.isNotBlank(queryParaVo.getExpDateStart())) {
+			sqlBuilder.append(" and item.exp_date>='" + queryParaVo.getExpDateStart() + "'");
+		}
+		
+		if(StringUtils.isNotBlank(queryParaVo.getExpDateEnd())) {
+			sqlBuilder.append(" and item.exp_date<='" + queryParaVo.getExpDateEnd() + "'");
+		}
+		
+		List<Object[]> lstTotal = super.getBaseDao().findBySQL(sqlBuilder.toString());
+		return (Double)lstTotal.get(0)[1];
+	}
+
+	
+}

@@ -1,0 +1,249 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>单一产品活动维护</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+<!--
+body {
+	background-color: #000000;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<script type="text/javascript">
+$(document).ready(function(){
+	
+	var rebateValue=$('input:radio[name="rebateFlag"]:checked').val();
+	if(rebateValue=="1"){
+		 $("#lblRebate").html("%");
+	}else{
+		 $("#lblRebate").html("元");
+	}
+	
+	$(":radio").click(function(){
+		var val=$('input:radio[name="rebateFlag"]:checked').val();
+ 		if(val=="1"){
+ 			 $("#lblRebate").html("%");
+ 		}else{
+ 			 $("#lblRebate").html("元");
+ 		}
+  });
+});
+
+function savePromotionInfo(){
+	if(checkSelProd()){
+		$("#cloudPromotionActivityVo").submit();
+	}
+}
+	
+function closeWin(){
+	window.close(); 
+}
+
+function doReturn(){
+	window.location ="${ctx}/promotion/list.do";
+}
+
+function checkAllProd(){
+	var iframe = window.frames['singleProductFrame'];
+	var box=document.getElementById("checkall");
+	var boxList = iframe.document.getElementsByName("checkSingleProduct");
+	for(var i=0;i<boxList.length;i++){
+		if(box.type=="checkbox" && boxList[i].type=="checkbox"){
+			if(box.checked==true){
+				boxList[i].checked=true;
+			}else{
+				boxList[i].checked=false;
+			}	
+		}
+	}
+}
+
+function checkSelProd() {
+	var iframe = window.frames['singleProductFrame'];
+	var allProd = iframe.document.getElementsByName("checkSingleProduct");
+	var prodIds = "";
+	var tag = false;
+	for ( var i = 0; i < allProd.length; i++) {
+		if (allProd.item(i).checked) {
+			tag = true;
+			prodIds = prodIds + allProd.item(i).getAttribute("value") + ",";
+			continue;
+		}
+	}
+	if (tag) {
+		$("#prodIds").val(prodIds);
+		return true;
+	} else {
+		alert("请选择需参加活动的单一产品!");
+		return false;
+	}
+}
+
+function query() {
+	
+	var iframe = window.frames['singleProductFrame'];
+	iframe.document.getElementById("prodName").value = document.getElementById("prodNameCur").value;
+	iframe.document.getElementById("cloudPromotionActivityVoList").submit();
+}
+
+</script>
+</head>
+<body>
+		<form:form modelAttribute="cloudPromotionActivityVo" action="${ctx}/promotion/savePromotionInfo.do" method="post" name="listForm">
+		  <form:input path="prodIds" type="hidden"/>
+		  <form:input path="promotionId" type="hidden"/>
+          <table width="962" border="0" cellpadding="0" cellspacing="0">
+			<tr height="4"><td bgcolor="#ffffff"></td></tr>
+            <tr>
+              <td align="center" valign="top" bgcolor="#ffffff">
+              
+					<table width="952" height="680" border="0" cellspacing="0" cellpadding="0">
+                  	  <tr>
+                  	    <td width="5"></td>
+                    	<td align="left" valign="top">
+						  <table width="100%" border="0" cellspacing="1" cellpadding="0" bgcolor="#a0a0a0">
+	                      	<tr height="20" bgcolor="#ffffff" >
+                          	  <td>
+		                       		<table width="100%" border="0" cellspacing="1" cellpadding="0" >
+		                           	  	<!-- 一键式搜索 -->
+		                                <tr height="30">
+		                              	  <td></td>
+		                                  <td width="80" class="f13_1" align="left">&nbsp;&nbsp;活动类型：</td>
+		                                  <td width="690" class="f13_1" id="promotionTitle">
+		                                     	单一产品活动
+		                                  </td>
+		                                  <td><form:input path="promotionType" type="hidden"/></td>
+		                                </tr>                               	  	
+		                                <tr height="30">
+		                              	  <td></td>
+		                                  <td width="80" class="f13_1" align="left">&nbsp;&nbsp;活动名称：</td>
+		                                  <td width="690">
+		                                     <form:input path="activityName" type="text"  class="text13" size="35" />&nbsp;&nbsp;<font size="2" color="red"><form:errors path="activityName" /></font>
+		                                  </td>
+		                                  <td></td>
+		                                </tr>
+		                                <tr height="30">
+		                              	  <td></td>
+		                                  <td width="80" class="f13_1" align="left">&nbsp;&nbsp;活动时间：</td>
+		                                  <td class="f13_1">
+		                                  	<form:input path="startDate" class="date_but" size="30" onfocus="WdatePicker()" readonly="true" id="startDate" />
+											至&nbsp;<form:input path="endDate" class="date_but" size="30" onfocus="WdatePicker()" readonly="true" id="endDate" />&nbsp;&nbsp;
+											<font size="2" color="red"><form:errors path="startDate" /></font>                                        
+		                                  </td>
+		                                  <td></td>
+		                                </tr>
+		                                <tr height="30">
+		                              	  <td></td>
+		                                  <td width="80" class="f13_1" align="left">&nbsp;&nbsp;返利方式：</td>
+		                                  <td width="690" class="f13_1">
+											<form:radiobutton path="rebateFlag" value="1" /> 比例
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+											<form:radiobutton path="rebateFlag" value="2" /> 金额
+		                                  </td>
+		                                  <td></td>
+		                                </tr>
+		                                <tr height="30">
+		                              	  <td></td>
+		                                  <td width="80" class="f13_1" align="left">&nbsp;&nbsp;返利额度：</td>
+		                                  <td width="690" >
+								 			<form:input path="rebateAmount" class="text13" size="10" id="rebateAmount" />&nbsp;<span id="lblRebate" class="text13">%</span>&nbsp;&nbsp;<font size="2" color="red"><form:errors path="rebateAmount" /></font>
+		                                  </td>
+		                                  <td></td>
+		                                </tr>
+		                                <tr height="30">
+		                              	  <td></td>
+		                                  <td width="80" class="f13_1" align="left">&nbsp;&nbsp;状态：</td>
+		                                  <td width="690" class="f13_1">
+											<form:radiobutton path="state" value="1" />活动
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+											<form:radiobutton path="state" value="0" />停用
+		                                  </td>
+		                                  <td></td>
+		                                </tr>                                    
+		                            </table>
+		                          </td>
+		                        </tr>
+		                      </table>
+		                    </td>
+		                  </tr>
+						<tr style="height:2px"><td colspan="2" style="height:2px"></td></tr>
+						
+						<!--<tr><td width="20"></td><td height="20" class="f13_1" align="left">产品关联：</td></tr>-->
+						<tr>
+						  <td width="5"></td>
+							<td height="50" class="f13_1" align="left" valign="bottom">
+								产品名称：<input type="text" name="prodNameCur" id="prodNameCur"  />
+								&nbsp;&nbsp;&nbsp;&nbsp;
+								<input type="button" value="筛选" onclick="query()" class="btn_bg" style="width: 60px;"/>
+							</td>
+						</tr>
+						
+						<tr style="height:4px"><td colspan="2" style="height:4px"></td></tr>
+						<tr>
+			                <td width="5"></td>
+							<td align="right" valign="top">
+						      <table width="100%" height="100%" border="0" cellpadding="0" cellspacing="0">
+						        <tr>
+						          <td align="left" valign="top" bgcolor="#FFFFFF" height="330">
+						     		<table width="99.5%" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+						              <tr bgcolor="#92b8c1" height="20">
+						                <td width="5%" align="center" class="f12">全选<input type="checkbox" name="checkall" id="checkall" onclick="checkAllProd()" /></td>
+						                <td width="5%" align="center" class="f12">序号</td>
+						                <td width="15%" align="center" class="f12">产品类型</td>
+						                <td width="35%" align="center" class="f12">产品名称 </td>
+						                <td width="25%" align="center" class="f12">价格 </td>
+						                <td width="5%" align="center" class="f12">状态 </td>
+						              </tr>
+						            </table>
+						            <iframe name="singleProductFrame" id="singleProductFrame" scrolling="no" src="${ctx }/promotion/singleProductList.do?promotionId=${cloudPromotionActivityVo.promotionId}" height="350px" width="99%"></iframe>
+						           <!-- <div id="order" style="height:220px; z-index:1; overflow-y: scroll;overflow-x:no;">   
+						             <table width="98%" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+						               <tr bgcolor="#deecef" height="20">
+						                  <td width="5%" align="center" class="f12_1">1</td>
+						                  <td width="10%" align="left" class="f12_1">高级网络一</td>
+						                  <td width="25%" align="left" class="f12_1">1CPU + 2Memory</td>
+						                  <td width="30%" align="center" class="f12_1"></td>
+						                  <td width="20%" align="center" class="f12_1"></td>
+						                  <td width="20%" align="center" class="f12_1"></td>
+						                </tr> 
+						              </table>
+						            </div> -->
+						          </td>
+						        </tr>
+						      </table>							
+							</td>
+				        </tr>
+						                     
+						<tr>
+						  <td colspan="2" align="center" valign="middle" height="50" style="text-align: center;">
+						  	<a href="#"><img src="${ctx}/images/btn11.png" alt="确定" onclick="javascript:savePromotionInfo();" width="101" height="30" border="0" align="absmiddle"/></a>
+							&nbsp;&nbsp;&nbsp;&nbsp;
+						   <a href="javascript:window.parent.parent.close();"><img src="${ctx}/images/btn8.png" alt="关闭" width="101" height="30" border="0" align="absmiddle"/></a>
+						  </td>
+						</tr>
+						<tr><td height="20" colspan="2" ></td></tr>  
+						                    
+			        </table>
+			        
+	       	  </td>
+	      </tr>
+	   </table>
+
+		</form:form>
+</body>
+</html>

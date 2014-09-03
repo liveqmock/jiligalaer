@@ -1,0 +1,243 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html id="content">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>账户退款编辑</title>
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/scripts/autoheight.js"></script>
+<style type="text/css">
+body {
+	background-color: #000000;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+<script type="text/javascript">
+	function doSave(){
+		if($("#refundAmount").val() == ''){
+			alert("请输入退款金额！");
+			return;
+		}
+		if(!checkAmount($("#refundAmount").val())){
+			alert("请输入正确的退款金额！");
+			return;
+		}
+		if(parseFloat($("#balanceAmount").val()) < parseFloat($("#refundAmount").val())){
+			alert("退款金额不能大于账户余额！");
+			return;
+		}
+		
+		var form = document.forms.editForm;
+		form.submit();
+	}
+	function back(){
+		window.location="${ctx}/processRefund/list.do";
+	}
+</script>
+<script type="text/javascript">
+var msg = '${processMsg}';
+if(msg!=''){
+	alert(msg);
+	//window.parent.parent.parent.close();
+	back()
+}
+</script>
+</head>
+<body>
+	<form:form modelAttribute="accountRefundVo" action="${ctx}/processRefund/save.do" method="post" name="editForm">
+	  <form:errors path="errors" cssClass="commomError" />
+
+      <table width="962" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center"  valign="top" bgcolor="#ffffff">
+
+			<table width="962" border="0" cellpadding="0" cellspacing="0">
+				<tr>
+					<td align="center" valign="top" bgcolor="#F2F2F2">
+						<table width="100%" border="0" cellpadding="0" cellspacing="0">
+							<tr>
+								<td height="40" align="left" valign="middle"><span class="f18b2">账户退款</span></td>
+								<td align="left" valign="middle">&nbsp;</td>
+							</tr>
+							<tr>
+								<td height="2" colspan="2" align="center" valign="middle">
+									<img src="${ctx}/images/sheet_line_2.jpg" width="940" height="2" />
+								</td>
+							</tr>
+
+							<tr>
+								<td align="left" valign="top">
+									<table width="100%" height="150" border="0" cellpadding="0" cellspacing="0">
+										<tr height="30">
+											<td width="20"></td>
+											<td align="left" class="f13_1">账户名称：</td>
+											<td align="left" class="f13_1">
+												${accountRefundVo.basicUser.userAccount }
+												<b>（余额：${expVo.payTotalAmount - expVo.expTotalAmount }元）</b>
+												<input type="hidden" value="${expVo.payTotalAmount - expVo.expTotalAmount }" name="balanceAmount" id="balanceAmount" />
+											</td>
+											<td align="left"></td>
+										</tr>
+										<tr height="30">
+											<td width="20"></td>
+											<td width="80" align="left" class="f13_1">申请日期：</td>
+											<td align="left" class="f13_1">
+												<fmt:formatDate value="${accountRefundVo.applyDate }" pattern="yyyy-MM-dd HH:mm:ss"/>
+											</td>
+											<td align="left"></td>
+										</tr>
+										<tr height="30">
+											<td width="20"></td>
+											<td align="left" class="f13_1">申请金额：</td>
+											<td align="left" class="f13_1">${accountRefundVo.applyAmount }（元）</td>	
+											<td align="left"></td>
+										</tr>
+										<tr height="30">
+											<td width="20"></td>
+											<td align="left" class="f13_1">申请备注：</td>
+											<td align="left" class="f13_1">${accountRefundVo.applyRemark }</td>	
+											<td align="left"></td>
+										</tr>
+										
+										<tr>
+											<td height="25" colspan="4" align="left" valign="middle">
+												&nbsp;&nbsp;&nbsp;&nbsp;<img src="${ctx}/images/sheet_line_2.jpg" width="470" height="2" />
+											</td>
+										</tr>
+										<tr height="30">
+											<td width="20"></td>
+											<td align="left" class="f13_1">退款金额：</td>
+											<td align="left" class="f13_1">
+												<form:input path="refundAmount" maxlength="10" id="refundAmount" /> 元
+											</td>	
+											<td align="left"></td>
+										</tr>
+										<tr height="30">
+											<td width="20"></td>
+											<td width="80" align="left" class="f13_1">退款日期：</td>
+											<td align="left">
+												<form:input path="refundDate" cssClass="date_but" value="${refundDate }"/>
+											</td>
+											<td align="left"></td>
+										</tr>
+										<tr height="30">
+											<td width="20"></td>
+											<td width="80" align="left" class="f13_1">退款状态：</td>
+											<td align="left">
+												<form:select path="state">
+													<form:option value="1">确认退款</form:option>
+													<form:option value="2">拒绝退款</form:option>
+												</form:select>
+											</td>
+											<td align="left"></td>
+										</tr>
+										<tr height="30">
+											<td width="20"></td>
+											<td align="left" class="f13_1">备注：</td>
+												<td align="left">
+													<form:textarea path="refundRemark" rows="5" cols="50"/>
+												</td>	
+											<td align="left"></td>
+										</tr>
+																																								
+									</table>
+								</td>
+								<td align="right" valign="top"></td>
+							</tr>
+							<tr><td height="14" colspan="2"></td></tr>
+			                <tr>
+			                   <td colspan="2" align="center" valign="middle">
+			                  	  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+			                       <tr>
+			                         <td width="15%" align="center"" valign="top">
+			                         	<a href="javascript:doSave()"><img src="${ctx}/images/btns1.png" alt="保存" width="101" height="30" border="0" align="absmiddle"/></a>
+			                         </td>
+			                         <td width="1%" ></td>
+			                         <td width="45%" align="left" valign="top">
+			                         	<a href="javascript:back();"><img src="${ctx}/images/btn10.png" alt="返回" width="101" height="30" border="0" align="absmiddle" /></a>
+			                         </td>
+									 <!--
+			                         <td width="45%" align="left" valign="top">
+			                         	<a href="javascript:void(0)"><img src="${ctx}/images/btnc1.png" alt="重置" onclick="document.forms.editForm.reset();return false;" width="101" height="30" border="0" align="absmiddle"/></a>
+			                         </td>
+			                         -->
+			                       </tr>
+			                     </table>
+			                   </td>
+			                </tr>
+							<tr><td height="14" colspan="2"></td></tr>
+							<tr>
+								<td height="2" colspan="2" align="center" valign="middle"><img src="${ctx}/images/sheet_line_2.jpg" width="940" height="2" /></td>
+							</tr>
+							<tr><td height="14" colspan="2"></td></tr>
+						</table>
+
+						<div id="middle_sheet_s_name">
+							<a href="javascript:accInfo('detailInfo',0,'${accountRefundVo.basicUser.userId }');"><img src="${ctx}/images/menu_s_0_s.png" border="0" align="absmiddle" id="detailInfo" /></a>
+							<a href="javascript:accInfo('orderInfo',1,'${accountRefundVo.basicUser.userId }');"><img src="${ctx}/images/menu_s_1.jpg" border="0" align="absmiddle" id="orderInfo" /></a>
+							<a href="javascript:accInfo('billInfo',1,'${accountRefundVo.basicUser.userId }');"><img src="${ctx}/images/menu_s_2.jpg" border="0" align="absmiddle" id="billInfo" /></a>							
+						</div>
+						<script type="text/javascript">
+							function accInfo(url,type,userId) {
+								var path="accPay";
+								if(type == 1){
+									path="accInfo";
+								}
+								$("#detailInfo")[0].src="${ctx}/images/menu_s_0.jpg";
+								$("#orderInfo")[0].src="${ctx}/images/menu_s_1.jpg";
+								$("#billInfo")[0].src="${ctx}/images/menu_s_2.jpg";
+								
+								var map = getMap(); 
+								map.put("detailInfo","${ctx}/images/menu_s_0_s.png");
+								map.put("orderInfo","${ctx}/images/menu_s_1_s.png");
+								map.put("billInfo","${ctx}/images/menu_s_2_s.png");
+								
+								$("#"+url)[0].src=map.get(url);
+								document.getElementById("refundForm").src = "${ctx}/" + path + "/" + url + ".do?userId="+userId;
+							}
+						</script>
+						
+						<div id="middle_sheet_s">
+							<table width="855" border="0" cellpadding="0" cellspacing="0">
+								<tr>
+									<td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_1.jpg" width="14" height="14" /></td>
+									<td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_2.jpg"></td>
+									<td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_3.jpg" width="14" height="14" /></td>
+								</tr>
+								<tr>
+									<td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_4.jpg"></td>
+									<td align="center" valign="top" bgcolor="#FFFFFF" height="500">
+
+										<iframe id="refundForm" name="userRefundForm" src="${ctx}/accPay/detailInfo.do?userId=${accountRefundVo.basicUser.userId }" frameborder="0" scrolling="no" height="100%" width="100%"></iframe>
+
+									</td>
+									<td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_5.jpg"></td>
+								</tr>
+								<tr>
+									<td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_6.jpg" width="14" height="14" /></td>
+									<td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_7.jpg"></td>
+									<td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_8.jpg" width="14" height="14" /></td>
+								</tr>
+							</table>
+						</div>
+
+					</td>
+				</tr>
+			</table>
+			
+          </td>
+        </tr>
+      </table>
+
+	</form:form>
+</body>
+</html>

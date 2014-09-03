@@ -1,0 +1,392 @@
+/*
+ * 创建日期 2005-6-29
+ *
+ */
+package sy.util2;
+
+import java.io.UnsupportedEncodingException;
+import java.util.Date;
+import java.util.Properties;
+
+import javax.activation.DataHandler;
+import javax.activation.FileDataSource;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.mail.internet.MimeUtility;
+
+import org.apache.log4j.Logger;
+
+import sun.misc.BASE64Encoder;
+
+import com.cits.online.common.CommonConstants;
+
+/**
+ * 邮件处理类
+ * 
+ * 
+ * @author Wangzz
+ */
+public class CITSendMailUtil {
+	/** charset */
+	protected static String charset = "UTF-8";
+
+	// protected String charset = "GB2312";
+
+	/** 日志 */
+	// protected static Logger logger = (Logger) IoC.get("Logger");
+	protected static Logger logger = Logger.getLogger(CommonConstants.LOG_NAME);
+
+	// protected static Logger logger = Logger.getLogger(CITSendMailUtil.class);
+
+	/** 收件人 */
+	protected InternetAddress mailToAddress = null;
+
+	/** 信息 */
+	protected MimeMessage mailMessage = null;
+
+	/** 发件人地址 */
+	protected InternetAddress mailFromAdress = null;
+
+	/** 邮件发送日期 */
+	protected Date mailSendDate = null;
+
+	/** 邮件标题! */
+	protected String mailSubject = "";
+
+	/** 暗送人 */
+	protected String mailBcc;
+
+	/** 多邮件体 */
+	protected MimeMultipart multipart = new MimeMultipart();
+
+	/** 邮件体部分 */
+	protected MimeBodyPart messageBodyPart;
+
+	/** Session */
+	protected Session sendMailSession = null;
+
+	/**
+	 * Creates a new CmnSendMail object.
+	 */
+	private CITSendMailUtil() {
+
+	}
+
+	/**
+	 * 取得SMTP配置信息
+	 * 
+	 * @param smtpHost SMTP 主机名
+	 * 
+	 * @param username SMTP 用户名
+	 * 
+	 * @param password SMTP 密码
+	 */
+	public CITSendMailUtil(String smtpHost, String username, String password) {
+		this(smtpHost, username, password, "true", charset);
+	}
+
+	/**
+	 * 取得SMTP配置信息
+	 * 
+	 * @param smtpHost SMTP 主机名
+	 * 
+	 * @param username SMTP 用户名
+	 * 
+	 * @param password SMTP 密码
+	 * @param smtpAuth SMTP 服务器是否要求身份验证
+	 * 
+	 */
+	public CITSendMailUtil(String smtpHost, String username, String password, String smtpAuth) {
+		this(smtpHost, username, password, smtpAuth, charset);
+	}
+
+	/**
+	 * 取得SMTP配置信息
+	 * 
+	 * @param smtpHost SMTP 主机名
+	 * 
+	 * 
+	 * @param username SMTP 用户名
+	 * 
+	 * 
+	 * @param password SMTP 密码
+	 * @param smtpAuth SMTP 服务器是否要求身份验证
+	 * @param incharset 
+	 * 
+	 * 
+	 */
+	public CITSendMailUtil(String smtpHost, String username, String password, String smtpAuth, String incharset) {
+		if (incharset != null && !incharset.equals("")) {
+			charset = incharset;
+		}
+
+		logger.info("开始发送邮件");
+
+		Properties props = new Properties();
+
+		System.setProperty("mail.mime.charset", charset);
+		props.put("mail.smtp.host", smtpHost);
+		props.put("mail.smtp.auth", smtpAuth);
+
+		if ("true".equals(smtpAuth)) {
+			// smtp服务器需要验证，用CITAuthertiactor来创建mail session
+			CITSendMailUtil.CITAuthenticator myauth = new CITSendMailUtil().new CITAuthenticator(username, password);
+
+			sendMailSession = Session.getInstance(props, myauth);
+		} else {
+			sendMailSession = Session.getInstance(props);
+		}
+
+		mailMessage = new MimeMessage(sendMailSession);
+		logger.info(mailMessage);
+		messageBodyPart = new MimeBodyPart();
+	}
+
+	/**
+	 * 设定收件人地址
+	 * 
+	 * @param mailTo 收件人地址
+	 * @param mailType 收件人类型
+	 * 
+	 * 
+	 * @throws Exception
+	 * 
+	 * @throws NullPointerException
+	 * 
+	 */
+
+	public void setMailTo(String[] mailTo, String mailType) throws Exception {
+		for (int i = 0; i < mailTo.length; i++) {
+			mailToAddress = new InternetAddress(mailTo[i]);
+			String address = mailToAddress.getAddress();
+			String personal = mailToAddress.getPersonal();
+			if (address != null && personal != null) {
+				mailToAddress = new InternetAddress(address, personal, charset);
+			}
+
+			if (mailType == null) {
+				throw new NullPointerException("MailType is null!");
+			} else if (mailType.equalsIgnoreCase("to")) {
+				logger.debug("设定收件人 = " + mailTo[0]);
+				mailMessage.addRecipient(Message.RecipientType.TO, mailToAddress);
+			} else if (mailType.equalsIgnoreCase("cc")) {
+				mailMessage.addRecipient(Message.RecipientType.CC, mailToAddress);
+			} else if (mailType.equalsIgnoreCase("bcc")) {
+				mailMessage.addRecipient(Message.RecipientType.BCC, mailToAddress);
+			} else {
+				throw new Exception("Unknown mailType: " + mailType + "!");
+			}
+		}
+	}
+
+	/**
+	 * 设定发件人
+	 * 
+	 * 
+	 * @param mailFrom eg. test@citbj.com; CITBJ <test@citbj.com>
+	 * 
+	 * @throws MessagingException
+	 * @throws UnsupportedEncodingException
+	 */
+	public void setMailFrom(String mailFrom) throws MessagingException, UnsupportedEncodingException {
+		mailFromAdress = new InternetAddress(mailFrom);
+		String address = mailFromAdress.getAddress();
+		String personal = mailFromAdress.getPersonal();
+		if (address != null && personal != null) {
+			mailFromAdress = new InternetAddress(address, personal, charset);
+		}
+		logger.info(mailMessage);
+		mailMessage.setFrom(mailFromAdress);
+	}
+
+	/**
+	 * 设定发送时间
+	 * 
+	 * 
+	 * @param sendDate 发件日期
+	 * 
+	 * @throws MessagingException
+	 */
+	public void setSendDate(Date sendDate) throws MessagingException {
+		this.mailSendDate = sendDate;
+		mailMessage.setSentDate(sendDate);
+	}
+
+	/**
+	 * 设定邮件主题
+	 * 
+	 * @param mailSubject 邮件主题
+	 * @throws MessagingException
+	 */
+	public void setSubject(String mailSubject) throws MessagingException {
+		this.mailSubject = mailSubject;
+		mailMessage.setSubject(mailSubject, charset);
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @throws MessagingException
+	 * @throws NullPointerException
+	 * 
+	 */
+	public void sendMail() throws MessagingException {
+
+		if ((mailBcc != null) && !mailBcc.equals("")) {
+			try {
+				String[] strtemp = { mailBcc };
+				setMailTo(strtemp, "bcc");
+			} catch (Exception e) {
+			}
+		}
+
+		if (mailToAddress == null) {
+			throw new NullPointerException("MailToAddress is null!");
+		} else {
+			mailMessage.setContent(multipart);
+			logger.info("邮件发送中...");
+			Transport.send(mailMessage);
+			logger.info("邮件发送完成。");
+		}
+	}
+
+	/**
+	 * 设定文本格式邮件内容
+	 * 
+	 * @param mailContent 邮件内容
+	 * 
+	 * @throws MessagingException
+	 * 
+	 */
+	public void setMailContent(String mailContent) throws MessagingException {
+		messageBodyPart.setText(mailContent);
+		multipart.addBodyPart(messageBodyPart);
+	}
+
+	/**
+	 * 设定HTML格式邮件内容
+	 * 
+	 * @param mailContent 邮件内容
+	 * 
+	 * @throws MessagingException
+	 * 
+	 */
+	public void setMailHtmlContent(String mailContent) throws MessagingException {
+		multipart = new MimeMultipart("related");
+		messageBodyPart.setContent(mailContent, "text/html; charset=" + charset);
+		multipart.addBodyPart(messageBodyPart);
+	}
+
+	/**
+	 * 设置附件
+	 * 
+	 * @param fileNames 文件名数组
+	 * @throws MessagingException
+	 * @throws UnsupportedEncodingException
+	 */
+	public void setfileAttacment(String fileNames[]) throws MessagingException, UnsupportedEncodingException {
+		for (int i = 0; fileNames != null && i < fileNames.length; i++) {
+			String fileName = fileNames[i];
+			if (fileName != null && !fileName.trim().equals("")) {
+				logger.info("正在添加附件:" + fileName);
+				FileDataSource source = new FileDataSource(fileName);
+				MimeBodyPart mBodyPart = new MimeBodyPart();
+
+				mBodyPart.setDataHandler(new DataHandler(source));
+
+				BASE64Encoder enc = new BASE64Encoder();// 该类位于jre/lib/rt.jar中
+
+				// fds为FileDataSource实例
+				mBodyPart.setFileName("=?GBK?B?" + enc.encode((source.getName()).getBytes()) + "?=");
+				// mBodyPart.setFileName(MimeUtility.encodeWord(source.getName()));
+
+				// logger.info("MimeUtility.getDefaultJavaCharset() = "
+				// + MimeUtility.getDefaultJavaCharset());
+				multipart.addBodyPart(mBodyPart);
+			}
+		}
+	}
+	
+
+	/**
+	 * 设置附件	 * 
+	 * @param filePaths 文件路径数组
+	 * @param fileNames 文件名数组
+	 * @throws MessagingException
+	 * @throws UnsupportedEncodingException
+	 */
+	public void setfileAttacment(String filePaths[], String fileNames[]) throws MessagingException, UnsupportedEncodingException {
+		for (int i = 0; filePaths != null && i < filePaths.length; i++) {
+			String filePath = filePaths[i];
+			if (filePath != null && !filePath.trim().equals("")) {
+				
+				FileDataSource source = new FileDataSource(filePath);
+				MimeBodyPart mBodyPart = new MimeBodyPart();
+
+				mBodyPart.setDataHandler(new DataHandler(source));
+
+//				BASE64Encoder enc = new BASE64Encoder();// 该类位于jre/lib/rt.jar中
+
+				
+				// fds为FileDataSource实例
+				String fileName = source.getName();
+				if(fileNames != null && i < fileNames.length){
+					fileName = CmnUtil.nvl(fileNames[i]);
+				}
+				logger.info("正在添加附件:" + fileName + "(路径：" + filePath + ")");
+//				mBodyPart.setFileName("=?GBK?B?" + enc.encode((file.getName()).getBytes()) + "?=");
+				mBodyPart.setFileName(MimeUtility.encodeWord(fileName, "GB2312",null));   
+//				mBodyPart.setFileName(new String(fileName.getBytes(charset),"GBK"));
+//				 mBodyPart.setFileName(MimeUtility.encodeText(fileName));
+
+				// logger.info("MimeUtility.getDefaultJavaCharset() = "
+				// + MimeUtility.getDefaultJavaCharset());
+				multipart.addBodyPart(mBodyPart);
+			}
+		}
+	}
+	
+
+	/**
+	 * SMTP 需要验证时候的验证类
+	 * 
+	 * 
+	 * @author Wangzz
+	 */
+	class CITAuthenticator extends javax.mail.Authenticator {
+		/** 用户名 */
+		private String strUser;
+
+		/** 密码 */
+		private String strPwd;
+
+		/**
+		 * Creates a new CITAuthenticator object.
+		 * 
+		 * @param user 用户名
+		 * 
+		 * @param password 密码
+		 */
+		public CITAuthenticator(String user, String password) {
+			this.strUser = user;
+			this.strPwd = password;
+		}
+
+		/**
+		 * 取得验证信息
+		 * 
+		 * @return 验证信息
+		 */
+		protected PasswordAuthentication getPasswordAuthentication() {
+			return new PasswordAuthentication(strUser, strPwd);
+		}
+	}
+}

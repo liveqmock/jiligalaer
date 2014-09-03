@@ -1,0 +1,403 @@
+package sy.controller.base;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import net.sf.json.JSONObject;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.SessionAttributes;
+
+import sy.common.mail.EmailHandler;
+import sy.common.mail.EmailInfo;
+import sy.common.model.ECContext;
+import sy.common.model.QueryContext;
+import sy.common.util.Constants;
+import sy.common.util.DateUtil;
+import sy.common.util.validator.ValidatorException;
+import sy.controller.shared.BaseControllerTemplate;
+import sy.domain.vo.base.BasicDictItemVo;
+import sy.domain.vo.base.BasicUserVo;
+import sy.service.base.BasicDictItemServiceI;
+import sy.service.base.BasicUserServiceI;
+import sy.service.shared.BasicServiceI;
+
+/**
+ * 账户审批（账户激活后需要管理员审批，是否可以登录系统）
+ * @author luobin
+ * 
+ */
+@Controller
+@RequestMapping("/accApproval")
+@SessionAttributes("basicUserVo")
+public class AccountApprovalController extends BaseControllerTemplate<BasicUserVo> {
+
+	@Autowired
+	private BasicUserServiceI basicUserService;
+	@Autowired
+	private BasicDictItemServiceI basicDictItemService;
+	
+	public String getViewPath(){
+		return "base";
+	}
+	
+	public BasicUserServiceI getBasicUserService() {
+		return basicUserService;
+	}
+
+	public void setBasicUserService(BasicUserServiceI basicUserService) {
+		this.basicUserService = basicUserService;
+	}
+	
+	public BasicDictItemServiceI getBasicDictItemService() {
+		return basicDictItemService;
+	}
+
+	public void setBasicDictItemService(
+			BasicDictItemServiceI basicDictItemService) {
+		this.basicDictItemService = basicDictItemService;
+	}	
+	
+	@Override
+	public BasicServiceI<BasicUserVo> getService() {
+		return basicUserService;
+	}
+	
+	protected void initContextParams(HttpServletRequest request,
+			QueryContext context) {
+	}
+
+	/**
+	 * 获取字典项信息
+	 * @param request
+	 */
+	public void getDictItemInfo(HttpServletRequest request){
+		List<BasicDictItemVo> userAccountTypeItemList = null;
+		List<BasicDictItemVo> userIdentityItemList = null;
+		List<BasicDictItemVo> industryDictItemList = null;
+		List<BasicDictItemVo> geoDictItemList = null;
+		try {
+			//账户类别
+			userAccountTypeItemList = basicDictItemService.getBaiscDictItemListByDictType("userAccountType");
+			//账户类型
+			userIdentityItemList = basicDictItemService.getBaiscDictItemListByDictType("userIdentity");
+			//行业
+			industryDictItemList = basicDictItemService.getBaiscDictItemListByDictType("industry");
+			//地区
+			geoDictItemList = basicDictItemService.getBaiscDictItemListByDictType("geo");
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		request.setAttribute("userAccountType", userAccountTypeItemList);
+		request.setAttribute("userIdentity", userIdentityItemList);
+		request.setAttribute("industry", industryDictItemList);
+		request.setAttribute("geo", geoDictItemList);
+	}
+	
+	/**
+	 * 查询用户审批信息
+	 */
+	@RequestMapping(value = "list")
+	public String list(HttpServletRequest request, ModelMap modelMap) throws ValidatorException {
+		this.getDictItemInfo(request);
+		
+		QueryContext context = new ECContext(request, modelMap, getNameSpace());
+		//清理上一次查询参数
+		context.clearParmeters();
+		String queryType = request.getParameter("queryType");
+		request.setAttribute("queryType", queryType);
+		//账户
+		context.put("$in_userFlag", String.valueOf(Constants.USER_FLAG_ACCOUNT));
+		
+		if("0".equals(queryType)){//账户类别一键式
+			String userAccountTypeFlag = request.getParameter("userAccountTypeFlag");
+			context.put("$eq_userTypeDictItem_itemCode", userAccountTypeFlag);
+			
+		}else if("1".equals(queryType)){//账户身份一键式
+			String userIdentityFlag = request.getParameter("userIdentityFlag");
+			context.put("$eq_userIdentityDictItem_itemCode", userIdentityFlag);
+			
+		}else if("2".equals(queryType)){//地区一键式
+			String geoFlag = request.getParameter("geoFlag");
+			context.put("$eq_geoDictItem_itemCode", geoFlag);
+			
+		}else if("3".equals(queryType)){//行业一键式
+			String industryFlag = request.getParameter("industryFlag");
+			context.put("$eq_industryDictItem_itemCode", industryFlag);			
+			
+		}else if("4".equals(queryType)){//审批状态一键式
+			String stateFlag = request.getParameter("stateFlag");
+			context.put("$eq_state", stateFlag);
+			
+		}else if("5".equals(queryType)){//申请日期
+			// 1:今日    2:本周     3:上周    4: 本月     5:上月     6:其它
+			String timeFlag = request.getParameter("timeFlag");
+			if ("1".equals(timeFlag)){
+				context.put("$ge_registerDate", DateUtil.getTodayDate());
+				context.put("$le_registerDate", DateUtil.getTodayDate());
+				
+			} else if ("2".equals(timeFlag)){
+				context.put("$ge_registerDate", DateUtil.getFirstDayOfCurrWeek());
+				context.put("$le_registerDate", DateUtil.getLastDayOfCurrWeek());
+				
+			} else if ("3".equals(timeFlag)){
+				context.put("$ge_registerDate", DateUtil.getFirstDayOfLastWeek());
+				context.put("$le_registerDate", DateUtil.getLastDayOfLastWeek());
+				
+			} else if ("4".equals(timeFlag)){
+				context.put("$ge_registerDate", DateUtil.getMonthFirstDay(null));
+				context.put("$le_registerDate", DateUtil.getMonthLastDay(null));
+				
+			} else if ("5".equals(timeFlag)){
+				context.put("$ge_registerDate", DateUtil.getFirstDayOfLastMonth());
+				context.put("$le_registerDate", DateUtil.getLastDayOfLastMonth());
+				
+			} else if ("6".equals(timeFlag)){
+				context.put("$lt_registerDate", DateUtil.getFirstDayOfLastMonth());
+			}			
+			
+		}else{//高级搜索
+			
+			//申请日期
+			String dateS = request.getParameter("dateS");
+			String dateE = request.getParameter("dateE");
+			context.put("$ge_registerDate", dateS);
+			context.put("$le_registerDate", dateE);
+			request.setAttribute("dateS", dateS);
+			request.setAttribute("dateE", dateE);
+			
+			String userName = request.getParameter("userName");
+			String userAccount = request.getParameter("userAccount");
+			String tel = request.getParameter("tel");
+			context.put("$lk_userName", userName);
+			context.put("$lk_userAccount", userAccount);
+			context.put("$lk_tel", tel);
+			request.setAttribute("userName", userName);
+			request.setAttribute("userAccount", userAccount);
+			request.setAttribute("tel", tel);
+			
+			//账户类别
+			String[] userAccountTypeArr = request.getParameterValues("userAccountType");
+			String userAccountTypeStr = "";
+			if(userAccountTypeArr != null && userAccountTypeArr.length > 0){
+				for(int i=0; i<userAccountTypeArr.length; i++){
+					userAccountTypeStr += userAccountTypeArr[i] + ",";
+				}
+				context.put("$in_userTypeDictItem_itemCode", userAccountTypeStr.substring(0, userAccountTypeStr.length()-1));
+				request.setAttribute("userAccountTypeStr", userAccountTypeStr.substring(0, userAccountTypeStr.length()-1));
+			}
+			
+			//账户类型
+			String[] userIdentityArr = request.getParameterValues("userIdentity");
+			String userIdentityStr = "";
+			if(userIdentityArr != null && userIdentityArr.length > 0){
+				for(int i=0; i<userIdentityArr.length; i++){
+					userIdentityStr += userIdentityArr[i] + ",";
+				}
+				context.put("$in_userIdentityDictItem_itemCode", userIdentityStr.substring(0, userIdentityStr.length()-1));
+				request.setAttribute("userIdentityStr", userIdentityStr.substring(0, userIdentityStr.length()-1));
+			}
+
+			//地区
+			String[] geoArr = request.getParameterValues("geo");
+			String geoStr = "";
+			if(geoArr != null && geoArr.length > 0){
+				for(int i=0; i<geoArr.length; i++){
+					geoStr += geoArr[i] + ",";
+				}
+				context.put("$in_geoDictItem_itemCode", geoStr.substring(0, geoStr.length()-1));
+				request.setAttribute("geoStr", geoStr.substring(0, geoStr.length()-1));
+			}
+
+			//行业
+			String[] industryArr = request.getParameterValues("industry");
+			String industryStr = "";
+			if(industryArr != null && industryArr.length > 0){
+				for(int i=0; i<industryArr.length; i++){
+					industryStr += industryArr[i] + ",";
+				}
+				context.put("$in_industryDictItem_itemCode", industryStr.substring(0, industryStr.length()-1));
+				request.setAttribute("industryStr", industryStr.substring(0, industryStr.length()-1));
+			}
+			//充值方式
+			String[] stateArr = request.getParameterValues("state");
+			String stateArrStr = "";
+			if(stateArr != null && stateArr.length > 0){
+				for(int i=0; i<stateArr.length; i++){
+					stateArrStr += stateArr[i] + ",";
+				}
+				context.put("$in_state", stateArrStr.substring(0, stateArrStr.length()-1));
+				request.setAttribute("stateArrStr", stateArrStr.substring(0, stateArrStr.length()-1));
+			}
+		}
+
+		List<?> users = getService().list(context);
+		context.initTotalRows(modelMap);
+		modelMap.put("list", users);
+		
+		return getViewPath() + "/accountApprovalList";
+	}
+
+	/**
+	 * 审批通过
+	 * @param userId
+	 * @param request
+	 * @param vo
+	 * @param modelMap
+	 * @param errors
+	 * @return
+	 * @throws ValidatorException
+	 */
+	//@RequestMapping(method = RequestMethod.GET, value = "approval")
+	@RequestMapping(method = RequestMethod.POST, value = "approval")
+	public String approval(@RequestParam("userId") String userId, HttpServletRequest request,
+			BasicUserVo vo, ModelMap modelMap, BindingResult errors,HttpServletResponse response) throws ValidatorException {
+		Map<String, String> resultMap = new HashMap<String, String>();
+		String approvalState = request.getParameter("approvalState");
+		String rejectRemark = request.getParameter("rejectRemark");
+		BasicUserVo user = (BasicUserVo)this.basicUserService.get(userId);
+		user.setState(Integer.parseInt(approvalState));
+		user.setApprovalDate(new Date());
+		user.setRefuseMemo(rejectRemark);
+		
+		// send mail
+		// 待解决问题	1：审批通过返回到页面时提示信息；
+		try {
+			if(Constants.USER_STATE_PASS == Integer.parseInt(approvalState)){
+				//通过
+				this.sendMail(user.getUserAccount(), "", Constants.USER_APPROVAL_MAIL_THEME.replace("@userType", "账户"), getMailContent(user, "pass"));
+			}else{
+				//拒绝
+				this.sendMail(user.getUserAccount(), "", Constants.USER_APPROVAL_MAIL_THEME.replace("@userType", "账户"), getMailContent(user, "reject"));
+			}
+			
+			this.basicUserService.save(user);
+			
+			resultMap.put("flag", "01");
+			
+		} catch (Exception e) {
+			resultMap.put("flag", "02");
+		}finally{
+			try {
+				printOutSteamContent(JSONObject.fromObject(resultMap).toString(), response);
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return this.list(request, modelMap);
+	}
+	
+	/**
+	 * 批量审批
+	 * @param userId
+	 * @param request
+	 * @param vo
+	 * @param modelMap
+	 * @param errors
+	 * @param response
+	 * @return
+	 * @throws ValidatorException
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "batchApproval")
+	public String batchApproval(HttpServletRequest request,
+			BasicUserVo vo, ModelMap modelMap, BindingResult errors,HttpServletResponse response) throws ValidatorException {
+		Map<String, String> resultMap = new HashMap<String, String>();
+		String approvalState = request.getParameter("approvalState");
+		String rejectRemark = request.getParameter("rejectRemark");
+		String userIdArr = request.getParameter("userIdArr");
+
+		try {
+			QueryContext context = new ECContext(request, modelMap, getNameSpace());
+			context.put("$in_userId", userIdArr);
+			List<BasicUserVo> userList = this.basicUserService.list(context);
+			
+			if(userList != null){
+				for(BasicUserVo user : userList){
+					user.setState(Integer.parseInt(approvalState));
+					user.setApprovalDate(new Date());
+					user.setRefuseMemo(rejectRemark);
+					
+					if(Constants.USER_STATE_PASS == Integer.parseInt(approvalState)){
+						//通过
+						this.sendMail(user.getUserAccount(), "", Constants.USER_APPROVAL_MAIL_THEME.replace("@userType", "账户"), getMailContent(user, "pass"));
+					}else{
+						//拒绝
+						this.sendMail(user.getUserAccount(), "", Constants.USER_APPROVAL_MAIL_THEME.replace("@userType", "账户"), getMailContent(user, "reject"));
+					}
+					
+					this.basicUserService.save(user);
+				}
+			}
+
+			resultMap.put("flag", "01");
+			
+		} catch (Exception e) {
+			resultMap.put("flag", "02");
+		}finally{
+			try {
+				printOutSteamContent(JSONObject.fromObject(resultMap).toString(), response);
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return this.list(request, modelMap);
+	}
+	
+	/**
+	 * 发送邮件
+	 * @param toMail
+	 * @param ccMail
+	 * @param theme
+	 * @param content
+	 * @throws Exception 
+	 */
+	public void sendMail(String toMail, String ccMail, String theme, String content) throws Exception{
+		EmailInfo emailInfo = new EmailInfo();
+		emailInfo.setToEmail(new String[]{toMail});
+		emailInfo.setCcEmail(new String[]{ccMail});
+		emailInfo.setTheme(theme);
+		emailInfo.setContent(content);
+
+		emailHandler.sendHtmlMail(emailInfo);
+		//throw new Exception();
+	}
+	
+	private String getMailContent(BasicUserVo user, String mailType){
+		String content = "";
+		if("pass".equals(mailType)){
+			content = user.getUserName() + Constants.USER_APPROVAL_PASS_TEMPLATE.replace("userAccount", user.getUserAccount())+user.getRefuseMemo();
+		}else{
+			content = user.getUserName() + Constants.USER_APPROVAL_REJECT_TEMPLATE.replace("userAccount", user.getUserAccount())+user.getRefuseMemo();
+		}
+		return content.replace("@userType", "账户");
+	}
+	
+	private EmailHandler emailHandler;
+
+	public EmailHandler getEmailHandler() {
+		return emailHandler;
+	}
+
+	public void setEmailHandler(EmailHandler emailHandler) {
+		this.emailHandler = emailHandler;
+	}
+	
+
+}

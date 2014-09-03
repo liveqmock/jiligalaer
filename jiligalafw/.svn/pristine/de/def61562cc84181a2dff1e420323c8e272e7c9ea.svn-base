@@ -1,0 +1,1130 @@
+package sy.service.expense;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+
+import sy.common.mail.EmailHandler;
+import sy.common.mail.EmailInfo;
+import sy.common.util.Constants;
+import sy.common.util.DateUtil;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.en.base.BasicRemindType;
+import sy.domain.model.base.BasicUser;
+import sy.domain.model.expense.AccountExpense;
+import sy.domain.model.expense.AccountExpenseItem;
+import sy.domain.model.product.CloudUserOrder;
+import sy.domain.model.product.CloudUserOrderItem;
+import sy.domain.vo.base.BasicUserQuotaVo;
+import sy.domain.vo.base.BasicUserVo;
+import sy.domain.vo.expense.AccountExpenseItemVo;
+import sy.domain.vo.expense.AccountExpenseVo;
+import sy.domain.vo.expense.BillingParameter;
+import sy.domain.vo.finance.AccountPayVo;
+import sy.domain.vo.product.CloudMdmNetworkVo;
+import sy.domain.vo.product.CloudMdmProductVo;
+import sy.domain.vo.product.CloudMdmVmVo;
+import sy.domain.vo.product.CloudProductPriceVo;
+import sy.domain.vo.product.CloudUserOrderItemVo;
+import sy.domain.vo.product.CloudUserOrderVo;
+import sy.domain.vo.promotion.CloudPromotionInfoVo;
+import sy.service.base.BasicRemindServiceI;
+import sy.service.base.BasicUserQuotaServiceI;
+import sy.service.base.BasicUserServiceI;
+import sy.service.finance.AccountPayServiceI;
+import sy.service.product.CloudMdmNetworkServiceI;
+import sy.service.product.CloudMdmVMServiceI;
+import sy.service.product.CloudProductPriceServiceI;
+import sy.service.product.CloudUserOrderItemServiceI;
+import sy.service.product.CloudUserOrderServiceI;
+import sy.service.promotion.CloudPromotionInfoServiceI;
+import sy.service.shared.BaseServiceTemplate;
+
+/**
+ * 账户总费用
+ * @author luobin
+ * 
+ */
+@Service("accountExpenseService")
+public class AccountExpenseService extends BaseServiceTemplate<AccountExpense, AccountExpenseVo> implements AccountExpenseServiceI{
+
+	private static final Logger log = Logger
+			.getLogger(AccountExpenseService.class);
+	
+	public AccountExpenseVo getExpenseByUserId(String userId){
+		List<AccountExpenseVo> list = this.find("from AccountExpense where basicUser.userId = ?", userId);
+		if(list != null && list.size()>0){
+			return list.get(0);
+		}else{
+			return null;
+		}
+	}
+	
+	/**
+	 * 控制板获取所有账户余额及当月消费金额
+	 */
+	public List<Object[]> getAccountAllExpense(String userId){
+		String sql = "select 	ifnull(sum(main.PAY_TOTAL_AMOUNT-main.EXP_TOTAL_AMOUNT),0) as balanceAmount, " +
+				"				ifnull(sum(item.EXP_AMOUNT),0) as expAmount " +
+				"	from 		cloud_user_expense main " +
+				"				left join (" +
+				"					select 	sum(EXP_AMOUNT) as EXP_AMOUNT, USER_ID" +
+				"					from 	cloud_user_expense_item " +
+				"					where 	date_format(EXP_DATE,'%Y-%m')='" + DateUtil.format(new Date()).substring(0, 7) + "' ";
+				if(!"".equals(userId)){
+					sql += "				and USER_ID='" + userId + "' ";
+				}
+				sql +=	"					group by USER_ID" +
+				"				) item on main.USER_ID=item.USER_ID ";
+		if(!"".equals(userId)){
+			sql += "where		main.user_id= '" + userId + "' ";
+		}
+		List<Object[]> arr = super.getBaseDao().findBySQL(sql);
+		return arr;
+	}
+	
+	
+	
+	
+	
+	@Autowired
+	private CloudUserOrderItemServiceI cloudUserOrderItemService;
+	
+	@Autowired
+	private CloudUserOrderServiceI cloudUserOrderService;
+
+	@Autowired
+	private BasicUserQuotaServiceI basicUserQuotaService;
+	
+	@Autowired
+	private CloudMdmVMServiceI cloudMdmVMService;
+	
+	@Autowired
+	private CloudMdmNetworkServiceI cloudMdmNetworkService;
+	
+	@Autowired
+	private AccountExpenseItemServiceI accountExpenseItemService;
+	
+	@Autowired
+	private BasicRemindServiceI basicRemindService;
+	
+	@Autowired
+	private EmailHandler emailHandler;
+	
+	@Autowired
+	private CloudPromotionInfoServiceI cloudPromotionInfoService;
+	
+	@Autowired
+	private BasicUserServiceI basicUserService;
+	
+	@Autowired
+	private AccountPayServiceI accountPayService;
+	
+	@Autowired
+	private CloudProductPriceServiceI cloudProductPriceService;
+	
+	@SuppressWarnings("unchecked")
+	private List<AccountExpense> getExpenseList(){
+		return getBaseDao().find("From AccountExpense Order by basicUser");
+	}
+	
+	public void startBilling() {
+		String hql = "Update AccountExpense Set isBilling = 1";
+		super.update(hql);
+		super.getBaseDao().getSession().flush();
+	}
+	
+	public void endBilling() {
+		String hql = "Update AccountExpense Set isBilling = 0";
+		super.update(hql);
+	}
+	
+	private Map<String, List<CloudUserOrderVo>> buildOrderCache(){
+		//查询订单主表，根据账户ID、购买人ID 排序
+		List<CloudUserOrderVo> orders = cloudUserOrderService.getStartBillingOrders();
+		
+		//准备工作,准备缓存,加入KEY为账户ID
+		HashMap<String, List<CloudUserOrderVo>> orderCache = new HashMap<String, List<CloudUserOrderVo>>();
+		for (CloudUserOrderVo order : orders) {
+			String key = order.getBasicAccount().getUserId();
+			if(orderCache.get(key) == null){
+				orderCache.put(key, new ArrayList<CloudUserOrderVo>());
+			}
+			orderCache.get(key).add(order);
+		}
+		return orderCache;
+	}
+	
+	private void destroyResources(String accountId,String accountName,
+			List<CloudUserOrderVo> cachcedOrders,StringBuilder warningMessage, boolean mayDelDaysWarn,
+			AccountExpense expense, Date now){
+		
+		String message = "账户[" + accountName + "]，已欠款累计达到最大删机天数，物理删除全部网络资源、虚拟机资源.";
+		log.info(message);
+		
+		StringBuilder remindMsgBuilder = new StringBuilder();
+		remindMsgBuilder.append(message);
+		
+		//移除虚拟机、网络资源删除
+		for (CloudUserOrderVo order : cachcedOrders) {
+			CloudMdmVmVo vmvo = order.getCloudMdmVm();
+			if (vmvo != null && vmvo.getInterfaceId() != null) {
+				String virtualmachineid = vmvo.getInterfaceId();
+				try {
+					message = "欠款累计，删除虚拟机，IF_ID:"+virtualmachineid+"，名称:"+vmvo.getName()+"，显示描述："+vmvo.getDisplayName();
+					log.info(message);
+					cloudMdmVMService.destroy(virtualmachineid);
+					remindMsgBuilder.append(message);
+				} catch (Exception e) {
+					log.info("摧毁虚拟机时候发生错误："+e.getMessage(), e);
+				}
+			}
+			CloudMdmNetworkVo network = order.getCloudMdmNetwork();
+			if (network != null
+					&& network.getInterfaceId() != null) {
+				String networkid = network.getInterfaceId();
+				try {
+					message = "欠款累计，删除网络，IF_ID:"+networkid+"，名称:"+network.getName()+"，显示描述："+network.getDisplaytext();
+					log.info(message);
+					cloudMdmNetworkService.delete(networkid);
+					remindMsgBuilder.append(message);
+				} catch (Exception e) {
+					log.info("删除网络时候发生错误："+e.getMessage(), e);
+				}
+			}
+			
+			//虚拟机、网络资源移除后需 将订单 置为无效
+			try {
+				order.setState("0");
+				order.setRemark("已删机.");
+				cloudUserOrderService.save(order);
+			} catch (ValidatorException e) {
+				log.error("更新订单时发生错误:" + e.getMessage(), e);
+			}
+		}
+		
+		if (mayDelDaysWarn) {
+			expense.setDelVmDaysLastWarnDate(now);
+			//存储警告数据
+			basicRemindService.createRemind(accountId, accountId,
+					BasicRemindType.AFTER_DESTROY, remindMsgBuilder.toString(),
+					"系统计费功能提醒");
+		}
+		
+		warningMessage.append(remindMsgBuilder.toString()).append(Constants.HTML_LINE);
+	}
+	
+	private boolean stopResources(String accountId,String accountName,
+			List<CloudUserOrderVo> cachcedOrders, BasicUserQuotaVo quota,
+			AccountExpense expense,StringBuilder warningMessage,
+			boolean mayStopDaysWarn, boolean mayDelDaysWarn,Date now) {
+
+		boolean billing = true;
+		
+		String message = "账户[" + accountName + "]，已欠款累计达到最大停机天数，停用全部虚拟机.";
+		log.info(message+"符合删机天数倒计时处理条件.");
+		
+		StringBuilder remindMsgBuilder = new StringBuilder();
+		remindMsgBuilder.append(message);
+		
+		//停止账户下其全部虚拟机
+		for (CloudUserOrderVo order : cachcedOrders) {
+			CloudMdmVmVo vmvo = order.getCloudMdmVm();
+			if (vmvo != null && vmvo.getInterfaceId() != null) {
+				String virtualmachineid = vmvo.getInterfaceId();
+				try {
+					message = "欠款积累导致停用虚拟机，IF_ID:"+virtualmachineid+"，名称:"+vmvo.getName()+"，显示描述："+vmvo.getDisplayName();
+					log.info(message);
+					remindMsgBuilder.append(message);
+					cloudMdmVMService.stop(virtualmachineid, true);
+				} catch (Exception e) {
+					log.info("停止虚拟机时候发生错误："+e.getMessage(), e);
+				}
+			}
+		}
+		
+		if(mayStopDaysWarn){
+			expense.setStopRunDaysLastWarnDate(now);
+			//存储警告数据
+			basicRemindService.createRemind(accountId, accountId,
+					BasicRemindType.AFTER_STOP, message,
+					"系统计费功能提醒");
+		}
+		
+		warningMessage.append(message).append(Constants.HTML_LINE);
+		
+		//停机天数用完则进入删机天数倒计时
+		
+		Integer maxDelVmDays = quota.getDelVmDay(); //全局最大信用删机天数
+		if (maxDelVmDays == null) {
+			maxDelVmDays = 0;
+		}
+		
+		Integer usedDelVmDays = expense.getUsedDelVmDays();
+		
+		if (usedDelVmDays == null) {
+			usedDelVmDays = 0;
+		}
+		
+		log.info("账户[" + accountName + "]，已用删机天数：" + usedDelVmDays + "，全局最大删机天数：" + maxDelVmDays);
+		
+		if(usedDelVmDays >= maxDelVmDays){
+			destroyResources(accountId,accountName, cachcedOrders,warningMessage,mayDelDaysWarn,expense,now);
+			billing = false;
+		} else {
+			billing = true;
+			if (mayDelDaysWarn) {
+				usedDelVmDays = usedDelVmDays + 1;
+				expense.setUsedDelVmDays(usedDelVmDays);
+			}
+			
+			message = "账户[" + accountName + "]，欠款累计已达到最大停机天数，已停用全部虚拟机，如继续拖欠则系统将"+(maxDelVmDays-usedDelVmDays)+"天后销毁全部虚拟机.";
+			
+			if (mayDelDaysWarn) {
+				expense.setDelVmDaysLastWarnDate(now);
+				//存储警告数据
+				basicRemindService.createRemind(accountId, accountId,
+						BasicRemindType.PRE_DESTROY, 
+						message,
+						"系统计费功能提醒");
+			}
+			
+			warningMessage.append(message).append(Constants.HTML_LINE);
+		}
+		return billing;
+	}
+	
+	class AmountInfo{
+		final Double oneTimeRebateAmount;
+		final Double cycleRebateAmount;
+		private AmountInfo(Double oneTimeRebateAmount,Double cycleRebateAmount){
+			this.oneTimeRebateAmount = oneTimeRebateAmount;
+			this.cycleRebateAmount = cycleRebateAmount;
+		}
+		private Double getTotal(){
+			return oneTimeRebateAmount + cycleRebateAmount;
+		}
+	}
+	
+	/**计算促销活动价，如果没有促销活动直接返回参数price即可*/
+	public Double calcRebatedPrice(CloudUserOrderItemVo orderItem, Double price) {
+		
+		if(price == null){
+			log.error("订单明细：["+orderItem.getOrderItemId()+"]，价格为空！BillingType："+orderItem.getBillingType());
+			return 0.0;
+		}
+		
+		if(orderItem.getRebateFlag() == null
+				|| orderItem.getRebateAmount() == null){
+			return price;
+		}
+		
+		//比例折扣
+		if(Constants.REBATE_FLAG_RATIO == orderItem.getRebateFlag().intValue()){
+			return price * orderItem.getRebateAmount();
+		}
+		
+		//返现
+		if(Constants.REBATE_FLAG_AMOUNT == orderItem.getRebateFlag().intValue()){
+			if(price > orderItem.getRebateAmount()){
+				return price - orderItem.getRebateAmount();
+			}else{
+				return 0.0;
+			}
+		}
+		return price;
+	}
+	
+	private boolean isCustomerDisk(CloudUserOrderItemVo orderItem){
+		boolean isCustomerDisk = false;
+		if(orderItem.getCloudMdmProductItem()!=null
+				&& orderItem.getCloudMdmProductItem().getMdmDiskSoln() != null
+				&& "true".equals(orderItem.getCloudMdmProductItem().getMdmDiskSoln().getIscustomized())){
+			isCustomerDisk = true;
+		}
+		return isCustomerDisk;
+	}
+	
+	private AmountInfo calcCostAmount(int fewDays, Date todayBegin, Date afterFewDaysEnd,
+			List<CloudUserOrderVo> cachcedOrders,Map<String, List<CloudUserOrderItemVo>> orderItemCache, 
+			Map<String, CloudProductPriceVo> priceCache, SimpleDateFormat formater_yyyyMMdd){
+		
+		//获取该账户接下来fewDays天内应扣费总数（区分一次性和周期性）
+		Double oneTimeRebateAmount = 0.0;
+		Double cycleRebateAmount = 0.0;
+		
+		for (CloudUserOrderVo order : cachcedOrders) {
+			
+			log.info("核查订单：["+order.getOrderId()+"]");
+			
+			Date nextBillingTime = order.getNextBillingTime();
+			
+			Date time = nextBillingTime;
+			log.info("计费时间点:"+formater_yyyyMMdd.format(time));
+			
+			//计费时间在今天至fewDays天后的区间内
+			if (time.compareTo(todayBegin) >= 0
+					&& time.compareTo(afterFewDaysEnd) <= 0) {
+				
+//				if (order.getOneTimeRebateAmount() != null) {
+//					log.info("在接下来的"+fewDays+"天内，将发生一次性费用："+order.getOneTimeRebateAmount());
+//					oneTimeRebateAmount += order.getOneTimeRebateAmount();
+//				}
+				
+				//获取订单需要的单次金额
+				
+				List<CloudUserOrderItemVo> orderItems = orderItemCache.get(order.getOrderId());
+				
+				if(orderItems == null){
+					log.error("订单["+order.getOrderId()+"]不存在明细数据，处理下一个订单.");
+					continue;
+				}
+				
+				Double totalCycleAmount = 0.0;
+				//循环订单明细，计算需要的累计金额
+				for (CloudUserOrderItemVo orderItem : orderItems) {
+					CloudMdmProductVo product = orderItem.getCloudMdmProduct();
+					if(product == null){
+						continue;
+					}
+					CloudProductPriceVo prodPrice = priceCache.get(product.getId());
+					
+					if(prodPrice == null){
+						continue;
+					}
+					
+					boolean isCustomerDisk = isCustomerDisk(orderItem);
+					
+					String billingType = orderItem.getBillingType();
+					
+					if(Constants.BILLING_TYPE_SINGLE.equals(billingType)){
+						if(prodPrice.getOneTimePrice()!=null){
+							oneTimeRebateAmount += calcRebatedPrice(orderItem,prodPrice.getOneTimePrice());
+						}
+					} else if(Constants.BILLING_TYPE_CYCLE.equals(billingType)){
+						Double price = 0.0;
+						if (Constants.BILLING_CYCLE_DAY.equals(order
+								.getBillingCycle())) {
+							price = calcRebatedPrice(orderItem,prodPrice.getDayPrice());
+						}else if(Constants.BILLING_CYCLE_MONTH.equals(order
+								.getBillingCycle())){
+							price = calcRebatedPrice(orderItem,prodPrice.getMonthPrice());
+						}else if(Constants.BILLING_CYCLE_YEAR.equals(order
+								.getBillingCycle())){
+							price = calcRebatedPrice(orderItem,prodPrice.getYearPrice());
+						}else if(Constants.BILLING_CYCLE_HOUR.equals(order
+								.getBillingCycle())){
+							price = calcRebatedPrice(orderItem,prodPrice.getHourPrice());
+						}
+						
+						if(isCustomerDisk){
+							price = price * orderItem.getDiskSize();
+						}
+						
+						totalCycleAmount += price;
+					}
+				}
+				
+				//if (order.getCycleRebateAmount() != null) {
+				if (totalCycleAmount != null) {
+					
+					//cycleRebateAmount += order.getCycleRebateAmount();
+					cycleRebateAmount += totalCycleAmount;
+					
+					//如果该订单属于按天进行计费的，则需将这fewDays期间内的其余几天也需考虑进来，只考虑周期性累计即可
+					if (Constants.BILLING_CYCLE_DAY.equals(order
+							.getBillingCycle())) {
+//						Double amount = order.getCycleRebateAmount()
+//								* (fewDays - 1);
+						Double amount = totalCycleAmount
+								* (fewDays - 1);
+						cycleRebateAmount += amount;
+						log.info("在接下来的"+fewDays+"天内，将发生周期性费用："+cycleRebateAmount);
+					}else if(Constants.BILLING_CYCLE_HOUR.equals(order
+							.getBillingCycle())){
+						Double amount = totalCycleAmount
+								* (fewDays * 24 - 1);
+						cycleRebateAmount += amount;
+						log.info("在接下来的"+(fewDays * 24)+"小时内，将发生周期性费用："+cycleRebateAmount);
+					}else{
+						//log.info("在接下来的"+fewDays+"天内，将发生周期性费用："+order.getCycleRebateAmount());
+						log.info("在接下来的"+fewDays+"天内，将发生周期性费用："+totalCycleAmount);
+					}
+				}
+				
+				if (oneTimeRebateAmount != null) {
+					log.info("在接下来的"+fewDays+"天内，将发生一次性费用："+oneTimeRebateAmount);
+				}
+			}
+		}
+		
+		return new AmountInfo(oneTimeRebateAmount, cycleRebateAmount);
+	}
+	
+	public void billing(AccountExpense expense,BillingParameter param) {
+		
+		Date now = param.getNow();
+		int fewDays = param.getFewDays();
+		Date todayBegin = param.getTodayBegin();
+		Date afterFewDaysEnd = param.getAfterFewDaysEnd();
+		String today = param.getToday();
+		String currentHour = param.getCurrentHour();
+		SimpleDateFormat formater_yyyyMMdd = param.getFormater_yyyyMMdd();
+		SimpleDateFormat formater_yyyyMMddHH = param.getFormater_yyyyMMddHH();
+		
+		Map<String, List<CloudUserOrderVo>> orderCache = param.getOrderCache();
+		Map<String, List<CloudUserOrderItemVo>> orderItemCache = param.getOrderItemCache();
+		Map<String, CloudProductPriceVo> priceCache = param.getProdPriceCache();
+		
+		boolean needWarning = false; //是否需要发送警告
+		boolean billing = true; //是否需要计费
+		StringBuilder warningMessage = new StringBuilder();
+		
+		//可能存在小时计费方式，保证一日只提醒记录、邮件通知一次
+		boolean mayRemind = true;
+		Date lastRemindDate = expense.getLastRemindDate();
+		if (lastRemindDate != null
+				&& !today.equals(formater_yyyyMMdd.format(lastRemindDate))) {
+			mayRemind = false;
+		}
+		boolean mayDelDaysWarn = true;
+		Date delVmDaysLastWarnDate = expense.getDelVmDaysLastWarnDate();
+		if(delVmDaysLastWarnDate != null
+				 && !today.equals(formater_yyyyMMdd.format(delVmDaysLastWarnDate))){
+			mayDelDaysWarn = false;
+		}
+		boolean mayStopDaysWarn = true;
+		Date stopRunDaysLastWarnDate = expense.getStopRunDaysLastWarnDate();
+		if(stopRunDaysLastWarnDate != null
+				&& !today.equals(formater_yyyyMMdd.format(stopRunDaysLastWarnDate))){
+			mayStopDaysWarn = false;
+		}
+		
+		//账户信息
+		BasicUser account = expense.getBasicUser();
+		String accountId = account.getUserId();
+		String accountName = account.getUserName();
+		String mailAdress = account.getUserAccount();
+		
+		log.info("账户:["+accountName+"]，准备处理计费.");
+		
+		//充值总金额
+		Double payTotalAmount = expense.getPayTotalAmount();
+		//消费
+		Double expTotalAmount = expense.getExpTotalAmount();
+		//当前余额
+		Double accountBalance = payTotalAmount - expTotalAmount;
+		
+		//授信额度
+		Double creditAmount = expense.getCreditAmount();
+		if (creditAmount == null) {
+			creditAmount = 0.0;
+		}
+		
+		log.info("账户余额:"+accountBalance+"，授信额度:"+creditAmount);
+		
+		//查询账户余额内还有多少钱，检查该账户要其对应的订单
+		List<CloudUserOrderVo> cachcedOrders = orderCache.get(accountId);
+
+		if(cachcedOrders == null){
+			log.info("账户:[" + accountName + "]不存在任何有效的订单.");
+			return;
+		}
+		
+		//存在购买订单才继续
+		
+		AmountInfo costAmount = calcCostAmount( fewDays,todayBegin, afterFewDaysEnd,cachcedOrders,orderItemCache,priceCache,formater_yyyyMMdd);
+		Double needCostTotalAmount = costAmount.getTotal();
+		
+		String message = "账户[" + accountName + "]，当前余额：" + accountBalance + "，接下来的"+fewDays+"天内需扣除：一次性费用:"+costAmount.oneTimeRebateAmount+"，周期性费用:"+costAmount.cycleRebateAmount+"，合计:"+needCostTotalAmount+".";
+		
+		log.info(message);
+		
+		//余额不够扣除该账户的所有订单金额十天fewDays使用的，则需记录提醒日志，并发出邮件提醒
+		if (accountBalance < needCostTotalAmount) {
+			needWarning = true;
+			
+			//存储警告数据
+			StringBuilder remindMsgBuilder = new StringBuilder();
+			remindMsgBuilder.append(message);
+			warningMessage.append(message).append(Constants.HTML_LINE);
+			message = "当前账户内余额不足未来"+fewDays+"天内发生的订单消费总额.";
+			
+			remindMsgBuilder.append(message);
+			
+			if(mayRemind){
+				expense.setLastRemindDate(now);
+				basicRemindService.createRemind(accountId, accountId,
+						BasicRemindType.NOT_ENOUGH_EXPENSE, remindMsgBuilder.toString(),
+						"系统计费功能提醒");
+			}
+			
+			warningMessage.append(message).append(Constants.HTML_LINE);
+			
+		}
+		
+		//如果余额+授信额度为负值，则已进入信用开始时间倒计时，需检查已欠款多少天
+		Double balanceAndCredit = accountBalance + creditAmount;
+		if (balanceAndCredit <= 0.0 ) {
+			
+			needWarning = true;
+			
+			log.info("账户[" + accountName + "]，当前余额：" + accountBalance + "，授信额度：" + creditAmount + "，总余额：" + balanceAndCredit+"，已出现欠款，符合停机天数倒计时处理条件.");
+			
+			BasicUserQuotaVo quota = basicUserQuotaService.getUserQuotaInfo();
+			
+			Integer maxStopRunDays = quota.getStopRunDay(); //全局最大信用停机天数
+			if (maxStopRunDays == null) {
+				maxStopRunDays = 0;
+			}
+			
+			//已使用的停机天数
+			Integer usedStopRunDays = expense.getUsedStopRunDays();
+			if (usedStopRunDays == null) {
+				usedStopRunDays = 0;
+			}
+			
+			log.info("账户[" + accountName + "]，已用停机天数：" + usedStopRunDays + "，全局最大停机天数：" + maxStopRunDays);
+			
+			if (usedStopRunDays >= maxStopRunDays) {
+				
+				//停机及删机 处理
+				billing = stopResources(accountId, accountName, cachcedOrders, quota, expense,warningMessage,mayStopDaysWarn,mayDelDaysWarn,now);
+			}else{
+				billing = true;
+				
+				if(mayStopDaysWarn){
+					usedStopRunDays = usedStopRunDays + 1;
+					expense.setUsedStopRunDays(usedStopRunDays);
+				}
+				
+				message = "账户[" + accountName
+						+ "]，当前余额：" + accountBalance + "，授信额度："
+						+ creditAmount + "，总余额：" + balanceAndCredit
+						+ "，已出现欠款，，如继续拖欠则系统将" + (maxStopRunDays - usedStopRunDays) + "天后销毁全部虚拟机.";
+				
+				if(mayStopDaysWarn){
+					expense.setStopRunDaysLastWarnDate(now);
+					//存储警告数据
+					basicRemindService.createRemind(accountId, accountId,
+							BasicRemindType.PRE_STOP, 
+									  message,
+							"系统计费功能提醒");
+				}
+
+				warningMessage.append(message).append(Constants.HTML_LINE);
+			}
+			
+		} else {
+			
+			log.info("账户[" + accountName + "]，当前余额：" + accountBalance + "，余额未达到停机标准 ，重置该账户已用停机天数及最大停机天数.");
+			
+			//已使用停机信用清零
+			expense.setUsedStopRunDays(0);
+			//已使用删机信用清零
+			expense.setUsedDelVmDays(0);
+			
+			expense.setStopRunDaysLastWarnDate(now);
+			expense.setDelVmDaysLastWarnDate(now);
+			
+			billing = true;
+		}
+		
+		//除了删机以外都需要计费
+		if (billing) {
+			
+			log.info("账户[" + accountName + "]，开始计费.");
+			
+			Double oneTimeRebateTotal = 0.0;
+			Double cycleRebateTotal = 0.0;
+			
+			List<CloudUserOrderVo> orders = orderCache.get(accountId);
+			for (CloudUserOrderVo order : orders) {
+				String orderId = order.getOrderId();
+				
+				log.info("账户[" + accountName + "]，处理订单["+orderId+"].");
+				
+				String billingCycle = order.getBillingCycle();
+				
+				//购买用户
+				BasicUserVo userVo = order.getBasicUser();
+				
+				Date billingTime = order.getNextBillingTime();
+				
+				if(Constants.BILLING_CYCLE_HOUR.equals(billingCycle) 
+						&& now.before(billingTime)){
+					log.error("账户[" + accountName + "]，订单["+orderId+"]，小时计费，存在丢失时间。间隔时间补全到当前时间。NextBillingTime："+formater_yyyyMMddHH.format(billingTime)+"。Now："+formater_yyyyMMddHH.format(now));
+					billingTime = now;
+				}
+				
+				Calendar cal = Calendar.getInstance();
+				cal.setTime(billingTime);
+				if(Constants.BILLING_CYCLE_HOUR.equals(billingCycle)){
+					cal.add(Calendar.HOUR, 1);
+				} else if(Constants.BILLING_CYCLE_DAY.equals(billingCycle)){
+					cal.add(Calendar.DATE, 1);
+				} else if(Constants.BILLING_CYCLE_MONTH.equals(billingCycle)){
+					cal.add(Calendar.MONTH, 1);
+				} else if(Constants.BILLING_CYCLE_YEAR.equals(billingCycle)){
+					cal.add(Calendar.YEAR, 1);
+				} else {
+					log.warn("不支持的计费周期:["+billingCycle+"]");
+				}
+				order.setNextBillingTime(cal.getTime());
+				
+				//只要订单存在一次性计费，则今日必将计费，因此订单主表直接清零即可，说明已收费，下次就不必统计了
+				//order.setOneTimeProdAmount(0.0);
+				
+				//更新订单主表，涉及下次计费时间
+				try {
+					cloudUserOrderService.save(order);
+				} catch (ValidatorException e) {
+					log.error("更新订单时发生错误:" + e.getMessage(), e);
+				}
+				
+				List<CloudUserOrderItemVo> orderItems = orderItemCache.get(orderId);
+				
+				if(orderItems == null){
+					log.error("订单["+order.getOrderId()+"]不存在明细数据，处理下一个订单.");
+					continue;
+				}
+				
+				for (CloudUserOrderItemVo orderItem : orderItems) {
+					
+					String orderItemId = orderItem.getOrderItemId();
+					
+					log.info("账户[" + accountName + "]，处理订单["+orderId+"]，明细:["+orderItemId+"].");
+					
+					CloudMdmProductVo product = orderItem.getCloudMdmProduct();
+					if(product == null){
+						log.info("账户[" + accountName + "]，处理订单["+orderId+"]，明细:["+orderItemId+"]，发生错误，原因：订单明细中对应产品为空.");
+						continue;
+					}
+					CloudProductPriceVo prodPrice = priceCache.get(product.getId());
+					
+					if(prodPrice == null){
+						log.info("账户[" + accountName + "]，处理订单["+orderId+"]，明细:["+orderItemId+"]，发生错误，原因：订单明细中对应产品当前价格为空.");
+						continue;
+					}
+					
+					boolean isCustomerDisk = isCustomerDisk(orderItem);
+					
+					String billingType = orderItem.getBillingType();
+					
+					AccountExpenseItem expenseItem = new AccountExpenseItem();
+					
+					BasicUser basicUser = new BasicUser();
+					basicUser.setUserId(accountId);
+					
+					expenseItem.setBasicUser(basicUser);
+//					expenseItem.setBillingCycle(billingCycle);
+					expenseItem.setBillingType(billingType);
+//					expenseItem.setCreated(created);
+					
+					String userId = userVo.getUserId();
+					BasicUser buyUser = new BasicUser();
+					buyUser.setUserId(userId);
+					
+//					expenseItem.setOrderId(orderId);
+//					expenseItem.setBuyUser(buyUser);
+					CloudUserOrder cloudUserOrder = new CloudUserOrder();
+					cloudUserOrder.setOrderId(orderId);
+					expenseItem.setCloudUserOrder(cloudUserOrder);
+					
+					CloudUserOrderItem cloudUserOrderItem = new CloudUserOrderItem();
+					cloudUserOrderItem.setOrderItemId(orderItemId);
+					expenseItem.setCloudUserOrderItem(cloudUserOrderItem);
+					
+					expenseItem.setExpDate(now);
+					
+					Double expAmount = 0.0;
+					//一次性收费
+					if(Constants.BILLING_TYPE_SINGLE.equals(billingType)){
+						orderItem.setOneTimeBillingFlag(1); //发生一次性收费
+						//expAmount = orderItem.getProdRebatePrice();
+						expAmount = calcRebatedPrice(orderItem,prodPrice.getOneTimePrice());
+						oneTimeRebateTotal += expAmount;
+						log.info("类型:[一次性收费]，费用:["+expAmount+"].");
+					} else if(Constants.BILLING_TYPE_CYCLE.equals(billingType)){
+						
+						if(!today.equals(formater_yyyyMMdd.format(billingTime))){ //如果计费时间点不是今天，则不需要写入明细，直接看下一个订单明细
+							log.info("类型:[周期性收费]，未到收费时间点，不予收费，处理下一个订单明细.");
+							continue;
+						}else if(Constants.BILLING_CYCLE_HOUR.equals(billingCycle) 
+								&& !currentHour.equals(formater_yyyyMMddHH.format(billingTime))){
+							log.info("类型:[周期性收费]，未到收费时间点(小时)，不予收费，处理下一个订单明细.");
+							continue;
+						}
+						
+						orderItem.setNextBillingTime(cal.getTime());
+						//expAmount = orderItem.getProdRebatePrice();
+						
+						if(Constants.BILLING_CYCLE_HOUR.equals(billingCycle)){
+							expAmount = calcRebatedPrice(orderItem,prodPrice.getHourPrice());
+						} else if(Constants.BILLING_CYCLE_DAY.equals(billingCycle)){
+							expAmount = calcRebatedPrice(orderItem,prodPrice.getDayPrice());
+						} else if(Constants.BILLING_CYCLE_MONTH.equals(billingCycle)){
+							expAmount = calcRebatedPrice(orderItem,prodPrice.getMonthPrice());
+						} else if(Constants.BILLING_CYCLE_YEAR.equals(billingCycle)){
+							expAmount = calcRebatedPrice(orderItem,prodPrice.getYearPrice());
+						}
+						
+						if(isCustomerDisk){
+							expAmount = expAmount * orderItem.getDiskSize();
+						}
+						
+						cycleRebateTotal += expAmount;
+						
+						log.info("类型:[周期性收费]，费用:["+expAmount+"].");
+					} else {
+						log.warn("不支持的计费类型.["+billingType+"]，处理下一个订单明细!");
+						continue;
+					}
+					expenseItem.setExpAmount(expAmount);//计费金额
+					
+					//更新订单明细，涉及 发生的一次性计费状态 、下次计费时间
+					try {
+						cloudUserOrderItemService.save(orderItem);
+					} catch (ValidatorException e) {
+						log.error("更新订单明细时发生错误:" + e.getMessage(), e);
+					}
+					
+					//保存计费明细
+					getBaseDao().save(expenseItem);
+					
+					log.info("账户[" + accountName + "]，处理订单["+orderId+"]，明细:["+orderItemId+"]结束.");
+				}
+				
+				
+				log.info("账户[" + accountName + "]，处理订单["+orderId+"]结束.");
+			}
+			
+			//更新费用消费总额
+			Double rebateTotal = oneTimeRebateTotal + cycleRebateTotal;
+			Double total = expTotalAmount + rebateTotal;
+			log.info("账户[" + accountName + "]，费用结算，总扣费:["+rebateTotal+"]，累计扣费:["+total+"].");
+			
+			expense.setExpTotalAmount(total);
+			expense.setExpUpdated(now);
+			getBaseDao().save(expense);
+			
+			
+			log.info("账户[" + accountName + "]，结束计费.");
+		}
+		
+		if (needWarning) {
+			String content = warningMessage.toString();
+			log.info("发送邮件给："+mailAdress);
+			try {
+				//发送邮件
+				EmailInfo emailInfo = new EmailInfo();
+				emailInfo.setToEmail(new String[]{mailAdress});
+				emailInfo.setTheme("计费提醒通知！");
+				emailInfo.setContent(content);
+				emailHandler.sendHtmlMail(emailInfo);
+			} catch (Exception e) {
+				log.error("邮件投递失败，收件人:"+mailAdress+"内容:"+content, e);
+			}
+		}
+		
+	
+	}
+	
+	public void doBilling() {
+		
+		int fewDays = 10;
+		
+		log.info("订单主表准备开始.");
+		Map<String, List<CloudUserOrderVo>> orderCache = buildOrderCache();
+		log.info("订单主表准备结束.");
+		
+		log.info("订单明细表准备开始.");
+		Map<String, List<CloudUserOrderItemVo>> orderItemCache = buildOrderItemCache();
+		log.info("订单明细表准备结束.");
+		
+		log.info("此时产品价格缓存准备开始.");
+		Map<String, CloudProductPriceVo> prodPriceCache = buildProdPriceCache();
+		log.info("此时产品价格缓存准备结束.");
+		
+		BillingParameter param = new BillingParameter(fewDays,orderCache, orderItemCache ,prodPriceCache);
+		
+		log.info("今日:"+param.getToday()+"，\t"+fewDays+"天后:"+param.getAfterDay());
+		log.info("今日(开始):"+param.getTodayBegin_yyyyMMddHHmmss()+"，\t"+fewDays+"天后结束:"+param.getAfterFewDaysEnd_yyyyMMddHHmmss());
+		
+		//查询费用主表，根据账户ID 排序
+		List<AccountExpense> expenses = getExpenseList();
+		
+		//逐个账户ID过 费用主表(一个账户最多有一条费用记录)
+		for (AccountExpense expense : expenses) {
+			
+			billing(expense,param);
+		}
+	}
+	
+	private Map<String, CloudProductPriceVo> buildProdPriceCache() {
+
+		List<CloudProductPriceVo> prices = cloudProductPriceService.getCurrentProductPriceList();
+		
+		HashMap<String, CloudProductPriceVo> cache = new HashMap<String, CloudProductPriceVo>();
+		for (CloudProductPriceVo price : prices) {
+			
+			CloudMdmProductVo prod = price.getCloudMdmProduct();
+			if(prod == null){
+				continue;
+			}
+			
+			cache.put(prod.getId(), price);
+		}
+		
+		return cache;
+		
+	}
+
+	/**是否处于计费处理过程中*/
+	@Transactional(isolation=Isolation.READ_UNCOMMITTED)
+	public boolean isBilling(String expenseId){
+		String hql = "From AccountExpense Where isBilling=1 And expId = ?";
+		List<AccountExpenseVo> result = find(hql, expenseId);
+		return CollectionUtils.isNotEmpty(result);
+	}
+	
+	/**是否处于计费处理过程中*/
+	@Transactional(isolation=Isolation.READ_UNCOMMITTED)
+	public boolean isBilling(){
+		String hql = "From AccountExpense Where isBilling=1";
+		List<AccountExpenseVo> result = find(hql);
+		return CollectionUtils.isNotEmpty(result);
+	}
+	
+	@Override
+	public void billing() {
+		try {
+			getBaseDao().findBySQL("select * from CLOUD_USER_EXPENSE for update;");
+			// 费用主表 全部更改为 处理中
+			startBilling();
+			doBilling();
+		} catch (Exception e) {
+			log.error("计费过程中发生错误:" + e.getMessage(), e);
+		} finally {
+			try {
+				// 费用主表 全部更改为 等待处理
+				endBilling();
+			} catch (Exception e) {
+				log.error("费用主表全部更改为等待处理时发生错误:" + e.getMessage(), e);
+			}
+		}
+	}
+
+	private Map<String, List<CloudUserOrderItemVo>> buildOrderItemCache() {
+		//查询订单明细表，根据订单ID做KEY，按照账户ID、购买人ID、创建时间排序
+		List<CloudUserOrderItemVo> orderItems = cloudUserOrderItemService
+				.getStartBillingOrderItems();
+		
+		//准备工作,准备缓存,加入KEY为订单主表ID		
+		HashMap<String, List<CloudUserOrderItemVo>> orderItemCache = new HashMap<String, List<CloudUserOrderItemVo>>();
+		for (CloudUserOrderItemVo orderItem : orderItems) {
+			String key = orderItem.getCloudUserOrder().getOrderId();
+			if(orderItemCache.get(key) == null){
+				orderItemCache.put(key, new ArrayList<CloudUserOrderItemVo>());
+			}
+			orderItemCache.get(key).add(orderItem);
+		}
+		
+		return orderItemCache;
+	}
+
+	
+	
+	
+	//被推荐人在此期间注册和消费金额到达xxx，（多个活动日期重叠，前台管理员控制，或者维护时空中）
+	//计费表必须有被计算过推荐返利的标记
+	public void recommendRebateCal(){
+		
+		//查询当前日期所在的活动，存在多个，取最近维护的推荐返利活动
+		CloudPromotionInfoVo promoAct = this.cloudPromotionInfoService.getUniqueRecommendRebateInfo(null);
+		String startDate = DateUtil.format(promoAct.getStartDate(), "yyyy-MM-dd");
+		String endDate = DateUtil.format(promoAct.getEndDate(), "yyyy-MM-dd HH:mm:ss");
+		Double rebateThreshold = Double.valueOf(promoAct.getRebateThresholdValue().toString());
+		
+		//查询所有审核通过、有效账户信息
+		String sql = "from BasicUser where state="+Constants.USER_STATE_PASS+" and userFlag="+Constants.USER_FLAG_ACCOUNT+" ";
+		List<BasicUserVo> userList = this.find(BasicUserVo.class, sql);
+		
+		
+		//开始计算
+		for(BasicUserVo userVo : userList){
+			//查询被推荐的账户信息：条件为该账户注册日期在活动日期范围之内
+			String accStr = this.basicUserService.getRecommendedUserStr(userVo.getUserId(), startDate, endDate);
+			if("".equals(accStr)){
+				continue;
+			}
+			//查询被推荐账户消费金额：条件为该账户消费金额在活动日期范围之内
+			String expSql = "from AccountExpenseItem where " +
+					"basicUser.userId in ("+accStr+") " +
+					"and expDate>='"+startDate+"' and expDate<='"+endDate+"' " +
+					"and ifnull(rebateFlag,1) <> "+Constants.INVALID_STATE+" ";
+			List<AccountExpenseItemVo> expItemList = this.find(AccountExpenseItemVo.class, expSql);
+			
+			Double totalExpAmount = 0d;
+			for(AccountExpenseItemVo expItemVo : expItemList){
+				totalExpAmount += expItemVo.getExpAmount();
+				//expItemVo.setRebateFlag(Constants.INVALID_STATE);//设置已计算过返利
+			}
+			
+			//判断总费用金额是否满足返利条件金额
+			Double rebateAmount = 0d;
+			if(totalExpAmount > rebateThreshold){
+				rebateAmount = Double.valueOf(totalExpAmount/rebateThreshold).intValue() * rebateThreshold * Double.valueOf(promoAct.getRebatePercentage().toString());
+			}
+			
+			//插入充值信息
+			if(rebateAmount > 0){
+				AccountExpenseVo expVo = this.getExpenseByUserId(userVo.getUserId());
+				if(this.isBilling()){
+					continue;
+				}
+				if(null == expVo){
+					expVo = new AccountExpenseVo();
+					expVo.setBasicUser(userVo);
+					expVo.setExpTotalAmount(0d);
+				}
+				
+				//总金额 = 上次总金额 + 本次充值金额
+				Double totalAmount = (null==expVo.getPayTotalAmount()) ? 0 : expVo.getPayTotalAmount();
+				expVo.setPayTotalAmount(rebateAmount + totalAmount);
+				expVo.setPayUpdated(new Date());
+				
+				//充值明细信息
+				AccountPayVo payVo = new AccountPayVo();
+				payVo.setBasicUser(userVo);
+				Double remainingAmount = 0d;
+				if(null != expVo){
+					//充值后余额 = 充值总金额  - 费用总金额
+					remainingAmount = expVo.getPayTotalAmount() - expVo.getExpTotalAmount();
+				}
+				payVo.setRemainingAmount(remainingAmount);
+				payVo.setPayAmount(rebateAmount);
+				payVo.setPayType(Constants.PAY_TYPE_RECOMMEND);
+				
+				List<AccountPayVo> payList = new ArrayList<AccountPayVo>();
+				payList.add(payVo);
+				try {
+					this.accountPayService.savePay(payList, expVo);
+				} catch (ValidatorException e) {
+					log.error(userVo.getUserAccount() + "插入充值信息时发生错误:" + e.getMessage(), e);
+					e.printStackTrace();
+				}
+				
+			}
+			
+			try {
+				this.accountExpenseItemService.saveAll(expItemList);
+			} catch (ValidatorException e) {
+				log.error(userVo.getUserAccount() + "修改费用明细表计算返利标记时发生错误:" + e.getMessage(), e);
+				e.printStackTrace();
+			}
+		}
+
+	}
+	
+	
+	public CloudUserOrderItemServiceI getCloudUserOrderItemService() {
+		return cloudUserOrderItemService;
+	}
+
+	public void setCloudUserOrderItemService(
+			CloudUserOrderItemServiceI cloudUserOrderItemService) {
+		this.cloudUserOrderItemService = cloudUserOrderItemService;
+	}
+
+	public CloudUserOrderServiceI getCloudUserOrderService() {
+		return cloudUserOrderService;
+	}
+
+	public void setCloudUserOrderService(
+			CloudUserOrderServiceI cloudUserOrderService) {
+		this.cloudUserOrderService = cloudUserOrderService;
+	}
+
+	public BasicUserQuotaServiceI getBasicUserQuotaService() {
+		return basicUserQuotaService;
+	}
+
+	public void setBasicUserQuotaService(
+			BasicUserQuotaServiceI basicUserQuotaService) {
+		this.basicUserQuotaService = basicUserQuotaService;
+	}
+
+	public CloudMdmVMServiceI getCloudMdmVMService() {
+		return cloudMdmVMService;
+	}
+
+	public void setCloudMdmVMService(CloudMdmVMServiceI cloudMdmVMService) {
+		this.cloudMdmVMService = cloudMdmVMService;
+	}
+
+	public CloudMdmNetworkServiceI getCloudMdmNetworkService() {
+		return cloudMdmNetworkService;
+	}
+
+	public void setCloudMdmNetworkService(
+			CloudMdmNetworkServiceI cloudMdmNetworkService) {
+		this.cloudMdmNetworkService = cloudMdmNetworkService;
+	}
+
+	public AccountExpenseItemServiceI getAccountExpenseItemService() {
+		return accountExpenseItemService;
+	}
+
+	public void setAccountExpenseItemService(
+			AccountExpenseItemServiceI accountExpenseItemService) {
+		this.accountExpenseItemService = accountExpenseItemService;
+	}
+
+	public BasicRemindServiceI getBasicRemindService() {
+		return basicRemindService;
+	}
+
+	public void setBasicRemindService(BasicRemindServiceI basicRemindService) {
+		this.basicRemindService = basicRemindService;
+	}
+
+	public CloudPromotionInfoServiceI getCloudPromotionInfoService() {
+		return cloudPromotionInfoService;
+	}
+
+	public void setCloudPromotionInfoService(
+			CloudPromotionInfoServiceI cloudPromotionInfoService) {
+		this.cloudPromotionInfoService = cloudPromotionInfoService;
+	}
+
+	public BasicUserServiceI getBasicUserService() {
+		return basicUserService;
+	}
+
+	public void setBasicUserService(BasicUserServiceI basicUserService) {
+		this.basicUserService = basicUserService;
+	}
+
+	public AccountPayServiceI getAccountPayService() {
+		return accountPayService;
+	}
+
+	public void setAccountPayService(AccountPayServiceI accountPayService) {
+		this.accountPayService = accountPayService;
+	}
+	
+	
+	
+}

@@ -1,0 +1,172 @@
+/*
+ * 系统名: 国旅在线
+ * 业务名: FTP客户端取得
+ * 概要:   取得FTP客户端，初始化连接，并登录
+ * Copyright(C) 2005 CITBJ
+ *
+ * version 1.00    2005/06/21 王增舟
+ */
+package sy.util2;
+
+import java.io.IOException;
+
+import java.net.SocketException;
+
+import java.util.Hashtable;
+
+import com.cits.online.common.config.ConfigFacade;
+import com.cits.online.common.config.ConfigNames;
+import com.cits.online.common.ioc.IoC;
+
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPClientConfig;
+
+import org.apache.log4j.Logger;
+
+/**
+ * CITFTPClientFactory
+ */
+public class CITFTPClientFactory {
+	/** 日志 */
+	private static Logger logger = (Logger) IoC.get("Logger");
+
+	// /** 属性文件的文件名 */
+	// private static final String PROPERTY_FILENAME =
+	// OnlineConstance.PROPERTY_FILENAME;
+	//
+	// /** 服务器名对应的键值 */
+	// private static String SERVERNAME_KEY = "ftp.server.ip";
+	//
+	// /** 用户名对应的键值 */
+	// private static String USERNAME_KEY = "ftp.server.username";
+	//
+	// /** 用户密码对应的键值 */
+	// private static String PASSWORD_KEY = "ftp.server.password";
+	//
+	// /** 工作目录(FTP server)对应的键值 */
+	// private static String WORKING_DIRECTORY_KEY =
+	// "ftp.server.wokingdirectory";
+	//
+	// /** 要上传FTP文件根路径(本地)的键值 */
+	// private static String ROOT_FILE_PATH_KEY = "ftp.client.file.rootpath";
+	//
+	// /** 预设的FTPClient连接数量的键值 */
+	// private static String INIT_FTPCLIENT_COUNT_KEY = "ftp.client.count";
+
+	/** 服务器名 */
+	private static String SERVERNAME = ConfigFacade.getProperty(ConfigNames.FTP_SERVER_NAME);
+
+	/** 服务器端口号 */
+	private static int SERVERPORT = ConfigFacade.getIntProperty(ConfigNames.FTP_SERVER_PORT);
+
+	/** 用户名 */
+	private static String USERNAME = ConfigFacade.getProperty(ConfigNames.FTP_USER_NAME);
+
+	/** 用户密码 */
+	private static String PASSWORD = ConfigFacade.getProperty(ConfigNames.FTP_PASSWORD);
+
+	/** 工作目录(FTP server) */
+	private static String WORKING_DIRECTORY = ConfigFacade.getProperty(ConfigNames.FTP_WORKING_DIRECTORY);
+
+	/** 要上传FTP文件根路径(本地) */
+	public static String ROOT_FILE_PATH = ConfigFacade.getProperty(ConfigNames.FTP_FILE_PATH);
+
+	/** 预设的FTPClient连接数量 */
+	private static int INIT_FTPCLIENT_COUNT = ConfigFacade.getIntProperty(ConfigNames.FTP_MAX_CLIENT_COUNT);
+
+	/** 预设的FTPClient */
+	private static Hashtable clientMap = new Hashtable();
+
+	/** 控制循环返回FTPClient的索引 */
+	private static int index = 0;
+
+	/** FTP客户端配置 */
+	private static FTPClientConfig FTPConf = new FTPClientConfig(ConfigFacade.getProperty(ConfigNames.FTP_SERVER_OS));
+
+	/**
+	 * Creates a new CITFTPClientFactory object.
+	 * 
+	 * @throws IOException
+	 */
+	public CITFTPClientFactory() throws IOException {
+		FTPConf.setServerTimeZoneId("GMT");
+
+		for (int i = 0; i < INIT_FTPCLIENT_COUNT; i++) {
+			clientMap.put(String.valueOf(i), setFTPClient(new FTPClient()));
+		}
+	}
+
+	/**
+	 * create a FTPClient object and connect and login
+	 * 
+	 * @param FTP DOCUMENT ME!
+	 * 
+	 * @return a FTPClient
+	 * 
+	 * @throws SocketException
+	 * @throws IOException
+	 */
+	public static FTPClient setFTPClient(FTPClient FTP) throws SocketException, IOException {
+		logger.debug("Set ftpClient " + FTP);
+		FTP.configure(FTPConf);
+		FTP.setDefaultPort(SERVERPORT);
+		FTP.connect(SERVERNAME);
+		boolean result = FTP.login(USERNAME, PASSWORD);
+		logger.debug(" login result = " + result);
+		boolean cdResult = FTP.changeWorkingDirectory(WORKING_DIRECTORY);
+		logger.debug("切换到目录" + WORKING_DIRECTORY + (cdResult ? "成功" : "失败"));
+		FTP.enterLocalPassiveMode();
+
+		return FTP;
+	}
+
+	/**
+	 * ReLogin a FTP server .
+	 * 
+	 * @param FTP ftp client
+	 * 
+	 * @return logined ftp client
+	 * 
+	 * @throws SocketException
+	 * @throws IOException
+	 */
+	public static FTPClient reLogin(FTPClient FTP) throws SocketException, IOException {
+		logger.debug("relogin ftpClient " + FTP);
+		FTP.connect(SERVERNAME);
+		FTP.login(USERNAME, PASSWORD);
+		FTP.changeWorkingDirectory(WORKING_DIRECTORY);
+		FTP.enterLocalPassiveMode();
+
+		return FTP;
+	}
+
+	/**
+	 * create a CITFTPClient object
+	 * 
+	 * @return CITFTPClient object
+	 * 
+	 * @throws IOException
+	 */
+	public synchronized static FTPClient getFTPClient() throws IOException {
+		if (clientMap.isEmpty()) {
+			new CITFTPClientFactory();
+		}
+
+		FTPClient FTP = (FTPClient) clientMap.get(String.valueOf(index++ % INIT_FTPCLIENT_COUNT));
+
+		if (FTP.isConnected()) {
+			return FTP;
+		} else {
+			return setFTPClient(FTP);
+		}
+	}
+
+	/**
+	 * 取得文件存放目录
+	 * 
+	 * @return 文件存放目录
+	 */
+	public static String getROOTFILEPATH() {
+		return ROOT_FILE_PATH;
+	}
+}

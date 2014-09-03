@@ -1,0 +1,38 @@
+package sy.service.product;
+
+import java.util.Date;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import sy.common.util.Constants;
+import sy.common.util.DateUtil;
+import sy.common.util.StringUtils;
+import sy.common.util.move.Mover;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.product.CloudOrderApproval;
+import sy.domain.vo.product.CloudOrderApprovalVo;
+import sy.service.shared.BaseServiceTemplate;
+
+
+
+/**
+ * 用户订单
+ * @author cs
+ *
+ */
+@Service("cloudOrderAppprovalService")
+public class CloudOrderAppprovalService extends
+		BaseServiceTemplate<CloudOrderApproval, CloudOrderApprovalVo> implements
+		CloudOrderAppprovalServiceI {
+	
+	public CloudOrderApprovalVo getCloudOrderApproById(String id) throws Exception {
+		CloudOrderApprovalVo cloudOrderApprovalVo = null;
+		if (StringUtils.isNotBlank(id)) {
+			String hql = "from CloudOrderApproval orderAppro where orderAppro.id='" + id + "'";
+			cloudOrderApprovalVo =this.findUnique(hql);
+		}
+		return cloudOrderApprovalVo;
+	}
+}

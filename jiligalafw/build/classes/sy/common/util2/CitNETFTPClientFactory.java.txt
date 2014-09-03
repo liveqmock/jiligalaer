@@ -1,0 +1,174 @@
+/*
+ * 系统名: 国旅在线
+ * 业务名: FTP客户端取得
+ * 概要:   取得FTP客户端，初始化连接，并登录
+ * Copyright(C) 2005 CITBJ
+ *
+ * version 1.00    2005/06/21 王增舟
+ */
+package sy.util2;
+
+import java.io.IOException;
+import java.net.SocketException;
+import java.util.Hashtable;
+
+import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.ftp.FTPClientConfig;
+import org.apache.commons.net.ftp.FTPReply;
+import org.apache.log4j.Logger;
+
+import com.cits.online.common.config.ConfigFacade;
+import com.cits.online.common.config.ConfigNames;
+import com.cits.online.common.ioc.IoC;
+
+/**
+ * CITFTPClientFactory
+ */
+public class CitNETFTPClientFactory {
+	/** 日志 */
+	private static Logger logger = (Logger) IoC.get("Logger");
+
+	/** 服务器名 */
+	private static String SERVERNAME = ConfigFacade.getProperty(ConfigNames.FTP_SERVER_NAME_NET);	
+//	private static String SERVERNAME = "172.100.1.81";
+
+	/** 服务器端口号 */
+	private static int SERVERPORT = ConfigFacade.getIntProperty(ConfigNames.FTP_SERVER_PORT_NET);
+
+	/** 用户名 */
+	private static String USERNAME =ConfigFacade.getProperty(ConfigNames.FTP_USER_NAME_NET);
+
+	/** 用户密码 */
+	private static String PASSWORD =ConfigFacade.getProperty(ConfigNames.FTP_PASSWORD_NET);
+
+	/** 工作目录(FTP server) */
+	private static String WORKING_DIRECTORY =ConfigFacade.getProperty(ConfigNames.FTP_WORKING_DIRECTORY_NET);
+
+	/** 预设的FTPClient连接数量 */
+	private static int INIT_FTPCLIENT_COUNT =ConfigFacade.getIntProperty(ConfigNames.FTP_MAX_CLIENT_COUNT_NET);
+
+	/** 预设的FTPClient */
+	private static Hashtable clientMap = new Hashtable();
+
+	/** 控制循环返回FTPClient的索引 */
+	private static int index = 0;
+
+	/** FTP客户端配置 */
+	private static FTPClientConfig FTPConf =new FTPClientConfig(ConfigFacade.getProperty(ConfigNames.FTP_SERVER_OS_NET));
+
+	/**
+	 * Creates a new CITFTPClientFactory object.
+	 * 
+	 * @throws IOException
+	 */
+	public CitNETFTPClientFactory() throws IOException {
+		FTPConf.setServerTimeZoneId("GMT");
+
+		for (int i = 0; i < INIT_FTPCLIENT_COUNT; i++) {
+			clientMap.put(String.valueOf(i), setFTPClient(new FTPClient()));
+		}
+	}
+
+	/**
+	 * create a FTPClient object and connect and login
+	 * 
+	 * @param FTP DOCUMENT ME!
+	 * 
+	 * @return a FTPClient
+	 * 
+	 * @throws SocketException
+	 * @throws IOException
+	 */
+	public static FTPClient setFTPClient(FTPClient FTP) throws SocketException, IOException {
+		logger.debug("Set ftpClient " + FTP);
+		FTP.configure(FTPConf);
+		FTP.setDefaultPort(SERVERPORT);
+		FTP.connect(SERVERNAME);
+		int reply = FTP.getReplyCode();  
+		if(!FTPReply.isPositiveCompletion(reply)){  
+			FTP.disconnect();  
+			throw new IOException("failed to connect to the FTP Server:"+SERVERNAME);  
+		} 
+		boolean result = FTP.login(USERNAME, PASSWORD);
+		logger.debug(" 登录 " + (result ? "成功" : "失败"));
+		boolean cdResult = FTP.changeWorkingDirectory(WORKING_DIRECTORY);
+		logger.debug("切换到目录" + WORKING_DIRECTORY + (cdResult ? "成功" : "失败"));
+		FTP.enterLocalPassiveMode();
+
+		return FTP;
+	}
+
+	/**
+	 * ReLogin a FTP server .
+	 * 
+	 * @param FTP ftp client
+	 * 
+	 * @return logined ftp client
+	 * 
+	 * @throws SocketException
+	 * @throws IOException
+	 */
+	public static FTPClient reLogin(FTPClient FTP) throws SocketException, IOException {
+		logger.debug("relogin ftpClient " + FTP);
+		FTP.connect(SERVERNAME);
+		int reply = FTP.getReplyCode();  
+		if(!FTPReply.isPositiveCompletion(reply)){  
+			FTP.disconnect();  
+			throw new IOException("failed to connect to the FTP Server:"+SERVERNAME);  
+		} 
+		boolean result =FTP.login(USERNAME, PASSWORD);
+		logger.debug(" 重登录 " + (result ? "成功" : "失败"));
+		FTP.changeWorkingDirectory(WORKING_DIRECTORY);
+		FTP.enterLocalPassiveMode();
+
+		return FTP;
+	}
+
+	/**
+	 * create a CITFTPClient object
+	 * 
+	 * @return CITFTPClient object
+	 * 
+	 * @throws IOException
+	 */
+	public synchronized static FTPClient getFTPClient() throws IOException {
+		if (clientMap.isEmpty()) {
+			new CitNETFTPClientFactory();
+		}
+
+		FTPClient FTP = (FTPClient) clientMap.get(String.valueOf(index++ % INIT_FTPCLIENT_COUNT));
+		//如果服务器端主动断开，客户端　是不知道的
+
+		if (FTP.isConnected()) {
+
+			try { 
+
+				//调到根目录，如果没有连接，会抛出
+				if (FTP.changeWorkingDirectory(WORKING_DIRECTORY)) {	  
+
+					return FTP;
+				}
+
+			} catch (Exception e) {
+				logger.debug("===FTP服务器端主动断开,客户端要断开再链接===");
+			}
+
+
+			try {
+				FTP.disconnect();
+			} catch (IOException f) {
+			}
+
+			return setFTPClient(FTP);
+
+		}else{
+
+			return setFTPClient(FTP);
+
+		}
+
+
+	}
+
+
+}

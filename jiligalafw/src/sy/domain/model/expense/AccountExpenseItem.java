@@ -1,0 +1,131 @@
+package sy.domain.model.expense;
+
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import sy.domain.model.base.BasicUser;
+import sy.domain.model.product.CloudUserOrder;
+import sy.domain.model.product.CloudUserOrderItem;
+import sy.domain.model.shared.PersistentObject;
+
+
+/**
+ * 账户费用明细PO
+ * @author luobin
+ *
+ */
+@Entity
+@Table(name = "CLOUD_USER_EXPENSE_ITEM")
+public class AccountExpenseItem implements PersistentObject{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2643130688211913881L;
+
+	private String expItemId;
+	/**
+	 * 订单ID
+	 */
+	private CloudUserOrder cloudUserOrder;
+	/**
+	 * 订单子ID
+	 */
+	private CloudUserOrderItem cloudUserOrderItem;
+	/**
+	 * 费用账户
+	 */
+	private BasicUser basicUser;
+	/**
+	 * 计费日期
+	 */
+	private Date expDate;
+	/**
+	 * 计费金额
+	 */
+	private Double expAmount;
+
+	/**
+	 * 计费类型（一次性、周期性）
+	 */
+	private String billingType;
+	
+	@Id
+	@Column(name="EXP_ITEM_ID",length = 32)
+	@GeneratedValue(generator = "system-uuid")
+	@GenericGenerator(name = "system-uuid", strategy = "uuid")
+	public String getExpItemId() {
+		return expItemId;
+	}
+
+	public void setExpItemId(String expItemId) {
+		this.expItemId = expItemId;
+	}
+	
+	@ManyToOne()  
+    @JoinColumn(name = "ORDER_ID") 
+	public CloudUserOrder getCloudUserOrder() {
+		return cloudUserOrder;
+	}
+
+	public void setCloudUserOrder(CloudUserOrder cloudUserOrder) {
+		this.cloudUserOrder = cloudUserOrder;
+	}
+
+	@ManyToOne()  
+    @JoinColumn(name = "ORDER_ITEM_ID") 
+	public CloudUserOrderItem getCloudUserOrderItem() {
+		return cloudUserOrderItem;
+	}
+
+	public void setCloudUserOrderItem(CloudUserOrderItem cloudUserOrderItem) {
+		this.cloudUserOrderItem = cloudUserOrderItem;
+	}
+
+	@ManyToOne()  
+    @JoinColumn(name = "USER_ID") 
+	public BasicUser getBasicUser() {
+		return basicUser;
+	}
+
+	public void setBasicUser(BasicUser basicUser) {
+		this.basicUser = basicUser;
+	}
+	
+	@Column(name="EXP_DATE")
+	public Date getExpDate() {
+		return expDate;
+	}
+
+	public void setExpDate(Date expDate) {
+		this.expDate = expDate;
+	}
+
+	@Column(name="EXP_AMOUNT")
+	public Double getExpAmount() {
+		return expAmount;
+	}
+
+	public void setExpAmount(Double expAmount) {
+		this.expAmount = expAmount;
+	}
+	
+	@Column(name="BILLING_TYPE")
+	public String getBillingType() {
+		return billingType;
+	}
+
+	public void setBillingType(String billingType) {
+		this.billingType = billingType;
+	}
+	
+}

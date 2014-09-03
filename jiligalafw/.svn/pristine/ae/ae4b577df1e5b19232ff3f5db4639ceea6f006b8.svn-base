@@ -1,0 +1,374 @@
+/*
+ * 创建日期 2008-8-9
+ *
+ */
+package sy.util2;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import javax.mail.MessagingException;
+
+import org.apache.log4j.Logger;
+
+import com.cits.online.common.config.ConfigFacade;
+import com.cits.online.common.config.ConfigNames;
+import com.cits.online.common.ioc.IoC;
+
+/**
+ * 发送邮件
+ * 
+ * 
+ * @author Wangzz
+ */
+public class CITSendMail {
+	/** 日志 */
+	protected static Logger logger = (Logger) IoC.get("Logger");
+
+	/** SMTP 服务器 */
+	protected static String smtpServer = "";
+
+	/** SMTP 验证 */
+	protected static String smtpAuth = "";
+
+	/** SMTP 用户名 */
+	protected static String smtpUser = "";
+
+	/** SMTP 密码 */
+	protected static String smtpPassword = "";
+
+	/** SMTP 发件人 */
+	protected static String From = "";
+
+	/**
+	 * 从配置文件读入SMTP配置信息
+	 */
+	protected static void getSMTPConfigration() {
+		smtpServer = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_HOST);
+		smtpAuth = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_AUTH);
+		smtpUser = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_USER);
+		smtpPassword = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_PASSWORD);
+		From = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_FROM);
+	}
+	
+	/**
+	 * @param mailTo 接受邮箱地址
+	 * @param mailSubject  邮件标题
+	 * @param sendURL sendURL 邮件主体URL
+	 * @param jspEncoding 页面编码格式 默认UTF—8
+	 * @return 成功标志boolean
+	 */
+	public static boolean sendMailForURL(String mailTo, String mailSubject, String sendURL,String jspEncoding) {
+
+		String fileContent = new String();
+		
+		String tempJspEncoding = CmnUtil.nvl(jspEncoding);
+		try {
+			String encoding="UTF-8";
+			if(tempJspEncoding.equalsIgnoreCase("ISO-8859-1")){
+				encoding = "ISO-8859-1";
+			} else	if(tempJspEncoding.equalsIgnoreCase("GBK")){
+				encoding = "GBK";
+			} else 	if(tempJspEncoding.equalsIgnoreCase("GB2312")){
+				encoding = "GB2312";
+			}
+			
+			fileContent = getHtmlCode(sendURL, encoding);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		} 
+
+		
+		return sendMail(mailTo, mailSubject, fileContent,jspEncoding);
+		
+		
+	}
+	
+	
+	/**
+	 * @param mailTo 接受邮箱地址
+	 * @param mailSubject  邮件标题
+	 * @param sendURL sendURL 邮件主体URL
+	 * @param jspEncoding 页面编码格式 默认UTF—8
+	 *  @param addContent 邮件的附加内容
+	 * @return 成功标志boolean
+	 */
+	public static boolean sendMailForURLAndContent(String mailTo, String mailSubject, String sendURL,String jspEncoding,String addContent) {
+
+		String fileContent = new String();
+		
+		String tempJspEncoding = CmnUtil.nvl(jspEncoding);
+		try {
+			String encoding="UTF-8";
+			if(tempJspEncoding.equalsIgnoreCase("ISO-8859-1")){
+				encoding = "ISO-8859-1";
+			} else	if(tempJspEncoding.equalsIgnoreCase("GBK")){
+				encoding = "GBK";
+			} else 	if(tempJspEncoding.equalsIgnoreCase("GB2312")){
+				encoding = "GB2312";
+			}
+			
+			fileContent = addContent + getHtmlCode(sendURL, encoding);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		} 
+
+		
+		return sendMail(mailTo, mailSubject, fileContent,jspEncoding);
+		
+		
+	}	
+	
+
+	/**
+	 * 
+	 * @param mailTo 接受邮箱地址
+	 * @param mailSubject  邮件标题
+	 * @param sendURL sendURL 邮件主体URL
+	 * @param jspEncoding 页面编码格式 默认UTF—8
+	 *  @param addContent 邮件的附加内容,可为空
+	 * @param fileAttacmentNames 附件路径，可为空
+	 * @param fileAttacmentNames 附件名称，可为空
+	 * @return 成功标志boolean
+	 */
+	public static boolean sendMailForURL(String mailTo, String mailSubject, String sendURL,String jspEncoding,String addContent, String[] fileAttacmentPaths, String[] fileAttacmentNames) {
+
+		String fileContent = new String();
+		
+		String tempJspEncoding = CmnUtil.nvl(jspEncoding);
+		try {
+			String encoding="UTF-8";
+			if(tempJspEncoding.equalsIgnoreCase("ISO-8859-1")){
+				encoding = "ISO-8859-1";
+			} else	if(tempJspEncoding.equalsIgnoreCase("GBK")){
+				encoding = "GBK";
+			} else 	if(tempJspEncoding.equalsIgnoreCase("GB2312")){
+				encoding = "GB2312";
+			}
+			fileContent = CmnUtil.nvl(addContent) + getHtmlCode(sendURL, encoding);
+			
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		} 
+
+		
+		return sendMail(mailTo, mailSubject, fileContent,jspEncoding,fileAttacmentPaths, fileAttacmentNames);
+		
+		
+	}	
+	
+    private static String getHtmlCode(String httpUrl, String encode) throws Exception {
+		StringBuffer htmlCode = new StringBuffer();
+		InputStream in = null;
+		java.io.BufferedReader breader = null;
+		try {
+			
+			URL url = new java.net.URL(httpUrl);
+			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			connection.setRequestProperty("User-Agent", "Mozilla/4.0");
+			connection.connect();
+			in = connection.getInputStream();
+			breader = new BufferedReader(new InputStreamReader(in, encode));
+			String currentLine;
+			while ((currentLine = breader.readLine()) != null) {
+
+				currentLine = replace(replace(currentLine, "\n", " "), "\t", " ");
+
+				if ("".equals(currentLine.trim()))
+					continue;
+
+				htmlCode.append(currentLine + "\n");
+			}
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		} finally {
+			if(breader != null){
+				breader.close();
+			}
+			if(in != null){
+				in.close();
+			}
+		}
+		return htmlCode.toString();
+	}
+	
+    /**
+	 * 字符串替换
+	 * 
+	 * @param text 需要被处理的字符串
+	 * @param from 需要被替换掉的字符串
+	 * @param to 被替换成的字符串
+	 * @return 被替换后的字符串
+	 * @see String#replaceAll(String, String)
+	 */
+	private static String replace(String text, String from, String to) {
+		if (text == null || from == null || to == null) {
+			return null;
+		}
+		StringBuffer newText = new StringBuffer(text.length() * 2);
+		int pos1 = 0;
+		int pos2 = text.indexOf(from);
+		while (pos2 >= 0) {
+			newText.append(text.substring(pos1, pos2) + to);
+			pos1 = pos2 + from.length();
+			pos2 = text.indexOf(from, pos1);
+		}
+		newText.append(text.substring(pos1, text.length()));
+		return newText.toString();
+	}
+	
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @param resviceMail 收件人
+	 * @param mailSubject 邮件主题
+	 * @param mailBody 邮件内容
+	 * @param sendEncoding 发送编码格式
+	 * 
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String resviceMail, String mailSubject, String mailBody,String sendEncoding) {
+		String mailTo[]=new String[] { resviceMail };
+		String sendToType[]=new String[] { "TO" };
+		String mailType="html";
+		boolean result = false;
+		
+
+
+		getSMTPConfigration();
+		logger.info("正在发送邮件,编码方式:" + sendEncoding);
+
+		CITSendMailUtil sendmailutil = new CITSendMailUtil(smtpServer, smtpUser, smtpPassword, smtpAuth, sendEncoding);
+
+		try {
+			sendmailutil.setMailFrom(From);
+
+			if (mailTo == null) {
+				throw new NullPointerException("未设定收件人");
+			}
+			for (int i = 0; i < mailTo.length; i++) {
+
+				sendmailutil.setMailTo(new String[] { mailTo[i] }, sendToType[i]);
+			}
+
+			if (mailType == null) {
+				logger.error("未设定邮件类型，按方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("html")) {
+				logger.debug("按HTML方式发送邮件");
+				// 按HTML方式发送邮件
+
+				sendmailutil.setMailHtmlContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("text")) {
+				logger.debug("按TEXT方式发送邮件");
+				// 按TEXT方式发送邮件
+
+				sendmailutil.setMailContent(mailBody);
+			} else {
+				logger.error("未设定邮件类型，按方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			}
+
+			sendmailutil.setSubject(mailSubject);
+			sendmailutil.sendMail();
+			result = true;
+		} catch (MessagingException me) {
+			result = false;
+			logger.error("发送邮件失败", me);
+		} catch (Exception e) {
+			result = false;
+			logger.error("发送邮件失败", e);
+		}
+
+		return result;
+		
+		
+	}
+	
+
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @param resviceMail 收件人
+	 * @param mailSubject 邮件主题
+	 * @param mailBody 邮件内容
+	 * @param sendEncoding 发送编码格式
+	 * @param fileAttacmentNames 附件路径，可为空
+	 * @param fileAttacmentNames 附件名称，可为空
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String resviceMail, String mailSubject, String mailBody,String sendEncoding, String[] fileAttacmentPaths,String[] fileAttacmentNames) {
+		String mailTo[]=new String[] { resviceMail };
+		String sendToType[]=new String[] { "TO" };
+		String mailType="html";
+		boolean result = false;
+		
+
+
+		getSMTPConfigration();
+		logger.info("正在发送邮件,编码方式:" + sendEncoding);
+
+		CITSendMailUtil sendmailutil = new CITSendMailUtil(smtpServer, smtpUser, smtpPassword, smtpAuth, sendEncoding);
+
+		try {
+			sendmailutil.setMailFrom(From);
+
+			if (mailTo == null) {
+				throw new NullPointerException("未设定收件人");
+			}
+			for (int i = 0; i < mailTo.length; i++) {
+
+				sendmailutil.setMailTo(new String[] { mailTo[i] }, sendToType[i]);
+			}
+
+			if (mailType == null) {
+				logger.error("未设定邮件类型，按方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("html")) {
+				logger.debug("按HTML方式发送邮件");
+				// 按HTML方式发送邮件
+
+				sendmailutil.setMailHtmlContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("text")) {
+				logger.debug("按TEXT方式发送邮件");
+				// 按TEXT方式发送邮件
+
+				sendmailutil.setMailContent(mailBody);
+			} else {
+				logger.error("未设定邮件类型，按方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			}
+			if(fileAttacmentPaths != null && fileAttacmentPaths.length > 0){
+				sendmailutil.setfileAttacment(fileAttacmentPaths,fileAttacmentNames);
+			}
+			sendmailutil.setSubject(mailSubject);
+			
+			sendmailutil.sendMail();
+			result = true;
+		} catch (MessagingException me) {
+			result = false;
+			logger.error("发送邮件失败", me);
+		} catch (Exception e) {
+			result = false;
+			logger.error("发送邮件失败", e);
+		}
+
+		return result;
+		
+		
+	}
+
+}

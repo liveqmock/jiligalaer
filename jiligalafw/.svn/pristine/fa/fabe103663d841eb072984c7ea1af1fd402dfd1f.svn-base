@@ -1,0 +1,1197 @@
+package sy.controller.product;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.SessionAttributes;
+
+import sy.common.model.ECContext;
+import sy.common.model.QueryContext;
+import sy.common.util.Constants;
+import sy.common.util.DateUtil;
+import sy.common.util.cloudstack.CloudException;
+import sy.common.util.validator.ValidatorException;
+import sy.controller.shared.BaseControllerTemplate;
+import sy.domain.vo.base.BasicUserVo;
+import sy.domain.vo.product.CloudMdmProductItemVo;
+import sy.domain.vo.product.CloudMdmVmVo;
+import sy.domain.vo.product.CloudProductPriceVo;
+import sy.domain.vo.product.CloudUserOrderItemVo;
+import sy.domain.vo.product.CloudUserOrderVo;
+import sy.domain.vo.promotion.CloudPromotionValue;
+import sy.service.base.BasicUserServiceI;
+import sy.service.product.CloudMdmIPServiceI;
+import sy.service.product.CloudMdmNetworkServiceI;
+import sy.service.product.CloudMdmNetworkSolnServiceI;
+import sy.service.product.CloudMdmNicServiceI;
+import sy.service.product.CloudMdmProductItemServiceI;
+import sy.service.product.CloudMdmProductServiceI;
+import sy.service.product.CloudMdmVMServiceI;
+import sy.service.product.CloudMdmVolumeServiceI;
+import sy.service.product.CloudMdmZoneServiceI;
+import sy.service.product.CloudProductPriceServiceI;
+import sy.service.product.CloudUserOrderItemServiceI;
+import sy.service.product.CloudUserOrderServiceI;
+import sy.service.promotion.CloudPromotionProductServiceI;
+import sy.service.shared.BasicServiceI;
+
+/**
+ * 我的资源 - 我的虚拟机
+ * @author luobin
+ * 
+ */
+@Controller
+@RequestMapping("/vmware")
+@SessionAttributes("cloudMdmVmVo")
+public class MyVMwareController extends BaseControllerTemplate<CloudMdmVmVo> {
+
+	//产品基础数据
+	@Autowired
+	private CloudMdmVMServiceI cloudMdmVMService;
+	@Autowired
+	private CloudMdmZoneServiceI cloudMdmZoneService;
+	@Autowired
+	private CloudMdmNetworkServiceI cloudMdmNetworkService;
+	@Autowired
+	private CloudMdmIPServiceI cloudMdmIPService;
+	@Autowired
+	private CloudMdmNetworkSolnServiceI cloudMdmNetworkSolnService;
+	@Autowired
+	private CloudUserOrderServiceI cloudUserOrderService;
+	@Autowired
+	private CloudUserOrderItemServiceI cloudUserOrderItemService;
+	@Autowired
+	private BasicUserServiceI basicUserService;
+	@Autowired
+	private CloudMdmNicServiceI cloudMdmNicService;
+	@Autowired
+	private CloudMdmVolumeServiceI cloudMdmVolumeService;
+	@Autowired
+	private CloudProductPriceServiceI cloudProductPriceService;
+	@Autowired
+	private CloudPromotionProductServiceI cloudPromotionProductService;
+	@Autowired
+	private CloudMdmProductServiceI cloudMdmProductService;
+	@Autowired
+	private CloudMdmProductItemServiceI cloudMdmProductItemService;
+	
+	public CloudMdmVMServiceI getCloudMdmVMService() {
+		return cloudMdmVMService;
+	}
+
+	public void setCloudMdmVMService(CloudMdmVMServiceI cloudMdmVMService) {
+		this.cloudMdmVMService = cloudMdmVMService;
+	}
+
+	public CloudMdmZoneServiceI getCloudMdmZoneService() {
+		return cloudMdmZoneService;
+	}
+
+	public void setCloudMdmZoneService(CloudMdmZoneServiceI cloudMdmZoneService) {
+		this.cloudMdmZoneService = cloudMdmZoneService;
+	}
+
+	public CloudMdmNetworkServiceI getCloudMdmNetworkService() {
+		return cloudMdmNetworkService;
+	}
+
+	public void setCloudMdmNetworkService(
+			CloudMdmNetworkServiceI cloudMdmNetworkService) {
+		this.cloudMdmNetworkService = cloudMdmNetworkService;
+	}
+
+	public CloudMdmIPServiceI getCloudMdmIPService() {
+		return cloudMdmIPService;
+	}
+
+	public void setCloudMdmIPService(CloudMdmIPServiceI cloudMdmIPService) {
+		this.cloudMdmIPService = cloudMdmIPService;
+	}
+
+	public CloudMdmNetworkSolnServiceI getCloudMdmNetworkSolnService() {
+		return cloudMdmNetworkSolnService;
+	}
+
+	public void setCloudMdmNetworkSolnService(
+			CloudMdmNetworkSolnServiceI cloudMdmNetworkSolnService) {
+		this.cloudMdmNetworkSolnService = cloudMdmNetworkSolnService;
+	}
+	
+	public CloudUserOrderServiceI getCloudUserOrderService() {
+		return cloudUserOrderService;
+	}
+
+	public void setCloudUserOrderService(
+			CloudUserOrderServiceI cloudUserOrderService) {
+		this.cloudUserOrderService = cloudUserOrderService;
+	}
+
+	public BasicUserServiceI getBasicUserService() {
+		return basicUserService;
+	}
+
+	public void setBasicUserService(BasicUserServiceI basicUserService) {
+		this.basicUserService = basicUserService;
+	}
+	
+	public CloudMdmNicServiceI getCloudMdmNicService() {
+		return cloudMdmNicService;
+	}
+
+	public void setCloudMdmNicService(CloudMdmNicServiceI cloudMdmNicService) {
+		this.cloudMdmNicService = cloudMdmNicService;
+	}
+
+	public CloudMdmVolumeServiceI getCloudMdmVolumeService() {
+		return cloudMdmVolumeService;
+	}
+
+	public void setCloudMdmVolumeService(
+			CloudMdmVolumeServiceI cloudMdmVolumeService) {
+		this.cloudMdmVolumeService = cloudMdmVolumeService;
+	}
+
+	public CloudUserOrderItemServiceI getCloudUserOrderItemService() {
+		return cloudUserOrderItemService;
+	}
+
+	public void setCloudUserOrderItemService(
+			CloudUserOrderItemServiceI cloudUserOrderItemService) {
+		this.cloudUserOrderItemService = cloudUserOrderItemService;
+	}
+
+	public CloudProductPriceServiceI getCloudProductPriceService() {
+		return cloudProductPriceService;
+	}
+
+	public void setCloudProductPriceService(
+			CloudProductPriceServiceI cloudProductPriceService) {
+		this.cloudProductPriceService = cloudProductPriceService;
+	}
+	
+	public CloudPromotionProductServiceI getCloudPromotionProductService() {
+		return cloudPromotionProductService;
+	}
+
+	public void setCloudPromotionProductService(
+			CloudPromotionProductServiceI cloudPromotionProductService) {
+		this.cloudPromotionProductService = cloudPromotionProductService;
+	}
+	
+	public CloudMdmProductServiceI getCloudMdmProductService() {
+		return cloudMdmProductService;
+	}
+
+	public void setCloudMdmProductService(
+			CloudMdmProductServiceI cloudMdmProductService) {
+		this.cloudMdmProductService = cloudMdmProductService;
+	}
+
+	public CloudMdmProductItemServiceI getCloudMdmProductItemService() {
+		return cloudMdmProductItemService;
+	}
+
+	public void setCloudMdmProductItemService(
+			CloudMdmProductItemServiceI cloudMdmProductItemService) {
+		this.cloudMdmProductItemService = cloudMdmProductItemService;
+	}
+
+	@Override
+	public BasicServiceI<CloudMdmVmVo> getService() {
+		return cloudMdmVMService;
+	}
+	
+	public String getViewPath() {
+		return "myresources";
+	}
+	
+	/**
+	 * 我虚拟机主页面
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "list")
+	public String list(HttpServletRequest request, ModelMap modelMap) throws ValidatorException {
+
+		BasicUserVo basicUser = this.getCurrentUser(request);
+		QueryContext context = new ECContext(request, modelMap, "myVmList");
+		context.clearParmeters();
+//		context.put("$eq_account", basicUser.getUserAccount());
+//		context.put("$eq_dataState", String.valueOf(Constants.VALID_STATE));
+//		//查询列表需要从新写
+//		List<?> myVmList = this.cloudMdmVMService.list(context);
+		
+		
+		//订单表状态
+		context.put("$eq_state", String.valueOf(Constants.VALID_STATE));
+		//虚拟机表状态
+		context.put("$eq_cloudMdmVm_dataState", String.valueOf(Constants.VALID_STATE));
+		//不属于IP和网络产品
+		context.put("$ne_buyType", Constants.PROD_BUY_SINGLE);
+		//账户查看自己及下属用户的，用户查看自己的
+		if(basicUser.getUserFlag() == Constants.USER_FLAG_USER){
+			//用户
+			context.put("$eq_basicUser_userId", basicUser.getUserId());
+		}else{
+			//账户
+			String userStr = basicUser.getUserId() + ",";
+			try {
+				List<BasicUserVo> userList = this.basicUserService.getBaiscUserVoListByParentBaiscUserVo(basicUser);
+				if(userList != null && userList.size() > 0){
+					for(BasicUserVo vo : userList){
+						userStr += vo.getUserId() + ",";
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			context.put("$in_basicUser_userId", userStr.substring(0, userStr.length()-1));
+		}
+		
+		List<?> myVmList = this.cloudUserOrderService.list(context);
+		
+		context.initTotalRows(modelMap);
+		modelMap.put("myVmList", myVmList);
+		
+		return "myresources/myVmwareList";
+	}
+
+	/**
+	 * 我的虚拟机 - 启动
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "vmStart")
+	public String vmStart(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+		String interfaceId = request.getParameter("interfaceId");
+		
+		response.setCharacterEncoding("UTF-8");
+		try {
+			try{
+				try{
+					this.cloudMdmVMService.startup(interfaceId);
+					response.getWriter().println("虚拟机启动成功");
+					
+				}catch (ValidatorException e){
+					response.getWriter().println("失败："+e.getMessage());
+				}
+			}catch (CloudException e){
+				e.printStackTrace();
+				response.getWriter().println("失败："+e.getMessage());
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	/**
+	 * 我的虚拟机 - 停止
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "vmStop")
+	public String vmStop(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+		String interfaceId = request.getParameter("interfaceId");
+		
+		response.setCharacterEncoding("UTF-8");
+		try {
+			try{
+				try{
+					this.cloudMdmVMService.stop(interfaceId, false);
+					response.getWriter().println("虚拟机成功停止");
+					
+				}catch (ValidatorException e){
+					response.getWriter().println("失败："+e.getMessage());
+				}
+			}catch (CloudException e){
+				e.printStackTrace();
+				response.getWriter().println("失败："+e.getMessage());
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	/**
+	 * 我的虚拟机 - 重启
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "vmRestart")
+	public String vmRestart(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+		String interfaceId = request.getParameter("interfaceId");
+		
+		response.setCharacterEncoding("UTF-8");
+		try {
+			try{
+				try{
+					this.cloudMdmVMService.reboot(interfaceId);
+					response.getWriter().println("虚拟机重启成功");
+					
+				}catch (ValidatorException e){
+					response.getWriter().println("失败："+e.getMessage());
+				}
+			}catch (CloudException e){
+				e.printStackTrace();
+				response.getWriter().println("失败："+e.getMessage());
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	/**
+	 * 我的虚拟机 - 销毁
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "vmDestroy")
+	public String vmDestroy(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+		String interfaceId = request.getParameter("interfaceId");
+		
+		response.setCharacterEncoding("UTF-8");
+		try {
+			try{
+				try{
+					this.cloudMdmVMService.destroy(interfaceId);
+					
+					//修改订单状态
+					response.getWriter().println("虚拟机成功销毁");
+					
+				}catch (ValidatorException e){
+					response.getWriter().println("失败："+e.getMessage());
+				}
+			}catch (CloudException e){
+				e.printStackTrace();
+				response.getWriter().println("失败："+e.getMessage());
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * 我的虚拟机 - 修改密码
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "changePassword")
+	public String changePassword(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+		String interfaceId = request.getParameter("interfaceId");
+
+		response.setCharacterEncoding("UTF-8");
+		try {
+			try{
+				try{
+					this.cloudMdmVMService.reboot(interfaceId);
+					response.getWriter().println("密码修改成功");
+					
+				}catch (ValidatorException e){
+					response.getWriter().println("失败："+e.getMessage());
+				}
+			}catch (CloudException e){
+				e.printStackTrace();
+				response.getWriter().println("失败："+e.getMessage());
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * 我的虚拟机 - 附加ISO
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "addIso")
+	public String addIso(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+
+		return "myresources/myVmware_detail";
+	}
+	/**
+	 * 我的虚拟机 - 查看控制台
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "viewConsole")
+	public String viewConsole(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+
+		return "myresources/myVmware_detail";
+	}
+
+	
+	
+	
+	/**
+	 * 我的虚拟机 - 详细 信息
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "detail")
+	public String detail(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) throws ValidatorException {
+		String vmId = request.getParameter("vmId");
+		CloudMdmVmVo vmVo = this.cloudMdmVMService.getVmById(vmId);
+		
+		modelMap.put("vmVo", vmVo);
+		return "myresources/myVmware_detail";
+	}
+	
+	/**
+	 * 我的虚拟机 - nic
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "nic")
+	public String nic(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) throws ValidatorException {
+		String interfaceId = request.getParameter("interfaceId");
+		QueryContext context = new ECContext(request, modelMap, "nicList");
+		context.clearParmeters();
+		context.put("$eq_virtualmachineId", interfaceId);
+		context.put("$eq_dataState", String.valueOf(Constants.VALID_STATE));
+		
+		List<?> nicList = this.cloudMdmNicService.list(context);
+		
+		modelMap.put("nicList", nicList);
+		return "myresources/myVmware_nic";
+	}
+
+	/**
+	 * 我的虚拟机 - 卷
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "volume")
+	public String volume(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) throws ValidatorException {
+		String interfaceId = request.getParameter("interfaceId");
+		QueryContext context = new ECContext(request, modelMap, "volumeList");
+		context.clearParmeters();
+		context.put("$eq_virtualmachineid", interfaceId);
+		context.put("$eq_dataState", String.valueOf(Constants.VALID_STATE));
+		
+		List<?> volumeList = this.cloudMdmVolumeService.list(context);
+		
+		modelMap.put("volumeList", volumeList);
+		return "myresources/myVmware_volume";
+	}
+
+	/**
+	 * 我的虚拟机 - 统计数据
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "statistic")
+	public String statistic(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) throws ValidatorException {
+		String vmId = request.getParameter("vmId");
+		CloudMdmVmVo vmVo = this.cloudMdmVMService.getVmById(vmId);
+		
+		modelMap.put("vmVo", vmVo);
+		return "myresources/myVmware_statistic";
+	}
+
+	
+	
+	
+	/**
+	 * 我的虚拟机 - 更改服务
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "changeService")
+	public String changeService(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+
+		return "myresources/changeServiceList";
+	}
+	
+	/**
+	 * 我的虚拟机 - 更改计算资源
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "compResource")
+	public String compResource(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) throws ValidatorException {
+		//只有自定义购买才能更换磁盘和计算方案
+		//计算方案更改，必须停机，磁盘方案只能增加
+		
+		String orderId = request.getParameter("orderId");
+		
+		//订单主表信息
+		CloudUserOrderVo orderVo = this.cloudUserOrderService.get(orderId);
+		
+		//订单子表信息，查找该虚机的计算方案计费类型
+		//在自定义购买时，虚机组成的元素计费类型可能不同，会存在一次性和周期性计费，
+		//所以在更换配置方案时，必须知道这个元素是按照什么方式计费的，
+		//在提供更换配置方案列表时，以此相同计费方式的产品定价展示供用户选择。
+		CloudUserOrderItemVo itemVo = this.cloudUserOrderItemService.getOrderItemByOrderIdAndProdType(orderId, Constants.PROD_TYPE_CPU_SOLN);
+		
+		
+		//根据订单的计费类型和计费周期，查找相同计费类型和计费周期的产品定价信息
+		QueryContext pc = new ECContext(request, modelMap, "priceList");
+		pc.clearParmeters();
+		pc.put("$le_effectiveDate", DateUtil.format(new Date(), "yyyy-MM-dd"));
+		pc.put("$eq_cloudMdmProductItem_itemType", Constants.PROD_TYPE_CPU_SOLN);
+		String billingType = itemVo.getBillingType();
+		if(Constants.BILLING_TYPE_SINGLE.equals(billingType)){
+			//虚机购买时，计算方案是按照一次性收费的
+			pc.put("$eq_priceMode", Constants.PRICE_MODE_ONE_TIME);
+			pc.put("$nn_oneTimePrice", null);
+			
+			modelMap.put("billingCycle", Constants.BILLING_TYPE_SINGLE);//一次性
+		}else{
+			//虚机购买时，计算方案是按照周期性收费的
+			String billingCycle = orderVo.getBillingCycle();
+			pc.put("$eq_priceMode", Constants.PRICE_MODE_CYCLE);
+			if(billingCycle.equals(Constants.BILLING_CYCLE_YEAR)){
+				pc.put("$nn_yearPrice", null);
+			}else if(billingCycle.equals(Constants.BILLING_CYCLE_MONTH)){
+				pc.put("$nn_monthPrice", null);
+			}else{
+				pc.put("$nn_dayPrice", null);
+			}
+			
+			modelMap.put("billingCycle", billingCycle);//年/月/日
+		}
+		List<?> priceList = this.cloudProductPriceService.list(pc);
+		
+		
+		modelMap.put("orderId", orderId);
+		modelMap.put("priceList", priceList);
+		return "myresources/changeService_computResource";
+	}
+	
+	/**
+	 * 我的虚拟机 - 计算资源更改保存
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "changeCpu")
+	public String changeCpu(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+		
+		String billingCycle = request.getParameter("billingCycle");
+		String prodId = request.getParameter("prodId");
+		String priceId = request.getParameter("priceId");
+		String prodItemId = request.getParameter("prodItemId");
+		String orderId = request.getParameter("orderId");
+		
+		//订单主表信息
+		CloudUserOrderVo orderVo = new CloudUserOrderVo(); 
+		
+		//选择的产品价格信息
+		CloudProductPriceVo priceVo = new CloudProductPriceVo();
+		
+		//待销毁被替换的子订单元素信息
+		CloudUserOrderItemVo itemVo = new CloudUserOrderItemVo();
+		
+		//新更改的订单信子息
+		CloudUserOrderItemVo newItemVo = new CloudUserOrderItemVo();
+		
+		Double oneTimeProdAmount = 0d;
+		Double oneTimeRebateAmount = 0d;
+		Double cycleProdAmount = 0d;
+		Double cycleRebateAmount = 0d;
+		try{
+			
+			try {
+				priceVo = this.cloudProductPriceService.get(priceId);
+				
+				itemVo = this.cloudUserOrderItemService.getOrderItemByOrderIdAndProdType(orderId, Constants.PROD_TYPE_CPU_SOLN);
+				itemVo.setResDestroyTime(new Date());
+		
+				//更换的新元素价格
+				Double newProdPrice = 0d;
+				if(billingCycle.equals(Constants.BILLING_TYPE_SINGLE)){
+					newProdPrice = priceVo.getOneTimePrice();
+				}else if(billingCycle.equals(Constants.BILLING_CYCLE_YEAR)){
+					newProdPrice = priceVo.getYearPrice();
+				}else if(billingCycle.equals(Constants.BILLING_CYCLE_MONTH)){
+					newProdPrice = priceVo.getMonthPrice();
+				}else{
+					newProdPrice = priceVo.getDayPrice();
+				}
+				//产品促销信息
+				CloudPromotionValue promo = cloudPromotionProductService.getDiscountAmountByProdId(prodId, newProdPrice);
+				
+				orderVo = this.cloudUserOrderService.get(orderId);
+				//原订单主表金额
+				oneTimeProdAmount = orderVo.getOneTimeProdAmount();
+				oneTimeRebateAmount = orderVo.getOneTimeRebateAmount();
+				cycleProdAmount = orderVo.getCycleOrderAmount();
+				cycleRebateAmount = orderVo.getCycleRebateAmount();
+				
+				//新订单金额=原订单金额+变更后元素金额-变更前元素金额
+				if(billingCycle.equals(Constants.BILLING_TYPE_SINGLE)){
+					orderVo.setOneTimeProdAmount(orderVo.getOneTimeProdAmount() + newProdPrice - itemVo.getProdDetailPrice());
+					if(promo != null){
+						orderVo.setOneTimeRebateAmount(orderVo.getOneTimeRebateAmount() + promo.getDiscountAmount() - itemVo.getProdRebatePrice());
+					}else{
+						orderVo.setOneTimeRebateAmount(orderVo.getOneTimeProdAmount());
+					}
+					
+				}else{
+					orderVo.setCycleOrderAmount(orderVo.getCycleOrderAmount() + newProdPrice - itemVo.getProdDetailPrice());
+					if(promo != null){
+						orderVo.setCycleRebateAmount(orderVo.getCycleRebateAmount() + promo.getDiscountAmount() - itemVo.getProdRebatePrice());
+					}else{
+						orderVo.setCycleRebateAmount(orderVo.getCycleOrderAmount());
+					}
+				}
+				
+				//更换的新元素信息
+				CloudMdmProductItemVo prodItemVo = this.cloudMdmProductItemService.get(prodItemId);
+				newItemVo.setCloudUserOrder(orderVo);
+				newItemVo.setCloudMdmProduct(this.cloudMdmProductService.get(prodId));
+				newItemVo.setCloudMdmProductItem(prodItemVo);
+				newItemVo.setProdType(Constants.PROD_TYPE_SINGLE);
+				//是否开始计费，变更成功后修改这个状态
+				newItemVo.setBillingFlag(Constants.BILLING_FALG_STOP);
+				//一次性计费是否已发生，2013-11-10和冬播确认，不管是一次性还是周期性，都填写未开始
+				newItemVo.setOneTimeBillingFlag(Constants.BILLING_FALG_STOP);
+				
+				newItemVo.setProdDetailPrice(newProdPrice);
+				//计费类型
+				if(Constants.BILLING_TYPE_SINGLE.equals(billingCycle)){
+					//一次性计费，如果已经收费，用了几个月后，更换方案，会再次收费。
+					//开始计费时间=明天凌晨
+					newItemVo.setBeginBillingTime(DateUtil.convertDate(DateUtil.formatDate(DateUtil.getAfterDay(new Date(),1))));
+					//下次计费时间
+					newItemVo.setNextBillingTime(newItemVo.getBeginBillingTime());
+					newItemVo.setBillingType(Constants.BILLING_TYPE_SINGLE);
+				}else{
+					//周期性计费，是按年收费,并且已经收费，到了3月份更换方案，不会再次收费，这种情况客户或者商家会存在损失。
+					//开始计费时间，用变更前的
+					newItemVo.setBeginBillingTime(itemVo.getNextBillingTime());
+					//计费调度时填写的
+					newItemVo.setNextBillingTime(itemVo.getNextBillingTime());
+					newItemVo.setBillingType(Constants.BILLING_TYPE_CYCLE);
+				}
+				if(promo != null){
+					newItemVo.setPromotionId(promo.getPromotionId());
+					newItemVo.setActivityName(promo.getActivityName());
+					newItemVo.setRebateAmount(promo.getRebateAmount());
+					newItemVo.setRebateFlag(promo.getRebateFlag());
+					newItemVo.setPromotionStartDate(promo.getStartDate());
+					newItemVo.setPromotionEndDate(promo.getEndDate());
+					
+					newItemVo.setProdRebatePrice(promo.getDiscountAmount());
+				}else{
+					newItemVo.setProdRebatePrice(newItemVo.getProdDetailPrice());
+				}
+				
+				
+				//订单变更保存(订单主表信息，可放到变更接口调用成功后保存)
+				this.cloudUserOrderService.savePordChange(orderVo, itemVo, newItemVo, "add");
+				
+				
+				//调用变更接口
+				this.cloudMdmVMService.changeService(orderVo.getCloudMdmVm().getInterfaceId(), prodItemVo.getMdmCpuSoln().getInterfaceId());
+				
+				
+				//变更成功后子订单的处理
+				newItemVo.setBillingFlag(Constants.BILLING_FALG_START);
+				this.cloudUserOrderItemService.save(newItemVo);
+				
+				modelMap.put("cpuChangeMsg", "计算方案更改成功");
+			} catch (ValidatorException e) {
+				
+				modelMap.put("cpuChangeMsg", "失败："+e.getMessage());
+				e.printStackTrace();
+			}
+			
+		}catch(CloudException e){
+			//更改失败，还原订单信息
+			try {
+				orderVo.setOneTimeProdAmount(oneTimeProdAmount);
+				orderVo.setOneTimeRebateAmount(oneTimeRebateAmount);
+				orderVo.setCycleOrderAmount(cycleProdAmount);
+				orderVo.setCycleRebateAmount(cycleRebateAmount);
+				
+				itemVo.setResDestroyTime(null);
+				this.cloudUserOrderService.savePordChange(orderVo, itemVo, newItemVo, "del");
+			} catch (ValidatorException e1) {
+				e1.printStackTrace();
+			}
+			
+			modelMap.put("cpuChangeMsg", "失败："+e.getMessage());
+			e.printStackTrace();
+		}
+		
+		modelMap.put("priceList", new ArrayList<Object>());
+		return "myresources/changeService_computResource";
+	}
+	
+	/**
+	 * 我的虚拟机 - 增加磁盘资源
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "diskResource")
+	public String diskResource(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) throws ValidatorException {
+		//磁盘方案只能增加，不可修改，必须停机才能调用接口
+		String orderId = request.getParameter("orderId");
+		
+		//订单主表信息
+		CloudUserOrderVo orderVo = this.cloudUserOrderService.get(orderId);
+		
+		//订单子表信息，查找该虚机的磁盘方案计费类型
+		CloudUserOrderItemVo itemVo = this.cloudUserOrderItemService.getOrderItemByOrderIdAndProdType(orderId, Constants.PROD_TYPE_DISK_SOLN);
+		
+		if(itemVo == null){
+			modelMap.put("orderId", orderId);
+			modelMap.put("priceList", new ArrayList<Object>());
+			return "myresources/changeService_diskResource";
+		}
+		//根据订单的计费类型和计费周期，查找相同计费类型和计费周期的产品定价信息
+		QueryContext pc = new ECContext(request, modelMap, "priceList");
+		pc.clearParmeters();
+		pc.put("$le_effectiveDate", DateUtil.format(new Date(), "yyyy-MM-dd"));
+		pc.put("$eq_cloudMdmProductItem_itemType", Constants.PROD_TYPE_DISK_SOLN);
+		String billingType = itemVo.getBillingType();
+		if(Constants.BILLING_TYPE_SINGLE.equals(billingType)){
+			//虚机购买时，磁盘方案是按照一次性收费的
+			pc.put("$eq_priceMode", Constants.PRICE_MODE_ONE_TIME);
+			pc.put("$nn_oneTimePrice", null);
+			
+			modelMap.put("billingCycle", Constants.BILLING_TYPE_SINGLE);//一次性
+		}else{
+			//虚机购买时，磁盘方案是按照周期性收费的
+			String billingCycle = orderVo.getBillingCycle();
+			pc.put("$eq_priceMode", Constants.PRICE_MODE_CYCLE);
+			if(billingCycle.equals(Constants.BILLING_CYCLE_YEAR)){
+				pc.put("$nn_yearPrice", null);
+			}else if(billingCycle.equals(Constants.BILLING_CYCLE_MONTH)){
+				pc.put("$nn_monthPrice", null);
+			}else{
+				pc.put("$nn_dayPrice", null);
+			}
+			
+			modelMap.put("billingCycle", billingCycle);//年/月/日
+		}
+		List<?> priceList = this.cloudProductPriceService.list(pc);
+		
+		
+		modelMap.put("orderId", orderId);
+		modelMap.put("priceList", priceList);
+		
+		return "myresources/changeService_diskResource";
+	}
+	
+	/**
+	 * 我的虚拟机 - 磁盘资源增加保存
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "changeDisk")
+	public String changeDisk(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) throws ValidatorException {
+		String billingCycle = request.getParameter("billingCycle");
+		String prodId = request.getParameter("prodId");
+		String priceId = request.getParameter("priceId");
+		String prodItemId = request.getParameter("prodItemId");
+		String orderId = request.getParameter("orderId");
+		
+		//增加磁盘当做新建订单处理
+		
+		//该订单所在的虚拟机
+		vo = this.cloudUserOrderService.get(orderId);
+		String vmInterfaceId = vo.getCloudMdmVm().getInterfaceId();
+		
+		//********************自定义磁盘增加未考虑
+		
+
+		//选择的产品价格信息
+		CloudProductPriceVo priceVo = new CloudProductPriceVo();
+		//订单主表信息
+		CloudUserOrderVo orderVo = new CloudUserOrderVo(); 
+		//新更改的订单信子息
+		CloudUserOrderItemVo newItemVo = new CloudUserOrderItemVo();
+		
+		try{
+			
+			try {
+				priceVo = this.cloudProductPriceService.get(priceId);
+				
+				//查找该虚拟机已存在的磁盘子订单信息
+//				CloudUserOrderItemVo itemVo = this.cloudUserOrderItemService.getOrderItemByOrderIdAndProdType(orderId, Constants.PROD_TYPE_CPU_SOLN);
+				
+				//更换的新元素价格
+				Double newProdPrice = 0d;
+				if(billingCycle.equals(Constants.BILLING_TYPE_SINGLE)){
+					newProdPrice = priceVo.getOneTimePrice();
+				}else if(billingCycle.equals(Constants.BILLING_CYCLE_YEAR)){
+					newProdPrice = priceVo.getYearPrice();
+				}else if(billingCycle.equals(Constants.BILLING_CYCLE_MONTH)){
+					newProdPrice = priceVo.getMonthPrice();
+				}else{
+					newProdPrice = priceVo.getDayPrice();
+				}
+				//产品促销信息
+				CloudPromotionValue promo = cloudPromotionProductService.getDiscountAmountByProdId(prodId, newProdPrice);
+				
+				
+				//订单主表
+				//orderVo = this.cloudUserOrderService.get(orderId);
+				BasicUserVo basicUser = this.getCurrentUser(request);
+				BasicUserVo basicAccount = basicUser.getUserFlag()==Constants.USER_FLAG_ACCOUNT ? basicUser : basicUser.getParentBasicUser();
+				orderVo.setBasicUser(basicUser);
+				orderVo.setBasicAccount(basicAccount);
+				orderVo.setOrderTime(new Date());
+				orderVo.setBuyType(Constants.PROD_BUY_SINGLE);
+				//是否开始计费
+				orderVo.setBillingFlag(Constants.BILLING_FALG_STOP);
+				//计费周期：不属于一次性计费的才写值
+				if(!billingCycle.equals(Constants.BILLING_TYPE_SINGLE)){
+					orderVo.setBillingCycle(billingCycle);
+				}
+				
+				if(Constants.BILLING_TYPE_SINGLE.equals(billingCycle)){
+					//一次性
+					orderVo.setOneTimeProdAmount(newProdPrice);
+					if(promo != null){
+						orderVo.setOneTimeRebateAmount(promo.getDiscountAmount());
+					}else{
+						orderVo.setOneTimeRebateAmount(newProdPrice);
+					}
+				}else{
+					//周期性
+					orderVo.setCycleOrderAmount(newProdPrice);
+					if(promo != null){
+						orderVo.setCycleRebateAmount(promo.getDiscountAmount());
+					}else{
+						orderVo.setCycleRebateAmount(newProdPrice);
+					}
+				}
+				orderVo.setState(String.valueOf(Constants.INVALID_STATE));
+				orderVo.setCreated(new Date());
+				orderVo.setCreatedBy(basicUser.getUserAccount());
+				orderVo.setCreateId(this.getCurrentUser(request).getUserId());
+				orderVo.setOrderType(Constants.ORDER_TYPE_DISK);
+				
+				//更换的新元素信息
+				newItemVo.setCloudUserOrder(orderVo);
+				newItemVo.setCloudMdmProduct(this.cloudMdmProductService.get(prodId));
+				newItemVo.setCloudMdmProductItem(this.cloudMdmProductItemService.get(prodItemId));
+				newItemVo.setProdType(Constants.PROD_TYPE_SINGLE);
+				//是否开始计费，变更成功后修改这个状态
+				newItemVo.setBillingFlag(Constants.BILLING_FALG_STOP);
+				//一次性计费是否已发生
+				newItemVo.setOneTimeBillingFlag(Constants.BILLING_FALG_STOP);
+				//开始计费时间=明天凌晨
+				newItemVo.setBeginBillingTime(DateUtil.convertDate(DateUtil.formatDate(DateUtil.getAfterDay(new Date(),1))));
+				//下次计费时间
+				newItemVo.setNextBillingTime(newItemVo.getBeginBillingTime());
+				//计费类型
+				if(Constants.BILLING_TYPE_SINGLE.equals(billingCycle)){
+					newItemVo.setBillingType(Constants.BILLING_TYPE_SINGLE);
+				}else{
+					newItemVo.setBillingType(Constants.BILLING_TYPE_CYCLE);
+				}
+				newItemVo.setProdDetailPrice(newProdPrice);
+				if(promo != null){
+					newItemVo.setPromotionId(promo.getPromotionId());
+					newItemVo.setActivityName(promo.getActivityName());
+					newItemVo.setRebateAmount(promo.getRebateAmount());
+					newItemVo.setRebateFlag(promo.getRebateFlag());
+					newItemVo.setPromotionStartDate(promo.getStartDate());
+					newItemVo.setPromotionEndDate(promo.getEndDate());
+					
+					newItemVo.setProdRebatePrice(promo.getDiscountAmount());
+				}else{
+					newItemVo.setProdRebatePrice(newProdPrice);
+				}
+				
+				
+				//订单变更保存
+				this.cloudUserOrderService.savePordChange(orderVo, null, newItemVo, "add");
+				
+				
+				//调用增加磁盘接口
+				String diskofferingid = priceVo.getCloudMdmProductItem().getMdmDiskSoln().getInterfaceId();
+				this.cloudMdmVMService.addDiskService(vmInterfaceId, basicAccount.getUserAccount(), diskofferingid, null);
+				
+				
+				//修改计费状态
+				orderVo.setBillingFlag(Constants.BILLING_FALG_START);
+				orderVo.setState(String.valueOf(Constants.VALID_STATE));
+				
+				newItemVo.setBillingFlag(Constants.BILLING_FALG_START);
+				this.cloudUserOrderService.saveOrder(orderVo, newItemVo);
+	
+				
+				modelMap.put("diskChangeMsg", "磁盘资源增加成功");
+			} catch (ValidatorException e) {
+				
+				modelMap.put("diskChangeMsg", "失败："+e.getMessage());
+				e.printStackTrace();
+			}
+			
+		}catch(CloudException e){
+			
+			modelMap.put("diskChangeMsg", "失败："+e.getMessage());
+			e.printStackTrace();
+		}
+		
+		modelMap.put("priceList", new ArrayList<Object>());
+		return "myresources/changeService_diskResource";
+	}
+	
+	
+	
+//	/**
+//	 * 我的虚拟机 - 磁盘资源增加保存
+//	 * @param request
+//	 * @param response
+//	 * @param vo
+//	 * @param modelMap
+//	 * @return
+//	 * @throws ValidatorException 
+//	 */
+//	@RequestMapping(value = "changeDisk")
+//	public String changeDisk(HttpServletRequest request,
+//			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) throws ValidatorException {
+//		String billingCycle = request.getParameter("billingCycle");
+//		String prodId = request.getParameter("prodId");
+//		String priceId = request.getParameter("priceId");
+//		String prodItemId = request.getParameter("prodItemId");
+//		String orderId = request.getParameter("orderId");
+//		
+//		//********************自定义磁盘增加未考虑
+//		
+//		//订单主表信息
+//		CloudUserOrderVo orderVo = new CloudUserOrderVo(); 
+//		
+//		//选择的产品价格信息
+//		CloudProductPriceVo priceVo = new CloudProductPriceVo();
+//		
+//		//新更改的订单信子息
+//		CloudUserOrderItemVo newItemVo = new CloudUserOrderItemVo();
+//		
+//		Double oneTimeProdAmount = 0d;
+//		Double oneTimeRebateAmount = 0d;
+//		Double cycleProdAmount = 0d;
+//		Double cycleRebateAmount = 0d;
+//		try{
+//			
+//			try {
+//				priceVo = this.cloudProductPriceService.get(priceId);
+//				
+//				//查找该虚拟机已存在的磁盘子订单信息
+//				CloudUserOrderItemVo itemVo = this.cloudUserOrderItemService.getOrderItemByOrderIdAndProdType(orderId, Constants.PROD_TYPE_CPU_SOLN);
+//				
+//				//更换的新元素价格
+//				Double newProdPrice = 0d;
+//				if(billingCycle.equals(Constants.BILLING_TYPE_SINGLE)){
+//					newProdPrice = priceVo.getOneTimePrice();
+//				}else if(billingCycle.equals(Constants.BILLING_CYCLE_YEAR)){
+//					newProdPrice = priceVo.getYearPrice();
+//				}else if(billingCycle.equals(Constants.BILLING_CYCLE_MONTH)){
+//					newProdPrice = priceVo.getMonthPrice();
+//				}else{
+//					newProdPrice = priceVo.getDayPrice();
+//				}
+//				//产品促销信息
+//				CloudPromotionValue promo = cloudPromotionProductService.getDiscountAmountByProdId(prodId, newProdPrice);
+//				
+//				//订单主表
+//				orderVo = this.cloudUserOrderService.get(orderId);
+//				//原订单主表金额
+//				oneTimeProdAmount = orderVo.getOneTimeProdAmount();
+//				oneTimeRebateAmount = orderVo.getOneTimeRebateAmount();
+//				cycleProdAmount = orderVo.getCycleOrderAmount();
+//				cycleRebateAmount = orderVo.getCycleRebateAmount();
+//				
+//				//新订单金额=原订单金额+变更后元素金额
+//				if(billingCycle.equals(Constants.BILLING_TYPE_SINGLE)){
+//					orderVo.setOneTimeProdAmount(orderVo.getOneTimeProdAmount() + newProdPrice);
+//					if(promo != null){
+//						orderVo.setOneTimeRebateAmount(orderVo.getOneTimeRebateAmount() + promo.getDiscountAmount());
+//					}else{
+//						orderVo.setOneTimeRebateAmount(orderVo.getOneTimeProdAmount());
+//					}
+//				}else{
+//					orderVo.setCycleOrderAmount(orderVo.getCycleOrderAmount() + newProdPrice);
+//					if(promo != null){
+//						orderVo.setCycleRebateAmount(orderVo.getCycleRebateAmount() + promo.getDiscountAmount());
+//					}else{
+//						orderVo.setCycleRebateAmount(orderVo.getCycleOrderAmount());
+//					}
+//				}
+//				
+//				//更换的新元素信息
+//				newItemVo.setCloudUserOrder(orderVo);
+//				newItemVo.setCloudMdmProduct(this.cloudMdmProductService.get(prodId));
+//				newItemVo.setCloudMdmProductItem(this.cloudMdmProductItemService.get(prodItemId));
+//				newItemVo.setProdType(Constants.PROD_TYPE_SINGLE);
+//				//是否开始计费，变更成功后修改这个状态
+//				newItemVo.setBillingFlag(Constants.BILLING_FALG_STOP);
+//				//一次性计费是否已发生，2013-11-10和冬播确认，不管是一次性还是周期性，都填写未开始
+//				newItemVo.setOneTimeBillingFlag(Constants.BILLING_FALG_STOP);
+//				
+//				newItemVo.setProdDetailPrice(newProdPrice);
+//				//计费类型
+//				if(Constants.BILLING_TYPE_SINGLE.equals(billingCycle)){
+//					//一次性计费，该磁盘增加完，明天凌晨开始计费
+//					//开始计费时间=明天凌晨
+//					newItemVo.setBeginBillingTime(DateUtil.convertDate(DateUtil.formatDate(DateUtil.getAfterDay(new Date(),1))));
+//					//下次计费时间
+//					newItemVo.setNextBillingTime(newItemVo.getBeginBillingTime());
+//					newItemVo.setBillingType(Constants.BILLING_TYPE_SINGLE);
+//				}else{
+//					//周期性计费，如果是按年收费,并且已经收费，到了3月份增加磁盘，这个地方的计费如何统一？按照上一个磁盘的周期来计费会有损失。
+//					//解决方案：1.增加时空中，只允许在收费之前增加，2.单独建立订单。
+//					//开始计费时间，用已存在的磁盘计费方式
+//					newItemVo.setBeginBillingTime(itemVo.getNextBillingTime());
+//					//计费调度时填写的
+//					newItemVo.setNextBillingTime(itemVo.getNextBillingTime());
+//					newItemVo.setBillingType(Constants.BILLING_TYPE_CYCLE);
+//				}
+//				if(promo != null){
+//					newItemVo.setPromotionId(promo.getPromotionId());
+//					newItemVo.setActivityName(promo.getActivityName());
+//					newItemVo.setRebateAmount(promo.getRebateAmount());
+//					newItemVo.setRebateFlag(promo.getRebateFlag());
+//					newItemVo.setPromotionStartDate(promo.getStartDate());
+//					newItemVo.setPromotionEndDate(promo.getEndDate());
+//					
+//					newItemVo.setProdRebatePrice(promo.getDiscountAmount());
+//				}else{
+//					newItemVo.setProdRebatePrice(newItemVo.getProdDetailPrice());
+//				}
+//				
+//				
+//				//订单变更保存
+//				this.cloudUserOrderService.savePordChange(orderVo, null, newItemVo, "add");
+//				
+//				
+//				//调用增加磁盘接口
+//				
+//				
+//				//增加成功后的子订单处理
+//				newItemVo.setBillingFlag(Constants.BILLING_FALG_START);
+//				this.cloudUserOrderItemService.save(newItemVo);
+//				
+//				modelMap.put("diskChangeMsg", "磁盘资源增加成功");
+//			} catch (ValidatorException e) {
+//				
+//				modelMap.put("diskChangeMsg", "失败："+e.getMessage());
+//				e.printStackTrace();
+//			}
+//			
+//		}catch(CloudException e){
+//			//更改失败，还原订单信息
+//			try {
+//				orderVo.setOneTimeProdAmount(oneTimeProdAmount);
+//				orderVo.setOneTimeRebateAmount(oneTimeRebateAmount);
+//				orderVo.setCycleOrderAmount(cycleProdAmount);
+//				orderVo.setCycleRebateAmount(cycleRebateAmount);
+//				
+//				this.cloudUserOrderService.savePordChange(orderVo, null, newItemVo, "del");
+//			} catch (ValidatorException e1) {
+//				e1.printStackTrace();
+//			}
+//			
+//			modelMap.put("diskChangeMsg", "失败："+e.getMessage());
+//			e.printStackTrace();
+//		}
+//		
+//		modelMap.put("priceList", new ArrayList<Object>());
+//		return "myresources/changeService_diskResource";
+//	}
+	
+	
+}

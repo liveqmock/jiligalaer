@@ -1,0 +1,98 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
+    <script>
+    
+    function openlink(nav,id,param){
+    	param = param || '';
+    	$("div",$("#menu")).removeClass("navSelected");
+    	$(nav).addClass("navSelected");
+    	document.getElementById("mainForm").src="${ctx}/main/display.do?navResId="+id+param;
+    }
+    
+    $(document).ready(function(){
+    	var tar = "${uri}";
+    	if(!tar){
+    		$("div",$("#menu")).eq(0).click();    		
+    	}else{
+    		var nav = $("#${CURRENT_NAV_ID}");
+    		openlink(nav,'${CURRENT_NAV_ID}','&uri=${uri}&_queryString=${_queryString}'); 
+    	}
+    });
+    
+    function menuBgover(nav){
+    	//$(nav).addClass("navSelected");
+    }    
+    function menuBgout(nav){
+    	//$("div",$("#menu")).removeClass("navSelected");
+    }
+    function myInfo(userFlag){
+    	if(userFlag == '0'){
+    		window.location="${ctx}/index/admin/edit.do?id=${_user.userId}";
+    	}else if(userFlag == '1'){
+    		window.open("${ctx}/account/accountDetailInfo.do", "账户信息");
+    	}else{
+    		window.open("${ctx}/user/userDetailInfo.do", "用户信息");
+    	}
+    }
+    function accountUpgrade(userId){
+    	window.open("${ctx}/index/account/upgradeAccountRedirect.do?userId="+userId, "账户升级");
+    	
+    }
+    </script>
+	
+	<style>
+	.nav{
+		cursor:pointer;
+		font-size:15px;
+		color:white;
+		display:inline;
+		width: 85px;
+		height: 34px;
+		line-height:34px;
+		float: left;
+		text-align: center;
+		vertical-align: middle;
+		font-family:"微软雅黑";
+	}
+	
+	.navSelected{
+		background-image: url("${ctx}/images/menu_2.jpg");
+		background-repeat: no-repeat;
+	}
+	</style>
+	
+	<!-- header -->
+	<div id="header">
+		<img src="${ctx}/images/head.jpg"/>
+		<div class="f13_2" id="header_link" align="right">
+			欢迎 
+			<a href="javascript:myInfo('${userFlag }')" class="f13">${_user.userName}</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+			<c:if test="${userFlag == 1 }">
+				<c:if test="${user.userTypeDictItem.itemCode == 'shiyong' }">
+					<a href="javascript:accountUpgrade('${user.userId }')" class="f13">升级</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+				</c:if>
+				<span class="f13" style="color: #C0C0C0;">充值</span>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;
+			</c:if>
+			<!--<a href="#" class="f13">设置</a>&nbsp;&nbsp;| &nbsp;&nbsp; -->
+			<a href="${ctx}/login/logout.do" class="f13">退出</a>&nbsp;&nbsp;|&nbsp;&nbsp; 
+			<a href="#" class="f13">帮助</a> 
+	  </div>
+	</div>
+	
+    <div id="menu">
+		<c:forEach items="${headerVo.resources}" var="res">
+			  
+			  <c:if test="${CURRENT_NAV_ID == res.resId}">
+			  	<c:set var="navSelected" value="navSelected" />
+			  </c:if>
+			  <c:if test="${CURRENT_NAV_ID != res.resId}">
+			  	<c:set var="navSelected" value="" />
+			  </c:if>
+			  
+			  <div class="nav ${navSelected}" id="${res.resId}" onclick="openlink(this,'${res.resId}')" onmouseover="menuBgover(this)" onmouseout="menuBgout(this)">
+				<span style="margin-left:8px; float: left;min-width:60px;width:60px;">${res.resName}</span>
+				<span id="menuline" style="background-image: url('${ctx}/images/menu_line.jpg'); float:right; width:2px; height:34px;"></span>
+			  </div>
+		</c:forEach>
+    </div>

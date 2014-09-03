@@ -1,0 +1,327 @@
+package sy.controller.base;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import sy.common.model.ECContext;
+import sy.common.model.QueryContext;
+import sy.common.util.Constants;
+import sy.common.util.DateUtil;
+import sy.controller.shared.BaseController;
+import sy.domain.vo.base.BasicUserVo;
+import sy.domain.vo.base.PanelVo;
+import sy.domain.vo.expense.BillQueryParameterVo;
+import sy.service.base.BasicRemindServiceI;
+import sy.service.base.BasicUserServiceI;
+import sy.service.base.NoticeMessagesServiceI;
+import sy.service.cloud.CloudEventServiceI;
+import sy.service.expense.AccountExpenseItemServiceI;
+import sy.service.expense.AccountExpenseServiceI;
+import sy.service.promotion.CloudPromotionInfoServiceI;
+
+/**
+ * 管理员、账户、用户控制板
+ * @author luobin
+ * 
+ */
+@Controller
+@RequestMapping("/panel")
+public class UserPanelController extends BaseController {
+
+	@Autowired
+	private BasicUserServiceI basicUserService;
+	@Autowired
+	private AccountExpenseServiceI accountExpenseService;
+	@Autowired
+	private NoticeMessagesServiceI noticeMessagesService;
+	@Autowired
+	private CloudPromotionInfoServiceI cloudPromotionInfoService;
+	@Autowired
+	private BasicRemindServiceI basicRemindService;
+	@Autowired
+	private CloudEventServiceI cloudEventService;
+	@Autowired
+	private AccountExpenseItemServiceI accountExpenseItemService;
+	
+	public void setBasicUserService(BasicUserServiceI basicUserService) {
+		this.basicUserService = basicUserService;
+	}
+	public BasicUserServiceI getBasicUserService() {
+		return basicUserService;
+	}
+	
+	public AccountExpenseServiceI getAccountExpenseService() {
+		return accountExpenseService;
+	}
+	public void setAccountExpenseService(
+			AccountExpenseServiceI accountExpenseService) {
+		this.accountExpenseService = accountExpenseService;
+	}
+	
+	public NoticeMessagesServiceI getNoticeMessagesService() {
+		return noticeMessagesService;
+	}
+	public void setNoticeMessagesService(
+			NoticeMessagesServiceI noticeMessagesService) {
+		this.noticeMessagesService = noticeMessagesService;
+	}
+	
+	public CloudPromotionInfoServiceI getCloudPromotionInfoService() {
+		return cloudPromotionInfoService;
+	}
+	public void setCloudPromotionInfoService(
+			CloudPromotionInfoServiceI cloudPromotionInfoService) {
+		this.cloudPromotionInfoService = cloudPromotionInfoService;
+	}
+	
+	public BasicRemindServiceI getBasicRemindService() {
+		return basicRemindService;
+	}
+	public void setBasicRemindService(BasicRemindServiceI basicRemindService) {
+		this.basicRemindService = basicRemindService;
+	}
+	
+	public CloudEventServiceI getCloudEventService() {
+		return cloudEventService;
+	}
+	public void setCloudEventService(CloudEventServiceI cloudEventService) {
+		this.cloudEventService = cloudEventService;
+	}
+	
+	@RequestMapping(value = "adminPanel")
+	public String adminPanel(HttpServletRequest request,
+			HttpServletResponse response, PanelVo vo, ModelMap modelMap) {
+        String userId = request.getParameter("userId");
+        if(null == userId || "".equals(userId)){
+	        BasicUserVo user = (BasicUserVo)request.getSession().getAttribute(Constants.SESSION_USER_KEY);
+	        userId = user.getUserId();
+        }
+        try {
+        	//虚机数量
+        	int csVmCount = this.basicUserService.getVmCount(Constants.USER_TYPE_SHIYONG, "", "");
+        	int zsVmCount = this.basicUserService.getVmCount(Constants.USER_TYPE_ZHENGSHI, "", "");
+        	int totalVm = csVmCount + zsVmCount;
+        	modelMap.put("csVmCount", csVmCount);
+        	modelMap.put("zsVmCount", zsVmCount);
+        	modelMap.put("totalVm", totalVm);
+        	
+        	//账户个数
+			int totalCount = basicUserService.getBasicUserVoCount(userId,Constants.USER_FLAG_ADMIN, "'"+Constants.USER_TYPE_ZHENGSHI+"','"+Constants.USER_TYPE_SHIYONG+"'");
+		    int zhengshiCount = basicUserService.getBasicUserVoCount(userId,Constants.USER_FLAG_ADMIN, "'"+Constants.USER_TYPE_ZHENGSHI+"'");
+		    int shiyongCount = basicUserService.getBasicUserVoCount(userId,Constants.USER_FLAG_ADMIN, "'"+Constants.USER_TYPE_SHIYONG+"'");
+		    modelMap.put("totalAccount", totalCount);
+		    modelMap.put("zhengshiAccount", zhengshiCount);
+		    modelMap.put("shiyongAccount", shiyongCount);
+		    
+		    //账户费用
+		    List<Object[]> exp = this.accountExpenseService.getAccountAllExpense("");
+		    modelMap.put("balanceAmount", exp.get(0)[0]);
+		    modelMap.put("expAmount", exp.get(0)[1]);
+		    
+		    //待办任务（待审批账户）
+		    int syApprovalCount = this.basicUserService.getNoApprovalUserCount(Constants.USER_TYPE_SHIYONG, "");
+		    int zsApprovalCount = this.basicUserService.getNoApprovalUserCount(Constants.USER_TYPE_ZHENGSHI, "");
+		    modelMap.put("syApprovalCount", syApprovalCount);
+		    modelMap.put("zsApprovalCount", zsApprovalCount);
+		    
+		    //用户、账户增量图表
+		    QueryContext context = new ECContext(request, modelMap, "panel");
+		    context.clearParmeters();
+		    context.put("$eq_state", String.valueOf(Constants.USER_STATE_PASS));
+		    //上月账户
+		    context.put("$eq_userFlag", String.valueOf(Constants.USER_FLAG_ACCOUNT));
+			context.put("$ge_registerDate", DateUtil.getFirstDayOfLastMonth());
+			context.put("$le_registerDate", DateUtil.getLastDayOfLastMonth());
+		    int lastMonthAccountNum = this.basicUserService.list(context).size();
+		    //本月账户
+			context.put("$ge_registerDate", DateUtil.getMonthFirstDay(null));
+			context.put("$le_registerDate", DateUtil.getMonthLastDay(null));
+		    int currMonthAccountNum = this.basicUserService.list(context).size();
+
+		    //上月用户
+		    context.put("$eq_userFlag", String.valueOf(Constants.USER_FLAG_USER));
+			context.put("$ge_registerDate", DateUtil.getFirstDayOfLastMonth());
+			context.put("$le_registerDate", DateUtil.getLastDayOfLastMonth());
+		    int lastMonthUserNum = this.basicUserService.list(context).size();
+		    //本月用户
+			context.put("$ge_registerDate", DateUtil.getMonthFirstDay(null));
+			context.put("$le_registerDate", DateUtil.getMonthLastDay(null));
+		    int currMonthUserNum = this.basicUserService.list(context).size();
+		    modelMap.put("lastMonthAccountNum", lastMonthAccountNum);
+		    modelMap.put("currMonthAccountNum", currMonthAccountNum);
+		    modelMap.put("lastMonthUserNum", lastMonthUserNum);
+		    modelMap.put("currMonthUserNum", currMonthUserNum);
+		    
+		    
+		    //系统容量
+		    
+		    
+		    //公告信息
+		    context.clearParmeters();
+		    context.setSort(" updated desc ");
+		    List<?> messList = this.noticeMessagesService.list(context);
+		    if(messList != null && messList.size()>21){
+		    	modelMap.put("messList", messList.subList(0, 20));
+		    }else{
+		    	modelMap.put("messList", messList);
+		    }
+		    
+		    
+		    //警告信息
+		    context.clearParmeters();
+		    context.put("$eq_level", Constants.EVENT_LEVEL_INFO);
+		    context.setSort(" created desc ");
+		    List<?> eventList = this.cloudEventService.list(context);
+		    if(eventList != null && eventList.size()>21){
+		    	modelMap.put("eventList", eventList.subList(0, 20));
+		    }else{
+		    	modelMap.put("eventList", eventList);
+		    }
+		    
+		    //提醒信息
+		    context.clearParmeters();
+		    context.setSort(" created desc ");
+		    List<?> remindList = this.basicRemindService.list(context);
+		    if(remindList != null && remindList.size()>21){
+		    	modelMap.put("remindList", remindList.subList(0, 20));
+		    }else{
+		    	modelMap.put("remindList", remindList);
+		    }
+		    
+         } catch (Exception e) {
+			e.printStackTrace();
+		}
+		return "base/adminPanel";
+	}
+
+	/**
+	 * 账户控制板
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "accountPanel")
+	public String accountPanel(HttpServletRequest request,
+			HttpServletResponse response, PanelVo vo, ModelMap modelMap) {
+		String userId = request.getParameter("userId");
+		String userAccount = "";
+		BasicUserVo user = null;
+        if(null == userId || "".equals(userId)){
+	        user = (BasicUserVo)request.getSession().getAttribute(Constants.SESSION_USER_KEY);
+	        userId = user.getUserId();
+	        userAccount = user.getUserAccount();
+	        modelMap.put("userFlag", user.getUserFlag());
+        }
+        try{
+        	//当前账户：虚拟机
+        	int totalVm = this.basicUserService.getVmCount("", userAccount, "");
+        	int stopVm = this.basicUserService.getVmCount("", userAccount, Constants.VM_STATE_STOPPED);
+        	int runVm = this.basicUserService.getVmCount("", userAccount, Constants.VM_STATE_RUNNING);
+        	modelMap.put("totalVm", totalVm);
+        	modelMap.put("stopVm", stopVm);
+        	modelMap.put("runVm", runVm);
+        	
+        	//当前账户：网络和存储
+        	int ipCount = this.basicUserService.getIpCount("", userAccount);
+        	Long storageSize = this.basicUserService.getStorageSize("", userAccount);
+        	modelMap.put("storageSize", storageSize);
+        	modelMap.put("ipCount", ipCount);
+        	
+        	//当前账户：费用
+		    List<Object[]> exp = this.accountExpenseService.getAccountAllExpense(userId);
+		    modelMap.put("balanceAmount", exp.get(0)[0]);
+		    modelMap.put("expAmount", exp.get(0)[1]);
+        	
+        	
+        	//当前账户：用户 数
+        	int totalCount = basicUserService.getBasicUserVoCount(userId, Constants.USER_FLAG_ACCOUNT, "");
+        	modelMap.put("totalUser", totalCount);
+        	
+        	//当前账户：待办任务（待审批用户）
+		    int syApprovalCount = this.basicUserService.getNoApprovalUserCount(Constants.USER_TYPE_SHIYONG, userId);
+		    int zsApprovalCount = this.basicUserService.getNoApprovalUserCount(Constants.USER_TYPE_ZHENGSHI, userId);
+		    modelMap.put("syApprovalCount", syApprovalCount);
+		    modelMap.put("zsApprovalCount", zsApprovalCount);
+        	
+        	//促销信息
+		    QueryContext contextP = new ECContext(request, modelMap, "prom");
+		    contextP.setSort(" updated desc ");
+        	List<?> promList = this.cloudPromotionInfoService.list(contextP);
+		    if(promList != null && promList.size()>20){
+		    	modelMap.put("promList", promList.subList(0, 20));
+		    }else{
+		    	modelMap.put("promList", promList);
+		    }
+        	
+        	//公告信息
+		    QueryContext context = new ECContext(request, modelMap, "panel");
+		    context.clearParmeters();
+		    context.setSort(" updated desc ");
+		    List<?> messList = this.noticeMessagesService.list(context);
+		    if(messList != null && messList.size()>20){
+		    	modelMap.put("messList", messList.subList(0, 20));
+		    }else{
+		    	modelMap.put("messList", messList);
+		    }
+        	
+        	//提醒信息
+		    context.clearParmeters();
+		    BasicUserVo userVo = (BasicUserVo)request.getSession().getAttribute(Constants.SESSION_USER_KEY);
+			if(userVo.getUserFlag() ==  Constants.USER_FLAG_ACCOUNT){
+				context.put("$eq_accountId", userVo.getUserId());
+			}else if(userVo.getUserFlag() ==  Constants.USER_FLAG_USER){
+				context.put("$eq_userId", userVo.getUserId());
+			}
+		    context.setSort(" created desc ");
+		    List<?> remindList = this.basicRemindService.list(context);
+		    if(remindList != null && remindList.size()>21){
+		    	modelMap.put("remindList", remindList.subList(0, 20));
+		    }else{
+		    	modelMap.put("remindList", remindList);
+		    }
+        	
+		    
+		    //用户、扣费增量图表
+		    context.clearParmeters();
+		    context.put("$eq_parentBasicUser_userId", userId);
+		    context.put("$eq_state", String.valueOf(Constants.USER_STATE_PASS));
+		    //上月用户
+		    context.put("$eq_userFlag", String.valueOf(Constants.USER_FLAG_USER));
+			context.put("$ge_registerDate", DateUtil.getFirstDayOfLastMonth());
+			context.put("$le_registerDate", DateUtil.getLastDayOfLastMonth());
+		    int lastMonthUserNum = this.basicUserService.list(context).size();
+		    //本月用户
+			context.put("$ge_registerDate", DateUtil.getMonthFirstDay(null));
+			context.put("$le_registerDate", DateUtil.getMonthLastDay(null));
+		    int currMonthUserNum = this.basicUserService.list(context).size();
+		    modelMap.put("lastMonthUserNum", lastMonthUserNum);
+		    modelMap.put("currMonthUserNum", currMonthUserNum);
+		    //扣费
+		    BillQueryParameterVo queryParaVo = new BillQueryParameterVo();
+		    queryParaVo.setBasicUserVo(user);
+		    //上月
+		    queryParaVo.setExpDateStart(DateUtil.getFirstDayOfLastMonth());
+		    queryParaVo.setExpDateEnd(DateUtil.getLastDayOfLastMonth());
+		    Double lastUserAmount = this.accountExpenseItemService.getExpenseAmoutTotal(queryParaVo);
+		    modelMap.put("lastUserAmount", lastUserAmount);
+		    //本月
+		    queryParaVo.setExpDateStart(DateUtil.getMonthFirstDay(null));
+		    queryParaVo.setExpDateEnd(DateUtil.getMonthLastDay(null));
+		    Double currUserAmount = this.accountExpenseItemService.getExpenseAmoutTotal(queryParaVo);
+		    modelMap.put("currUserAmount", currUserAmount);
+		    
+        }catch(Exception e){
+        	
+        }
+		return "base/accountPanel";
+	}
+}

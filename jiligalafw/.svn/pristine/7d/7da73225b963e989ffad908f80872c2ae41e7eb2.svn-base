@@ -1,0 +1,286 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>在线充值</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<link href="${ctx}/css/popup.dialog.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+<!--
+body {
+	background-color: #F2F2F2;
+	margin-left: 5px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<script type="text/javascript">
+	//高级查询
+	function query(val) {
+		var form = document.forms.listForm;
+		form.queryType.value=val;
+		form.action="${ctx}/onlinePay/list.do";
+		loading();
+		form.submit();
+	}
+	
+	//充值方式
+	function payTypeQuery(val) {
+		var form = document.forms.listForm;
+		form.queryType.value = '0';
+		form.payFlag.value = val;
+		form.action = "${ctx}/onlinePay/list.do";
+		loading();
+		form.submit();
+	}
+	//充值日期查询
+	function dateQuery(val){
+		var form = document.forms.listForm;
+		form.queryType.value='1';
+		form.timeFlag.value=val;
+		form.action="${ctx}/onlinePay/list.do";
+		loading();
+		form.submit();
+	}
+
+	function open_high() {
+		document.getElementById('search').style.display = 'block';
+		document.getElementById('openSearch').style.display = 'none';
+	}
+	function close_high() {
+		document.getElementById('search').style.display = 'none';
+		document.getElementById('openSearch').style.display = 'block';
+	}
+	function checkAllBox() {
+		var payTypeStr = '${payTypeStr}';
+		if(payTypeStr !="" || payTypeStr != undefined){
+			var sts = payTypeStr.split(",");
+			var st = document.getElementsByName("payType");
+			for ( var i = 0; i < st.length; i++) {
+				for ( var j = 0; j < sts.length; j++) {
+					if (st[i].value == sts[j]) {
+						st[i].checked = true;
+					}
+				}
+			}
+		}
+	}
+	function display() {
+		var queryType = '${queryType}';
+		if (queryType == '2') {
+			open_high();
+		}
+	}
+	
+	function unionpay(){
+		var form = document.forms.listForm;
+		//form.action="${ctx}/onlinePay/unionpay.do";
+		//form.submit();		
+	}
+	function alipay(){
+		var form = document.forms.listForm;
+		//form.action="${ctx}/onlinePay/alipay.do";
+		//form.submit();		
+	}	
+</script>
+
+</head>
+<body onLoad="checkAllBox();display();">
+	<form:form modelAttribute="accountPayVoList" action="${ctx}/onlinePay/list.do" method="post" name="listForm">
+
+		<input type="hidden" name="timeFlag" value="" id="timeFlag" />
+		<input type="hidden" name="payFlag" value="" id="payFlag" />
+		<input type="hidden" name="queryType" value="" id="queryType" />
+
+		<!-- 外层边框 -->
+		<div id="middle_sheet_s">
+			<table width="950" height="680" border="0" cellpadding="0" cellspacing="0" align="center">
+				<tr>
+					<td align="center" valign="top" bgcolor="#F2F2F2" height="670">
+
+						<!-- 内容区域：查询条件和结果集 -->
+						<table width="915" border="0" cellspacing="0" cellpadding="0">
+							<tr>
+								<td height="50" align="left" class="f18b3">
+									账户余额：${expVo.payTotalAmount - expVo.expTotalAmount }元
+									&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+									<input type="button" value="银联充值" onclick="unionpay()" class="btn_bg" style="width: 80px;"/>
+									&nbsp;&nbsp;&nbsp;&nbsp;
+									<input type="button" value="支付宝充值" onclick="alipay()" class="btn_bg" style="width: 85px;"/>
+								</td>
+							</tr>						
+							<tr>
+								<td height="2" align="center" valign="middle"><img src="${ctx}/images/sheet_line_2.jpg" width="915" height="2" /></td>
+							</tr>
+							<tr>
+								<td align="left" valign="top">
+									<table width="100%" border="0" cellspacing="1" cellpadding="0" bgcolor="#a0a0a0">
+										<tr height="20" bgcolor="#f2f2f2">
+											<td>
+												<table width="100%" border="0" cellspacing="1" cellpadding="0">
+													<!-- 一键式搜索 -->
+													<tr height="30">
+														<td></td>
+														<td width="80" class="f13_1" align="left">充值方式：</td>
+														<td>
+															<a href="javascript:payTypeQuery('')" class="f13_3">全部</a>&nbsp;&nbsp;&nbsp;&nbsp;
+															<a href="javascript:payTypeQuery('1')" class="f13_3">现金</a>&nbsp;&nbsp;&nbsp;&nbsp;
+															<a href="javascript:payTypeQuery('2')" class="f13_3">转账</a>&nbsp;&nbsp;&nbsp;&nbsp;
+															<a href="javascript:payTypeQuery('3')" class="f13_3">赠送</a>&nbsp;&nbsp;&nbsp;&nbsp;
+															<a href="javascript:payTypeQuery('4')" class="f13_3">银联</a>&nbsp;&nbsp;&nbsp;&nbsp;
+															<a href="javascript:payTypeQuery('5')" class="f13_3">支付宝</a>&nbsp;&nbsp;&nbsp;&nbsp;
+														</td>
+														<td></td>
+													</tr>
+				                                    <tr height="30">
+				                                  	  <td></td>
+				                                      <td width="80" class="f13_1" align="left">充值日期：</td>
+				                                      <td width="690" >
+														<a href="javascript:dateQuery('')" class="f13_3">全部</a>&nbsp;&nbsp;&nbsp;&nbsp;
+														<a href="javascript:dateQuery('1')" class="f13_3">今日</a>&nbsp;&nbsp;&nbsp;&nbsp;
+														<a href="javascript:dateQuery('2')" class="f13_3">本周</a>&nbsp;&nbsp;&nbsp;&nbsp;
+														<a href="javascript:dateQuery('3')" class="f13_3">上周</a>&nbsp;&nbsp;&nbsp;&nbsp;
+														<a href="javascript:dateQuery('4')" class="f13_3">本月</a>&nbsp;&nbsp;&nbsp;&nbsp;
+														<a href="javascript:dateQuery('5')" class="f13_3">上月</a>&nbsp;&nbsp;&nbsp;&nbsp;
+														<a href="javascript:dateQuery('6')" class="f13_3">其它</a>&nbsp;&nbsp;&nbsp;&nbsp;
+				                                      </td>
+				                                      <td></td>
+				                                    </tr>
+                                    
+													<!-- 高级搜索 -->
+													<tr height="30" style="cursor: pointer;" onclick="open_high()">
+														<td></td>
+														<td colspan="2" align="left" class="f15">
+															<table width="100%" border="0" cellspacing="0" cellpadding="0">
+																<tr>
+																	<td width="20" align="left"><img src="${ctx}/images/ico14.png" width="20" height="20" /></td>
+																	<td width="80" align="center">高级搜索</td>
+																	<td width="20" align="left"><img id="openSearch" src="${ctx}/images/ico15.png" width="20" height="20" /></td>
+																	<td>&nbsp;</td>
+																<tr>
+															</table>
+														</td>
+														<td></td>
+													</tr>
+
+													<tr>
+														<td width="15"></td>
+														<td colspan="2">
+															<table width="100%" border="0" cellspacing="1" cellpadding="0" id="search" style="display: none">
+																<tr>
+																	<td colspan="3" align="left" valign="top">
+																		<hr style="border: 1px dashed #ccc; width: 100%; height: 1px;" />
+																	</td>
+																</tr>
+																<tr height="30">
+																	<td width="30">&nbsp;</td>
+																	<td class="f13_1" align="left">充值方式：</td>
+																	<td class="f13_3">
+																		<input type="checkbox" name="checkall" id="checkallPayType" onclick="checkAll('checkallPayType','payType')"
+																		style="vertical-align: middle; margin-top: 0px;" />全部&nbsp;&nbsp;&nbsp;&nbsp;
+																		<input type="checkbox" name="payType" id="payType" value="1"
+																		style="vertical-align: middle; margin-top: 0px;" />现金&nbsp;&nbsp;&nbsp;&nbsp;
+																		<input type="checkbox" name="payType" id="payType" value="2"
+																		style="vertical-align: middle; margin-top: 0px;" />转账&nbsp;&nbsp;&nbsp;&nbsp;
+																		<input type="checkbox" name="payType" id="payType" value="3"
+																		style="vertical-align: middle; margin-top: 0px;" />赠送&nbsp;&nbsp;&nbsp;&nbsp;
+																		<input type="checkbox" name="payType" id="payType" value="4"
+																		style="vertical-align: middle; margin-top: 0px;" />银联&nbsp;&nbsp;&nbsp;&nbsp;
+																		<input type="checkbox" name="payType" id="payType" value="5"
+																		style="vertical-align: middle; margin-top: 0px;" />支付宝&nbsp;&nbsp;&nbsp;&nbsp;
+																	</td>
+																</tr>
+						                                        <tr height="30">
+						                                       		<td width="30">&nbsp;</td>
+						                                          	<td class="f13_1" align="left">充值日期：</td>
+						                                          	<td align="left" class="f13_1">
+						                                          		从<input name="dateS" type="text" value="${dateS }" onfocus="WdatePicker()" readonly class="date_but"/>
+						                      	                    	到<input name="dateE" type="text" value="${dateE }" onfocus="WdatePicker()" readonly class="date_but"/>
+						                                          	</td>
+						                                        </tr>
+																<tr height="50">
+																	<td width="30">&nbsp;</td>
+																	<td colspan="2" align="left" valign="middle">
+																		<a href="javascript:void(0)">
+																			<img src="${ctx}/images/btns2.png" alt="提交" onclick="query('2')" width="101" height="29"border="0" />
+																		</a>
+																		&nbsp;&nbsp;&nbsp;&nbsp; 
+																		<a href="javascript:void(0)">
+																			<img src="${ctx}/images/btnc1.png" alt="重置" onclick="document.forms.listForm.reset();return false;" width="101" height="30" border="0" />
+																		</a>
+																	</td>
+																</tr>
+																<tr valign="bottom">
+																	<td colspan="3" align="center">
+																		<img src="${ctx}/images/close.png" width="80" height="18" border="0" style="cursor: pointer;" onclick="close_high()" />
+																	</td>
+																</tr>
+															</table>
+														</td>
+														<td width="15"></td>
+													</tr>
+
+												</table>
+											</td>
+										</tr>
+									</table>
+
+								</td>
+							</tr>
+							<tr><td height="2"></td></tr>
+							<tr>
+								<td height="2" align="center" valign="middle"><img src="${ctx }/images/sheet_line_2.jpg" width="915" height="2" /></td>
+							</tr>
+							<tr><td height="20"></td></tr>
+
+							<tr>
+								<td align="left" valign="top">
+									<ec:table items="list" var="item" onInvokeAction="query('${queryType }')"
+										form="listForm" retrieveRowsCallback="limit" sortRowsCallback="limit" sortable="false" style="width:100%"
+										tableId="${tableId}" action="${ctx}/onlinePay/list.do" showPagination="true" cellspacing="1">
+
+										<ec:exportXls fileName="充值.xls" tooltip="导出Excel" view="xls" />
+										<ec:row>
+											<ec:column property="_rowNumber" title="序号" cell="rowNumber" style="text-align: center; width:5%" />
+											<ec:column property="payDate" title="充值时间" style="width:15%; text-align: center;" cell="date" format="yyyy-MM-dd HH:mm:ss"/>
+											<ec:column property="payType" title="充值方式" style="width:15%; text-align: left;" >
+												<c:if test="${item.payType == '1' }">现金</c:if>
+												<c:if test="${item.payType == '2' }">转账</c:if>
+												<c:if test="${item.payType == '3' }">赠送</c:if>
+												<c:if test="${item.payType == '4' }">银联</c:if>
+												<c:if test="${item.payType == '5' }">支付宝</c:if>
+												<c:if test="${item.payType == '6' }">首次充值</c:if>
+												<c:if test="${item.payType == '7' }">充值返利</c:if>
+												<c:if test="${item.payType == '8' }">推荐返利</c:if>
+											</ec:column>
+											<ec:column property="payAmount" title="充值金额（元）" style="width:15%; text-align: right;"/>
+											<ec:column property="remainingAmount" title="充值后余额（元）" style="width:15%; text-align: right;" />
+											<ec:column property="remark" title="充值状态" style="width:15%; text-align: right;" >
+												成功
+											</ec:column>
+											<ec:column property="remark" title="备注" style="width:15%; text-align: right;" />
+										</ec:row>
+									</ec:table>
+								</td>
+							</tr>
+
+						</table>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+	</form:form>
+</body>
+</html>

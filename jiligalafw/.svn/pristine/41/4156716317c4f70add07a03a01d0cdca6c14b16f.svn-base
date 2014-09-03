@@ -1,0 +1,1002 @@
+package sy.controller.product;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.commons.lang.StringUtils;
+import org.junit.internal.ExactComparisonCriteria;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import sy.common.model.ECContext;
+import sy.common.model.QueryContext;
+import sy.common.util.Constants;
+import sy.common.util.DateUtil;
+import sy.common.util.cloudstack.entity.NetworkType;
+import sy.common.util.validator.ValidatorException;
+import sy.controller.shared.BaseController;
+import sy.domain.vo.base.BasicUserVo;
+import sy.domain.vo.expense.AccountExpenseVo;
+import sy.domain.vo.product.CloudMdmNetworkVo;
+import sy.domain.vo.product.CloudMdmProductItemVo;
+import sy.domain.vo.product.CloudMdmVmVo;
+import sy.domain.vo.product.CloudOrderApprovalVo;
+import sy.domain.vo.product.CloudProductDetail;
+import sy.domain.vo.product.CloudProductPriceVo;
+import sy.domain.vo.product.CloudProductQuickBuyVo;
+import sy.domain.vo.product.CloudSecurityGroupVo;
+import sy.domain.vo.product.CloudUserOrderItemVo;
+import sy.domain.vo.product.CloudUserOrderVo;
+import sy.domain.vo.product.CloudVmBuyDetailVo;
+import sy.domain.vo.product.CloudVmCellDetailVo;
+import sy.domain.vo.promotion.CloudPromotionValue;
+import sy.service.base.BasicUserServiceI;
+import sy.service.expense.AccountExpenseServiceI;
+import sy.service.product.CloudMdmCPUSolnServiceI;
+import sy.service.product.CloudMdmDiskSolnServiceI;
+import sy.service.product.CloudMdmIPServiceI;
+import sy.service.product.CloudMdmNetworkServiceI;
+import sy.service.product.CloudMdmNetworkSolnServiceI;
+import sy.service.product.CloudMdmProductItemServiceI;
+import sy.service.product.CloudMdmProductServiceI;
+import sy.service.product.CloudMdmTemplateServiceI;
+import sy.service.product.CloudMdmVMServiceI;
+import sy.service.product.CloudMdmZoneServiceI;
+import sy.service.product.CloudOrderAppprovalServiceI;
+import sy.service.product.CloudProductPriceServiceI;
+import sy.service.product.CloudSecurityGroupServiceI;
+import sy.service.product.CloudUserOrderServiceI;
+import sy.service.promotion.CloudPromotionProductServiceI;
+
+/**
+ * 产品购买-快速购买
+ * 
+ * @author luobin
+ * 
+ */
+@Controller
+@RequestMapping("/quickBuy")
+@SuppressWarnings("unused")
+public class ProductQuickBuyController extends BaseController {
+
+	@Autowired
+	private CloudMdmCPUSolnServiceI cloudMdmCPUSolnService;
+	@Autowired
+	private CloudMdmDiskSolnServiceI cloudMdmDiskSolnService;
+	@Autowired
+	private CloudMdmNetworkSolnServiceI cloudMdmNetworkSolnService;
+	@Autowired
+	private CloudMdmTemplateServiceI cloudMdmTemplateService;
+	@Autowired
+	private CloudMdmIPServiceI cloudMdmIPService;
+
+	@Autowired
+	private CloudMdmVMServiceI cloudMdmVMService;
+	@Autowired
+	private CloudMdmZoneServiceI cloudMdmZoneService;
+
+	// 产品管理
+	@Autowired
+	private CloudMdmProductServiceI cloudMdmProductService;
+	@Autowired
+	private CloudMdmProductItemServiceI cloudMdmProductItemService;
+	@Autowired
+	private CloudProductPriceServiceI cloudProductPriceService;
+	@Autowired
+	private BasicUserServiceI basicUserService;
+	@Autowired
+	private CloudMdmNetworkServiceI cloudMdmNetworkService;
+	@Autowired
+	private CloudSecurityGroupServiceI cloudSecurityGroupService;
+	@Autowired
+	private CloudUserOrderServiceI cloudUserOrderService;
+	@Autowired
+	private AccountExpenseServiceI accountExpenseService;
+	@Autowired
+	private CloudPromotionProductServiceI cloudPromotionProductService;
+	@Autowired
+	private CloudOrderAppprovalServiceI cloudOrderAppprovalService;
+
+	public void setCloudPromotionProductService(
+			CloudPromotionProductServiceI cloudPromotionProductService) {
+		this.cloudPromotionProductService = cloudPromotionProductService;
+	}
+
+	public void setAccountExpenseService(
+			AccountExpenseServiceI accountExpenseService) {
+		this.accountExpenseService = accountExpenseService;
+	}
+
+	public void setCloudSecurityGroupService(
+			CloudSecurityGroupServiceI cloudSecurityGroupService) {
+		this.cloudSecurityGroupService = cloudSecurityGroupService;
+	}
+
+	public void setCloudMdmNetworkService(
+			CloudMdmNetworkServiceI cloudMdmNetworkService) {
+		this.cloudMdmNetworkService = cloudMdmNetworkService;
+	}
+
+	public void setBasicUserService(BasicUserServiceI basicUserService) {
+		this.basicUserService = basicUserService;
+	}
+
+	public void setCloudMdmCPUSolnService(
+			CloudMdmCPUSolnServiceI cloudMdmCPUSolnService) {
+		this.cloudMdmCPUSolnService = cloudMdmCPUSolnService;
+	}
+
+	public void setCloudMdmDiskSolnService(
+			CloudMdmDiskSolnServiceI cloudMdmDiskSolnService) {
+		this.cloudMdmDiskSolnService = cloudMdmDiskSolnService;
+	}
+
+	public void setCloudMdmNetworkSolnService(
+			CloudMdmNetworkSolnServiceI cloudMdmNetworkSolnService) {
+		this.cloudMdmNetworkSolnService = cloudMdmNetworkSolnService;
+	}
+
+	public void setCloudMdmTemplateService(
+			CloudMdmTemplateServiceI cloudMdmTemplateService) {
+		this.cloudMdmTemplateService = cloudMdmTemplateService;
+	}
+
+	public void setCloudMdmIPService(CloudMdmIPServiceI cloudMdmIPService) {
+		this.cloudMdmIPService = cloudMdmIPService;
+	}
+
+	public void setCloudMdmVMService(CloudMdmVMServiceI cloudMdmVMService) {
+		this.cloudMdmVMService = cloudMdmVMService;
+	}
+
+	public void setCloudMdmZoneService(CloudMdmZoneServiceI cloudMdmZoneService) {
+		this.cloudMdmZoneService = cloudMdmZoneService;
+	}
+
+	public void setCloudMdmProductService(
+			CloudMdmProductServiceI cloudMdmProductService) {
+		this.cloudMdmProductService = cloudMdmProductService;
+	}
+
+	public void setCloudMdmProductItemService(
+			CloudMdmProductItemServiceI cloudMdmProductItemService) {
+		this.cloudMdmProductItemService = cloudMdmProductItemService;
+	}
+
+	public void setCloudProductPriceService(
+			CloudProductPriceServiceI cloudProductPriceService) {
+		this.cloudProductPriceService = cloudProductPriceService;
+	}
+
+	public void setCloudOrderAppprovalService(
+			CloudOrderAppprovalServiceI cloudOrderAppprovalService) {
+		this.cloudOrderAppprovalService = cloudOrderAppprovalService;
+	}
+
+	/**
+	 * 产品购买-快速购买-选择虚拟机
+	 * 
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException
+	 */
+	@RequestMapping(value = "selectVm")
+	public String selectVm(HttpServletRequest request,
+			HttpServletResponse response, CloudMdmProductItemVo vo,
+			ModelMap modelMap) throws ValidatorException {
+		QueryContext context = new ECContext(request, modelMap, "order");
+		context.clearParmeters();
+		context.put("$eq_itemType", Constants.PROD_TYPE_COMP_PROD);
+		context.setPaging(false);
+		// 接口读取已存在的配置方案
+		int comnSize = 0;
+		List<CloudProductPriceVo> cloudProductPriceVoList = null;
+		try {
+			cloudProductPriceVoList = cloudProductPriceService
+					.getCloudProductPriceVoByComb();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		if (null != cloudProductPriceVoList) {
+			comnSize = cloudProductPriceVoList.size();
+		}
+		String product_quickCombProdId = (String) request.getSession()
+				.getAttribute("product_quickCombProdId");
+		String product_quickCombnetType = (String) request.getSession()
+				.getAttribute("product_quickCombnetType");
+		String product_quickCombZoneId = (String) request.getSession()
+				.getAttribute("product_quickCombZoneId");
+		modelMap.put("prodId", product_quickCombProdId + "__"
+				+ product_quickCombZoneId + "__" + product_quickCombnetType);
+		modelMap.put("combProdItemSize", comnSize);
+		modelMap.put("cloudProductPriceVoList", cloudProductPriceVoList);
+		// 跳转到选择虚拟机页面
+		return "product/productQuickBuy_selectVm";
+	}
+
+	/**
+	 * 产品购买-快速购买-选择网络
+	 * 
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "selectNet")
+	public String selectNet(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+		BasicUserVo user = (BasicUserVo) request.getSession().getAttribute(
+				Constants.SESSION_USER_KEY);
+		if (null != user) {
+			if (user.getUserFlag() == Constants.USER_FLAG_USER) {
+				try {
+					user = basicUserService.get(user.getParentBasicUser()
+							.getUserId());
+					modelMap.put("userFlag", "0");
+				} catch (ValidatorException e) {
+					// TODO Auto-generated catch block
+					logger.equals("can't get BasicAccount.");
+				}
+			}else{
+				modelMap.put("userFlag", "1");
+			}
+		}
+		String prodId = request.getParameter("prodId");
+		if (StringUtils.isNotBlank(prodId)) {
+			String[] prodInfo = prodId.split("__");
+			request.getSession().setAttribute("product_quickCombProdId",
+					prodInfo[0]);
+			request.getSession().setAttribute("product_quickCombZoneId",
+					prodInfo[1]);
+			request.getSession().setAttribute("product_quickCombnetType",
+					prodInfo[2]);
+		}
+		String product_quickCombNetIds = (String) request.getSession()
+				.getAttribute("product_quickCombNetIds");
+		String product_quickCombZoneId = (String) request.getSession()
+				.getAttribute("product_quickCombZoneId");
+		String product_quickCombnetType = (String) request.getSession()
+				.getAttribute("product_quickCombnetType");
+		String quick_networkName = (String) request.getSession().getAttribute(
+				"Qucik_NetworkName");
+		String quick_description = (String) request.getSession().getAttribute(
+				"Qucik_description");
+		String quick_networkSlon =(String)request.getSession().getAttribute(
+				"Qucik_NetworkSlon");
+		if (null != user) {
+			if (StringUtils.isNotBlank(product_quickCombnetType)
+					&& product_quickCombnetType.equals(NetworkType.Advanced
+							.toString())) {
+				try {
+					List<?> netWorkSolnlist = this.cloudMdmProductItemService
+							.getNetworkSingleProd(product_quickCombZoneId);
+					List<CloudMdmNetworkVo> cloudMdmNetworkList = cloudMdmNetworkService
+							.getUserNetWorksByZoneAccount(
+									user.getUserAccount(), cloudMdmZoneService
+											.get(product_quickCombZoneId)
+											.getInterfaceId());
+					modelMap.put("netIds", product_quickCombNetIds);
+					modelMap.put("cloudMdmNetworkList", cloudMdmNetworkList);
+					modelMap.put("netWorkSolnlist", netWorkSolnlist);
+					modelMap.put("networkName", quick_networkName);
+					modelMap.put("description", quick_description);
+					modelMap.put("networkSlon", quick_networkSlon);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					modelMap.put("message", "获取网络时失败!");
+					return "product/productQuickBuy_selectVm";
+
+				}
+					return "product/productQuickBuy_selectAdvanceNet";
+			} else if (StringUtils.isNotBlank(product_quickCombnetType)
+					&& product_quickCombnetType.equals(NetworkType.Basic
+							.toString()) && null != user) {
+				try {
+					String secGroupId = (String) request.getSession()
+							.getAttribute("product_quicksetGroupId");
+					List<CloudSecurityGroupVo> CloudSecurityGroupList = cloudSecurityGroupService
+							.getSecurityGroupListByAccount(user
+									.getUserAccount());
+					CloudMdmNetworkVo cloudMdmNetworkVo = cloudMdmNetworkService
+							.getBasicNetByZone(product_quickCombZoneId);
+					request.getSession().setAttribute(
+							"product_quickCombNetIds",
+							cloudMdmNetworkVo.getId());
+					modelMap.put("secGroupId", secGroupId);
+					modelMap.put("CloudSecurityGroupList",
+							CloudSecurityGroupList);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					modelMap.put("message", "获取网络时失败!");
+					return "product/productQuickBuy_selectVm";
+
+				}
+
+				return "product/productQuickBuy_selectBasicNet";
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * 产品购买-快速购买-主机配置
+	 * 
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "hostConfig")
+	public String hostConfig(HttpServletRequest request,
+			HttpServletResponse response, CloudVmBuyDetailVo vo,
+			ModelMap modelMap) {
+		String product_quickCombnetType = (String) request.getSession()
+				.getAttribute("product_quickCombnetType");
+
+		vo.setCount((Integer) request.getSession().getAttribute(
+				"productQuickBuy_countNum"));
+		vo.setVmName((String) request.getSession().getAttribute(
+				"productQuickBuy_vmName"));
+		vo.setStopTime((String) request.getSession().getAttribute(
+				"productQuickBuy_stopTime"));
+		if (StringUtils.isNotBlank(product_quickCombnetType)
+				&& product_quickCombnetType
+						.equals(NetworkType.Basic.toString())) {
+			String setGroupId = request.getParameter("secGroupId");
+			if (StringUtils.isNotBlank(setGroupId)) {
+				request.getSession().setAttribute("product_quicksetGroupId",
+						setGroupId);
+			}
+
+			return "product/productQuickBuy_basicHostConfig";
+		} else if (StringUtils.isNotBlank(product_quickCombnetType)
+				&& product_quickCombnetType.equals(NetworkType.Advanced
+						.toString())) {
+			String advanceNetIds = request.getParameter("networkIds");
+			String networkName = request.getParameter("networkName");
+			String description = request.getParameter("description");
+			String networkSlon = request.getParameter("networkSlon");
+			if (StringUtils.isNotBlank(advanceNetIds)) {
+				request.getSession().setAttribute("product_quickCombNetIds",
+						advanceNetIds);
+			}
+			if (StringUtils.isNotBlank(networkName)
+					&& StringUtils.isNotBlank(description)) {
+				request.getSession().setAttribute("Qucik_NetworkName",
+						networkName);
+				request.getSession().setAttribute("Qucik_description",
+						description);
+				request.getSession().setAttribute("Qucik_NetworkSlon",
+						networkSlon);
+				request.getSession().setAttribute("Qucik_NetworkFlag",
+						"1");
+			}
+			return "product/productQuickBuy_advanceHostConfig";
+		}
+		return null;
+	}
+
+	/**
+	 * 产品购买-快速购买-选择计费
+	 * 
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "selectBilling")
+	public String selectBilling(HttpServletRequest request,
+			HttpServletResponse response, CloudVmBuyDetailVo vo,
+			ModelMap modelMap) {
+		// 选择计费类型，一次性，周期性（年，月，日）
+
+		request.getSession().setAttribute("productQuickBuy_countNum",
+				vo.getCount());
+		request.getSession().setAttribute("productQuickBuy_vmName",
+				vo.getVmName());
+		request.getSession().setAttribute("productQuickBuy_stopTime",
+				vo.getStopTime());
+		String product_quickCombnetType = (String) request.getSession()
+				.getAttribute("product_quickCombnetType");
+		String prodId = (String) request.getSession().getAttribute(
+				"product_quickCombProdId");
+		String networkFlag = (String) request.getSession().getAttribute(
+						"Qucik_NetworkFlag");
+		CloudProductPriceVo cloudProdPrice = null;
+		CloudProductQuickBuyVo quickBuyVo = new CloudProductQuickBuyVo();
+		CloudProductQuickBuyVo quickNetWorkBuyVo = new CloudProductQuickBuyVo();
+		try {
+			cloudProdPrice = cloudProductPriceService.getPriceByProdId(prodId);
+			quickBuyVo = addToCountPrice(cloudProdPrice, quickBuyVo);
+
+			if (StringUtils.isNotBlank(quickBuyVo.getPriceMode())
+					&& quickBuyVo.getPriceMode().equals(
+							Constants.PRICE_MODE_ONE_TIME)) {
+				quickBuyVo.setOneTimePrice(quickBuyVo.getOneTimePrice()
+						* vo.getCount());
+				quickBuyVo.setOneTimeRebatePrice(quickBuyVo
+						.getOneTimeRebatePrice() * vo.getCount());
+			} else if (StringUtils.isNotBlank(quickBuyVo.getPriceMode())
+					&& quickBuyVo.getPriceMode().equals(
+							Constants.PRICE_MODE_CYCLE)) {
+				quickBuyVo.setYearPrice(quickBuyVo.getYearPrice()
+						* vo.getCount());
+				quickBuyVo.setYearRebatePrice(quickBuyVo.getYearRebatePrice()
+						* vo.getCount());
+				quickBuyVo.setMonthPrice(quickBuyVo.getMonthPrice()
+						* vo.getCount());
+				quickBuyVo.setMonthRebatePrice(quickBuyVo.getMonthRebatePrice()
+						* vo.getCount());
+				quickBuyVo
+						.setDayPrice(quickBuyVo.getDayPrice() * vo.getCount());
+				quickBuyVo.setDayRebatePrice(quickBuyVo.getDayRebatePrice()
+						* vo.getCount());
+				quickBuyVo.setHourPrice(quickBuyVo.getHourPrice()*vo.getCount());
+				quickBuyVo.setHourRebatePrice(quickBuyVo.getHourRebatePrice()*vo.getCount());
+			}
+			modelMap.put("quickBuyVo", quickBuyVo);
+			request.getSession().setAttribute("quickBuyVo", quickBuyVo);
+			if (StringUtils.isNotBlank(product_quickCombnetType)
+					&& product_quickCombnetType.equals(NetworkType.Advanced
+							.toString()) && "1".equals(networkFlag)) {
+				String quick_networkSlon =(String)request.getSession().getAttribute(
+						"Qucik_NetworkSlon");
+				String[] quickNetWorkArray = quick_networkSlon.split("_");
+				cloudProdPrice = cloudProductPriceService.getPriceByProdId(quickNetWorkArray[0]);
+				quickNetWorkBuyVo = addToCountPrice(cloudProdPrice, quickNetWorkBuyVo);
+				modelMap.put("quickNetWorkBuyVo", quickNetWorkBuyVo);
+				request.getSession().setAttribute("quickNetWorkBuyVo", quickNetWorkBuyVo);
+				modelMap.put("quickNetWorkType", quickNetWorkArray[2]);
+				modelMap.put("networkFlag", "1");
+			}
+		} catch (ValidatorException e) {
+			// TODO Auto-generated catch block
+			modelMap.put("message", "获取选择计费时失败!");
+			e.printStackTrace();
+			if (StringUtils.isNotBlank(product_quickCombnetType)
+					&& product_quickCombnetType.equals(NetworkType.Basic
+							.toString())) {
+				return "product/productQuickBuy_basicHostConfig";
+			} else {
+				return "product/productQuickBuy_advanceHostConfig";
+			}
+		}
+		// 跳转到配置虚拟机页面
+		return "product/productQuickBuy_selectBilling";
+	}
+
+	/**
+	 * 产品购买-快速购买-完成购买
+	 * 
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(value = "finishBuy")
+	public String finishBuy(HttpServletRequest request,
+			HttpServletResponse response, CloudUserOrderVo vo, ModelMap modelMap) {
+		// 获取用户选择的配置方案、虚拟机配置信息
+		double rebatePrice = 0;
+		double price = 0;
+		double netWorkRebatePrice=0;
+		double netWorkPrice =0;
+		CloudProductQuickBuyVo quickBuyVo = (CloudProductQuickBuyVo) request
+				.getSession().getAttribute("quickBuyVo");
+		CloudProductQuickBuyVo quickNetWorkBuyVo =(CloudProductQuickBuyVo)request
+				.getSession().getAttribute("quickNetWorkBuyVo");
+		String comPriceType = request.getParameter("comPriceType");
+		String ipType = request.getParameter("ipPrice");
+		String networkFlag = request.getParameter("networkFlag");
+		String comBillingCycle = null;
+		String ipBillingCycle = null;
+		if (StringUtils.isNotBlank(comPriceType)) {
+			if ("compOneTime".equals(comPriceType)) {
+				comBillingCycle = Constants.BILLING_TYPE_SINGLE;
+				rebatePrice = quickBuyVo.getOneTimeRebatePrice();
+				price = quickBuyVo.getOneTimePrice();
+			} else if ("compYear".equals(comPriceType)) {
+				comBillingCycle = Constants.BILLING_CYCLE_YEAR;
+				rebatePrice = quickBuyVo.getYearRebatePrice();
+				price = quickBuyVo.getYearPrice();
+			} else if ("compMonth".equals(comPriceType)) {
+				comBillingCycle = Constants.BILLING_CYCLE_MONTH;
+				rebatePrice = quickBuyVo.getMonthRebatePrice();
+				price = quickBuyVo.getMonthPrice();
+			} else if ("compDay".equals(comPriceType)) {
+				comBillingCycle = Constants.BILLING_CYCLE_DAY;
+				rebatePrice = quickBuyVo.getDayRebatePrice();
+				price = quickBuyVo.getDayPrice();
+			} else {
+				comBillingCycle = Constants.BILLING_CYCLE_HOUR;
+				rebatePrice = quickBuyVo.getHourRebatePrice();
+				price = quickBuyVo.getHourPrice();
+			}
+		}
+		if (rebatePrice == 0 || price == 0) {
+			modelMap.put("message", "购买虚拟机失败！");
+			return "product/productQuickBuy_selectBilling";
+		}
+		if(StringUtils.isNotBlank(ipType) && "1".equals(networkFlag)){
+			if(Constants.BILLING_TYPE_SINGLE.equals(ipType)){
+				ipBillingCycle =Constants.BILLING_TYPE_SINGLE;
+				netWorkRebatePrice=quickNetWorkBuyVo.getOneTimeRebatePrice();
+				netWorkPrice= quickNetWorkBuyVo.getOneTimePrice();
+			} else if(Constants.BILLING_CYCLE_YEAR.equals(ipType)){
+				ipBillingCycle=Constants.BILLING_CYCLE_YEAR;
+				netWorkRebatePrice=quickNetWorkBuyVo.getYearRebatePrice();
+				netWorkPrice =quickNetWorkBuyVo.getYearPrice();
+			} else if(Constants.BILLING_CYCLE_MONTH.equals(ipType)){
+				ipBillingCycle=Constants.BILLING_CYCLE_MONTH;
+				netWorkRebatePrice=quickNetWorkBuyVo.getMonthRebatePrice();
+				netWorkPrice =quickNetWorkBuyVo.getMonthPrice();
+			} else if(Constants.BILLING_CYCLE_DAY.equals(ipType)){
+				ipBillingCycle=Constants.BILLING_CYCLE_DAY;
+				netWorkRebatePrice=quickNetWorkBuyVo.getDayRebatePrice();
+				netWorkPrice =quickNetWorkBuyVo.getDayPrice();
+			}else{
+				ipBillingCycle=Constants.BILLING_CYCLE_HOUR;
+				netWorkRebatePrice=quickNetWorkBuyVo.getHourRebatePrice();
+				netWorkPrice =quickNetWorkBuyVo.getHourPrice();
+			}
+		if (netWorkRebatePrice == 0 || netWorkPrice == 0) {
+				modelMap.put("message", "购买虚拟机失败！");
+				return "product/productQuickBuy_selectBilling";
+			}
+		}
+		
+		// 获取当前用户或账户信息.
+		BasicUserVo account = null;
+		BasicUserVo user = (BasicUserVo) request.getSession().getAttribute(
+				Constants.SESSION_USER_KEY);
+		if (null != user) {
+			if (user.getUserFlag() == Constants.USER_FLAG_USER) {
+				try {
+					account = basicUserService.get(user.getParentBasicUser()
+							.getUserId());
+				} catch (ValidatorException e) {
+					// TODO Auto-generated catch block
+					logger.equals("can't get BasicAccount.");
+					modelMap.put("message",
+							"购买虚拟机失败！原因是：账户信息不存在:" + e.getMessage());
+					return "product/productQuickBuy_finishBuy";
+				}
+			} else if (user.getUserFlag() == Constants.USER_FLAG_ACCOUNT) {
+				account = user;
+			}
+		}
+		// 获取session中的参数。
+		SimpleDateFormat sd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String product_quickCombnetType = (String) request.getSession()
+				.getAttribute("product_quickCombnetType");
+		String product_quickCombProdId = (String) request.getSession()
+				.getAttribute("product_quickCombProdId");
+		String product_quickCombZoneId = (String) request.getSession()
+				.getAttribute("product_quickCombZoneId");
+		String product_quickCombNetIds = (String) request.getSession()
+				.getAttribute("product_quickCombNetIds");
+		String product_quickSecGroupIds = (String) request.getSession()
+				.getAttribute("product_quicksetGroupId");
+		String quick_networkName = (String) request.getSession().getAttribute(
+				"Qucik_NetworkName");
+		String quick_description = (String) request.getSession().getAttribute(
+				"Qucik_description");
+		String quick_networkSlon =(String)request.getSession().getAttribute(
+				"Qucik_NetworkSlon");
+		String quick_networkSlonFlag =(String)request.getSession().getAttribute("Qucik_NetworkFlag");
+		
+		
+		int count = (Integer) request.getSession().getAttribute(
+				"productQuickBuy_countNum");
+		String vmName = (String) request.getSession().getAttribute(
+				"productQuickBuy_vmName");
+		String stopTime = (String) request.getSession().getAttribute(
+				"productQuickBuy_stopTime");
+		Date stopTimeDate = null;
+		
+		if (StringUtils.isNotBlank(stopTime)) {
+			try {
+				stopTimeDate = sd.parse(stopTime);
+			} catch (ParseException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		// 购买时账户费用不足，购买失败。
+		try {
+			AccountExpenseVo expVo = accountExpenseService
+					.getExpenseByUserId(account.getUserId());
+			if (expVo == null
+					|| (expVo.getPayTotalAmount() - expVo.getExpTotalAmount()) < rebatePrice) {
+				modelMap.put("message", "购买虚拟机失败，账户费用不足，请充值。");
+				return "product/productQuickBuy_finishBuy";
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("get error in making VM" + e.getMessage());
+			modelMap.put("message", "建立虚拟机时失败!" + e.getMessage());
+			return "product/productQuickBuy_finishBuy";
+		}
+		CloudMdmNetworkVo mdmNetworkVo= new CloudMdmNetworkVo();
+		
+		// 写入网络订单以及明细.
+		if(StringUtils.isNotBlank(quick_networkSlonFlag)
+				&& quick_networkSlonFlag.equals("1")){
+			String[] quickNetWorkArray = quick_networkSlon.split("_");
+		CloudUserOrderVo cloudUserNetWorkOrderVo = null;
+		CloudUserOrderItemVo cloudUserNetWorkOrderItemVo =null;
+	
+		try{
+		String zoneIFId = cloudMdmZoneService.get(
+					product_quickCombZoneId).getInterfaceId();
+		  cloudUserNetWorkOrderVo = new CloudUserOrderVo();
+		 cloudUserNetWorkOrderVo.setBasicUser(account);
+		 cloudUserNetWorkOrderVo.setBillingCycle(ipBillingCycle);
+		 cloudUserNetWorkOrderVo.setBillingFlag(Constants.BILLING_FALG_STOP);
+		 cloudUserNetWorkOrderVo.setBuyType(Constants.PROD_BUY_SINGLE);
+		 cloudUserNetWorkOrderVo.setCreated(new Date());
+		 cloudUserNetWorkOrderVo.setCreatedBy(user.getUserAccount());
+		 cloudUserNetWorkOrderVo.setOrderTime(new Date());
+		 cloudUserNetWorkOrderVo.setOrderType(Constants.ORDER_TYPE_NETWORK);
+		 cloudUserNetWorkOrderVo.setState(String.valueOf(Constants.INVALID_STATE));
+		//子订单信息
+	     cloudUserNetWorkOrderItemVo = new CloudUserOrderItemVo();
+		cloudUserNetWorkOrderItemVo.setCloudUserOrder(cloudUserNetWorkOrderVo);
+		cloudUserNetWorkOrderItemVo.setCloudMdmProduct(this.cloudMdmProductService.get(quickNetWorkArray[0]));
+		cloudUserNetWorkOrderItemVo.setCloudMdmProductItem(this.cloudMdmProductItemService.get(quickNetWorkArray[3]));
+		cloudUserNetWorkOrderItemVo.setProdType(Constants.PROD_TYPE_NETWORK_SOLN);
+		//是否开始计费
+		cloudUserNetWorkOrderItemVo.setBillingFlag(Constants.BILLING_FALG_STOP);
+		//一次性计费是否已发生（如果是周期性的本不用填写，填写了也没用影响）
+		cloudUserNetWorkOrderItemVo.setOneTimeBillingFlag(Constants.BILLING_FALG_STOP);
+		cloudUserNetWorkOrderItemVo.setRebateAmount(netWorkRebatePrice);
+		
+		//计费类型
+		if(Constants.BILLING_TYPE_SINGLE.equals(ipType)){
+			cloudUserNetWorkOrderItemVo.setBillingType(Constants.BILLING_TYPE_SINGLE);
+		}else{
+			cloudUserNetWorkOrderItemVo.setBillingType(Constants.BILLING_TYPE_CYCLE);
+		}
+		 CloudProductDetail cloudProductDetail=this.cloudMdmNetworkSolnService.getCloudMdmNetworkSolnByProdId(quickNetWorkArray[0]);
+			
+		if (null != quickNetWorkBuyVo.getCloudPromotionValue()) {
+			cloudUserNetWorkOrderItemVo.setRebateFlag(quickNetWorkBuyVo.getCloudPromotionValue().getRebateFlag());
+			cloudUserNetWorkOrderItemVo.setRebateAmount(quickNetWorkBuyVo.getCloudPromotionValue().getRebateAmount());
+			cloudUserNetWorkOrderItemVo.setPromotionId(quickNetWorkBuyVo.getCloudPromotionValue().getPromotionId());
+		}
+		//购买时账户费用不足，购买失败。
+			AccountExpenseVo expVo = this.accountExpenseService.getExpenseByUserId(account.getUserId());
+			if(expVo == null || (expVo.getPayTotalAmount()- expVo.getExpTotalAmount()) < Double.valueOf(netWorkRebatePrice)){
+				modelMap.put("message", "网络添加失败，账户费用不足，请充值。");
+				return "product/productQuickBuy_finishBuy"; 
+			}
+			//保存购买订单
+			this.cloudUserOrderService.saveOrder(cloudUserNetWorkOrderVo, cloudUserNetWorkOrderItemVo);
+			//调用接口创建网络
+			mdmNetworkVo = this.cloudMdmNetworkService.create(account.getUserAccount(), zoneIFId, cloudProductDetail.getInterfaceId(), quick_networkName, quick_description);
+			 cloudUserNetWorkOrderVo.setBillingFlag(Constants.BILLING_FALG_START);
+			 cloudUserNetWorkOrderItemVo.setBillingFlag(Constants.BILLING_FALG_START);
+			 cloudUserNetWorkOrderVo.setState(String.valueOf(Constants.VALID_STATE));
+			 cloudUserNetWorkOrderVo.setCloudMdmNetwork(mdmNetworkVo);	
+			 cloudUserNetWorkOrderVo.setBeginBillingTime(DateUtil
+						.convertDate(DateUtil.formatDate(DateUtil
+								.getAfterDay(new Date(), 1))));
+			 cloudUserNetWorkOrderVo.setNextBillingTime(DateUtil
+						.convertDate(DateUtil.formatDate(DateUtil
+								.getAfterDay(new Date(), 1))));
+			 this.cloudUserOrderService.saveOrder(cloudUserNetWorkOrderVo, cloudUserNetWorkOrderItemVo);
+		}catch(Exception e){
+			modelMap.put("message", "创建虚拟机失败！" + e.getMessage());
+			e.printStackTrace();
+			return "product/productQuickBuy_finishBuy";
+		}
+		}
+		// 获取各元素的接口ID
+				CloudVmCellDetailVo cloudVmCellDetailVo = null;
+				List<String> networkOrSecuritygroupIds = new ArrayList<String>();
+				String[] product_quickNetArray=null;
+				try {
+					cloudVmCellDetailVo = cloudMdmProductItemService
+							.getVmCellDetailByProdId(product_quickCombProdId);
+					if (StringUtils.isNotBlank(product_quickCombnetType)
+							&& product_quickCombnetType.equals(NetworkType.Basic
+									.toString())
+							&& StringUtils.isNotBlank(product_quickSecGroupIds)) {
+						product_quickNetArray = product_quickSecGroupIds.split(",");
+						for(String product_quickSecGroupId :product_quickNetArray){
+						CloudSecurityGroupVo cloudSecurityGroupVo = cloudSecurityGroupService
+								.get(product_quickSecGroupId);
+						networkOrSecuritygroupIds.add(cloudSecurityGroupVo
+								.getInterfaceId());
+						}
+					} else if (StringUtils.isNotBlank(product_quickCombnetType)
+							&& product_quickCombnetType.equals(NetworkType.Advanced
+									.toString())) {
+						if(StringUtils.isNotBlank(product_quickCombNetIds)){
+							product_quickNetArray=product_quickCombNetIds.split(",");
+						for(String product_quickCombNetId : product_quickNetArray){
+						CloudMdmNetworkVo cloudMdmNetworkVo = cloudMdmNetworkService
+								.get(product_quickCombNetId);
+						networkOrSecuritygroupIds.add(cloudMdmNetworkVo
+								.getInterfaceId());
+						} 
+						}else{
+							networkOrSecuritygroupIds.add(mdmNetworkVo.getInterfaceId());
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					logger.error("get error in making VM" + e.getMessage());
+					modelMap.put("message", "建立虚拟机时失败!" + e.getMessage());
+					return "product/productQuickBuy_finishBuy";
+				}
+		// 写入VM订单以及订单明细.
+		try {
+
+			if (null != cloudVmCellDetailVo && null != user
+					&& StringUtils.isNotBlank(product_quickCombZoneId)) {
+				
+				for (int i = 0; i < count; i++) {
+					CloudOrderApprovalVo cloudOrderAppprovalVo = new CloudOrderApprovalVo();
+					CloudUserOrderVo cloudUserOrderVo = new CloudUserOrderVo();
+					cloudUserOrderVo.setBasicUser(user);
+					cloudUserOrderVo.setBasicAccount(account);
+					cloudUserOrderVo.setBillingCycle(comBillingCycle);
+					cloudUserOrderVo
+							.setBillingFlag(Constants.BILLING_FALG_STOP);
+					cloudUserOrderVo.setBuyType(Constants.PROD_BUY_QUICK);
+					cloudUserOrderVo.setCreated(new Date());
+					cloudUserOrderVo.setCreatedBy(user.getUserAccount());
+					cloudUserOrderVo.setOrderTime(new Date());
+					cloudUserOrderVo.setCloudMdmNetwork(mdmNetworkVo);
+					cloudUserOrderVo.setVmName(count > 1 ? vmName + i : vmName);
+					cloudUserOrderVo.setState(String
+							.valueOf(Constants.INVALID_STATE));
+					String[] netIdsArr = new String[networkOrSecuritygroupIds
+							.size()];
+					netIdsArr = networkOrSecuritygroupIds.toArray(netIdsArr);
+					String netIds = "";
+
+					for (String netId : netIdsArr) {
+						netIds += netId + ",";
+					}
+					if (!"".equals(netIds)) {
+						netIds = netIds.substring(0, netIds.lastIndexOf(","));
+					}
+					cloudUserOrderVo.setNetIds(netIds);
+					cloudUserOrderVo.setOrderType(Constants.ORDER_TYPE_VM);
+					CloudUserOrderItemVo cloudUserOrderItemVo = new CloudUserOrderItemVo();
+					// cloudUserOrderItemVo.setActivityName(quickBuyVo.getActivityName());
+
+					if (!comPriceType.equals("compOneTime")) {
+						cloudUserOrderItemVo
+								.setBillingType(Constants.BILLING_TYPE_CYCLE);
+						cloudUserOrderItemVo
+								.setOneTimeBillingFlag(Constants.BILLING_FALG_STOP);
+					} else {
+						cloudUserOrderItemVo
+								.setBillingType(Constants.BILLING_TYPE_SINGLE);
+						cloudUserOrderItemVo
+								.setOneTimeBillingFlag(Constants.BILLING_FALG_STOP);
+					}
+					cloudUserOrderItemVo
+							.setBillingFlag(Constants.INVALID_STATE);
+					// cloudUserOrderItemVo.setProdDetailPrice(price*1.00/count);
+//				    cloudUserOrderItemVo.setRebateAmount(rebatePrice*1.00/count);
+					cloudUserOrderItemVo
+							.setCloudMdmProduct(cloudMdmProductService
+									.get(product_quickCombProdId));
+					cloudUserOrderItemVo.setCloudUserOrder(cloudUserOrderVo);
+					cloudUserOrderItemVo
+							.setProdType(Constants.PROD_TYPE_COMP_PROD);
+					cloudUserOrderItemVo
+							.setCloudMdmProductItem(cloudMdmProductItemService
+									.getprodItemByProdId(product_quickCombProdId));
+					if (null != quickBuyVo.getCloudPromotionValue()) {
+						cloudUserOrderItemVo.setPromotionId(quickBuyVo
+								.getCloudPromotionValue().getPromotionId());
+						cloudUserOrderItemVo.setRebateFlag(quickBuyVo
+								.getCloudPromotionValue().getRebateFlag());
+						cloudUserOrderItemVo.setRebateAmount(quickBuyVo
+								.getCloudPromotionValue().getRebateAmount());
+					}
+//					cloudUserOrderVo.setCloudMdmNetworkSoln();
+					cloudUserOrderVo.setBeginBillingTime(DateUtil
+							.convertDate(DateUtil.formatDate(DateUtil
+									.getAfterDay(new Date(), 1))));
+					cloudUserOrderVo.setNextBillingTime(DateUtil
+							.convertDate(DateUtil.formatDate(DateUtil
+									.getAfterDay(new Date(), 1))));
+					cloudUserOrderItemVo.setBeginBillingTime(DateUtil
+							.convertDate(DateUtil.formatDate(DateUtil
+									.getAfterDay(new Date(), 1))));
+					cloudUserOrderItemVo.setNextBillingTime(DateUtil
+							.convertDate(DateUtil.formatDate(DateUtil
+									.getAfterDay(new Date(), 1))));
+					cloudUserOrderService.saveOrder(cloudUserOrderVo,
+							cloudUserOrderItemVo);
+					cloudOrderAppprovalVo.setBasicAccount(account);
+					cloudOrderAppprovalVo.setBasicUser(user);
+					cloudOrderAppprovalVo.setCloudUserOrder(cloudUserOrderVo);
+					cloudOrderAppprovalVo
+							.setCloudCpuSoln(this.cloudMdmCPUSolnService
+									.getMdmCPUSolnByInterfaceId(cloudVmCellDetailVo
+											.getServiceofferingid()));
+					cloudOrderAppprovalVo
+							.setCloudMdmDiskSoln(this.cloudMdmDiskSolnService
+									.getMdmDiskSolnByInterfaceId(cloudVmCellDetailVo
+											.getDiskofferingid()));
+					cloudOrderAppprovalVo
+							.setCloudMdmTemplate(this.cloudMdmTemplateService
+									.getMdmTemplateByInterfaceId(cloudVmCellDetailVo
+											.getTemplateid()));
+					cloudOrderAppprovalVo.setNetIds(netIds);
+					cloudOrderAppprovalVo.setStopTime(stopTimeDate);
+					cloudOrderAppprovalVo.setVmName(count > 1 ? vmName + i
+							: vmName);
+					cloudOrderAppprovalVo.setCreated(new Date());
+					cloudOrderAppprovalService.save(cloudOrderAppprovalVo);
+					if (user.getUserFlag() == Constants.USER_FLAG_ACCOUNT) {
+
+						CloudMdmVmVo vm = cloudMdmVMService.create(
+								user.getUserAccount(), cloudMdmZoneService.get(
+										product_quickCombZoneId).getInterfaceId(),
+								cloudVmCellDetailVo.getServiceofferingid(),
+								cloudVmCellDetailVo.getDiskofferingid(),
+								cloudVmCellDetailVo.getTemplateid(),
+								networkOrSecuritygroupIds, count > 1 ? vmName
+										+ i : vmName, null, stopTimeDate);
+
+						if (null != vm) {
+							cloudUserOrderVo.setCloudMdmVm(vm);
+							cloudUserOrderVo.setState(String
+									.valueOf(Constants.VALID_STATE));
+							cloudOrderAppprovalVo.setCloudMdmVm(vm);
+							cloudUserOrderVo
+									.setBillingFlag(Constants.BILLING_FALG_START);
+							cloudUserOrderItemVo
+									.setBillingFlag(Constants.BILLING_FALG_START);
+							cloudUserOrderVo.setBeginBillingTime(DateUtil
+									.convertDate(DateUtil.formatDate(DateUtil
+											.getAfterDay(new Date(), 1))));
+							cloudUserOrderVo.setNextBillingTime(DateUtil
+									.convertDate(DateUtil.formatDate(DateUtil
+											.getAfterDay(new Date(), 1))));
+							cloudUserOrderItemVo.setBeginBillingTime(DateUtil
+									.convertDate(DateUtil.formatDate(DateUtil
+											.getAfterDay(new Date(), 1))));
+							cloudUserOrderItemVo.setNextBillingTime(DateUtil
+									.convertDate(DateUtil.formatDate(DateUtil
+											.getAfterDay(new Date(), 1))));
+						}
+						cloudOrderAppprovalVo.setApprovalFlag(String
+								.valueOf(Constants.VALID_STATE));
+						modelMap.put("message", "虚拟机创建成功，请您稍后查看您的虚拟机列表。");
+					}
+					if (user.getUserFlag() == Constants.USER_FLAG_USER) {
+						cloudOrderAppprovalVo.setApprovalFlag(String
+								.valueOf(Constants.INVALID_STATE));
+						cloudUserOrderItemVo.setBeginBillingTime(null);
+						cloudUserOrderItemVo.setNextBillingTime(null);
+						cloudUserOrderVo.setNextBillingTime(null);
+						cloudUserOrderVo.setBeginBillingTime(null);
+						cloudOrderAppprovalVo.setCloudMdmVm(null);
+						modelMap.put("message", "请等待账户的审批。");
+					}
+					cloudUserOrderService.saveOrder(cloudUserOrderVo,
+							cloudUserOrderItemVo);
+					cloudOrderAppprovalService.save(cloudOrderAppprovalVo);
+				}
+			} else {
+				modelMap.put("message", "建立虚拟机时失败!");
+				return "product/productQuickBuy_finishBuy";
+			}
+		} catch (Exception e) {
+			modelMap.put("message", "创建虚拟机失败！" + e.getMessage());
+			e.printStackTrace();
+			return "product/productQuickBuy_finishBuy";
+		}
+		// 清楚session数据。
+		request.getSession().setAttribute("product_quickCombnetType", null);
+		request.getSession().setAttribute("product_quickCombProdId", null);
+		request.getSession().setAttribute("product_quickCombZoneId", null);
+		request.getSession().setAttribute("product_quickCombNetIds", null);
+		request.getSession().setAttribute("productQuickBuy_countNum", null);
+		request.getSession().setAttribute("productQuickBuy_vmName", null);
+		request.getSession().setAttribute("productQuickBuy_stopTime", null);
+		request.getSession().setAttribute("product_quickuserAccount", null);
+		request.getSession().setAttribute("quickBuyVo", null);
+		return "product/productQuickBuy_finishBuy";
+	}
+
+	private CloudProductQuickBuyVo addToCountPrice(CloudProductPriceVo priceVo,
+			CloudProductQuickBuyVo quickBuyVo) {
+
+		CloudPromotionValue promValue = null;
+		quickBuyVo.setPriceMode(priceVo.getPriceMode());
+		// 一次性收费
+		if ("0".equals(priceVo.getPriceMode())) {
+			// 一次性收费 促销
+			promValue = this.cloudPromotionProductService
+					.getDiscountAmountByProdId(priceVo.getCloudMdmProduct()
+							.getId(), priceVo.getOneTimePrice());
+			if (null != promValue) {
+				quickBuyVo.setOneTimePrice(priceVo.getOneTimePrice());
+				quickBuyVo.setOneTimeRebatePrice(promValue.getDiscountAmount());
+				quickBuyVo.setActivityName(promValue.getActivityName());
+			} else {
+				quickBuyVo.setOneTimePrice(priceVo.getOneTimePrice());
+				quickBuyVo.setOneTimeRebatePrice(priceVo.getOneTimePrice());
+			}
+
+		} else {
+			// 小时价格促销
+			quickBuyVo.setHourPrice(priceVo.getHourPrice());
+			promValue = this.cloudPromotionProductService
+					.getDiscountAmountByProdId(priceVo.getCloudMdmProduct()
+							.getId(), priceVo.getHourPrice());
+			if (null != promValue) {
+				quickBuyVo.setHourRebatePrice(promValue.getDiscountAmount());
+				quickBuyVo.setActivityName(promValue.getActivityName());
+			} else {
+				quickBuyVo.setHourRebatePrice(priceVo.getHourPrice());
+			}
+			// 日价格促销
+			quickBuyVo.setDayPrice(priceVo.getDayPrice());
+			promValue = this.cloudPromotionProductService
+					.getDiscountAmountByProdId(priceVo.getCloudMdmProduct()
+							.getId(), priceVo.getDayPrice());
+			if (null != promValue) {
+				quickBuyVo.setDayRebatePrice(promValue.getDiscountAmount());
+				quickBuyVo.setActivityName(promValue.getActivityName());
+			} else {
+				quickBuyVo.setDayRebatePrice(priceVo.getDayPrice());
+			}
+
+			// 月价格促销
+			quickBuyVo.setMonthPrice(priceVo.getMonthPrice());
+			promValue = this.cloudPromotionProductService
+					.getDiscountAmountByProdId(priceVo.getCloudMdmProduct()
+							.getId(), priceVo.getMonthPrice());
+			if (null != promValue) {
+				quickBuyVo.setMonthRebatePrice(promValue.getDiscountAmount());
+				quickBuyVo.setActivityName(promValue.getActivityName());
+			} else {
+				quickBuyVo.setMonthRebatePrice(priceVo.getMonthPrice());
+			}
+
+			// 年价格促销
+			quickBuyVo.setYearPrice(priceVo.getYearPrice());
+			promValue = this.cloudPromotionProductService
+					.getDiscountAmountByProdId(priceVo.getCloudMdmProduct()
+							.getId(), priceVo.getYearPrice());
+			if (null != promValue) {
+				quickBuyVo.setYearRebatePrice(promValue.getDiscountAmount());
+				quickBuyVo.setActivityName(promValue.getActivityName());
+			} else {
+				quickBuyVo.setYearRebatePrice(priceVo.getYearPrice());
+			}
+		}
+		quickBuyVo.setCloudPromotionValue(promValue);
+		return quickBuyVo;
+	}
+}

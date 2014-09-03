@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+       http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+         http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd"
+	default-autowire="byName" default-lazy-init="true">
+
+
+	<bean id="expenseJob" class="sy.service.expense.ExpenseJob"></bean>
+
+	<bean id="expenseJobTask"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<ref bean="expenseJob" />
+		</property>
+		<property name="targetMethod">
+			<value>execute</value>
+		</property>
+		<property name="concurrent">
+			<value>false</value>
+		</property>
+	</bean>
+
+	<bean id="expenseJobTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail">
+			<ref bean="expenseJobTask" />
+		</property>
+		<property name="cronExpression">
+			<!-- 每小时执行计费任务 -->
+			<value>0 0 0/1 * * ?</value>
+		</property>
+	</bean>
+ 
+	<bean id="expenseScheduler" lazy-init="false" autowire="no"
+		class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref bean="expenseJobTrigger" />
+			</list>
+		</property>
+		<property name="quartzProperties">
+			<map>
+				<entry key="org.quartz.threadPool.threadCount" value="15" />
+				<entry key="org.quartz.threadPool.threadPriority" value="9" />
+				<entry key="org.quartz.scheduler.instanceId" value="expenseScheduler" />
+			</map>
+		</property>
+	</bean>
+	
+	
+	
+	<!-- ################################################################################################################################################ -->
+	
+	<bean id="cloudDataSyncJob" class="sy.service.shared.CloudDataSyncJob"></bean>
+	
+	<bean id="cloudDataSyncJobLongIntervalTask"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<ref bean="cloudDataSyncJob" />
+		</property>
+		<property name="targetMethod">
+			<value>longInterval</value>
+		</property>
+		<property name="concurrent">
+			<value>false</value>
+		</property>
+	</bean>
+	
+	<bean id="cloudDataSyncJobLongIntervalTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail">
+			<ref bean="cloudDataSyncJobLongIntervalTask" />
+		</property>
+		<property name="cronExpression">
+			<value>0 0/30 * * * ?</value>
+		</property>
+	</bean>
+	
+	<bean id="cloudDataSyncJobNormalIntervalTask"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<ref bean="cloudDataSyncJob" />
+		</property>
+		<property name="targetMethod">
+			<value>normalInterval</value>
+		</property>
+		<property name="concurrent">
+			<value>false</value>
+		</property>
+	</bean>
+	
+	<bean id="cloudDataSyncJobNormalIntervalTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail">
+			<ref bean="cloudDataSyncJobNormalIntervalTask" />
+		</property>
+		<property name="cronExpression">
+			<value>0 0/5 * * * ?</value>
+		</property>
+	</bean>
+	
+	
+	
+	<bean id="cloudDataSyncJobShortIntervalTask"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<ref bean="cloudDataSyncJob" />
+		</property>
+		<property name="targetMethod">
+			<value>shortInterval</value>
+		</property>
+		<property name="concurrent">
+			<value>false</value>
+		</property>
+	</bean>
+	
+	<bean id="cloudDataSyncJobShortIntervalTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail">
+			<ref bean="cloudDataSyncJobShortIntervalTask" />
+		</property>
+		<property name="cronExpression">
+			<value>0/30 * * * * ?</value>
+		</property>
+	</bean>
+	
+	<bean id="cloudDataSyncScheduler" lazy-init="false" autowire="no"
+		class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref bean="cloudDataSyncJobLongIntervalTrigger" />
+				<ref bean="cloudDataSyncJobNormalIntervalTrigger" />
+				<ref bean="cloudDataSyncJobShortIntervalTrigger" />
+			</list>
+		</property>
+		<property name="quartzProperties">
+			<map>
+				<entry key="org.quartz.threadPool.threadCount" value="15" />
+				<entry key="org.quartz.threadPool.threadPriority" value="9" />
+				<entry key="org.quartz.scheduler.instanceId" value="cloudDataSyncScheduler" />
+			</map>
+		</property>
+	</bean>
+	
+	
+	<!-- ################################################################################################################################################ -->
+	
+	
+	<bean id="recommendRebateCalJob" class="sy.service.expense.RecommendRebateCalJob"></bean>
+
+	<bean id="recommendRebateCalJobTask" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<ref bean="recommendRebateCalJob" />
+		</property>
+		<property name="targetMethod">
+			<value>execute</value>
+		</property>
+		<property name="concurrent">
+			<value>false</value>
+		</property>
+	</bean>
+
+	<bean id="recommendRebateCalJobTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+		<property name="jobDetail">
+			<ref bean="recommendRebateCalJobTask" />
+		</property>
+		<property name="cronExpression">
+			<!-- 每天凌晨2点执行任务 -->
+			<value>0 1 2 * * ?</value>
+		</property>
+	</bean>
+ 
+	<bean id="recommendRebateCalScheduler" lazy-init="false" autowire="no" class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+		<property name="triggers">
+			<list>
+				<ref bean="recommendRebateCalJobTrigger" />
+			</list>
+		</property>
+		<property name="quartzProperties">
+			<map>
+				<entry key="org.quartz.threadPool.threadCount" value="15" />
+				<entry key="org.quartz.threadPool.threadPriority" value="9" />
+				<entry key="org.quartz.scheduler.instanceId" value="recommendRebateCalScheduler" />
+			</map>
+		</property>
+	</bean>
+	
+	
+	<!-- ################################################################################################################################################ -->
+</beans>

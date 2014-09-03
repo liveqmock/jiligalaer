@@ -1,0 +1,610 @@
+/*
+ * 系统名称    国旅在线
+ * 共通        传真异步发送
+ *
+ * Copyright: Copyright(c) 2005 中国国际旅行社总社
+ *
+ * 作成日      2005.7.19
+ * 修改履历    2005.7.19 Wangzz 新规作成
+ */
+package sy.util2;
+
+import java.io.IOException;
+
+import java.rmi.RemoteException;
+
+import java.util.Iterator;
+import java.util.List;
+
+import javax.ejb.CreateException;
+
+import com.cits.common.constance.OnlineConstance;
+
+import com.cits.online.buzlogic.bo.FaxPipelineBO;
+import com.cits.online.common.AppRootRuntimeException;
+import com.cits.online.common.ioc.IoC;
+import com.cits.online.common.jndi.ServiceLocator;
+import com.cits.online.common.voucher.VoucherProcess;
+import com.cits.online.interfaces.Voucher;
+import com.cits.online.interfaces.VoucherHome;
+
+import com.cits.online2cc.callcenter.CCCall;
+
+import com.hollycrm.framework.ecallcenter.media.generated.SendTaskInfo;
+
+import org.apache.log4j.Logger;
+
+/**
+ * 传真异步发送
+ * 
+ * 
+ * @author Wangzz
+ */
+public class CITSendFaxUtil implements Runnable {
+	/** 日志 */
+	protected static Logger logger = (Logger) IoC.get("Logger");
+
+	/** 唯一实例 */
+	private static CITSendFaxUtil singleObject = null;
+
+	/** 休眠时间 */
+	private static long interval = 2000L;
+
+	/** 运行状态, 暂停:true 运行:false */
+	private static boolean threadSuspended = false;
+
+	/** 同步用信号量 */
+	private static byte[] mutex = {};
+
+	/** 运作线程 */
+	private static Thread blinker;
+
+	/** 发送状态:未发送 */
+	private final static String VOUCHER_STATUS_NONE = "0";
+
+	/** 发送状态:已发送失败 */
+	private final static String VOUCHER_STATUS_FAILURE = "1";
+
+	/** 发送状态:已发送成功 */
+	//private final static String VOUCHER_STATUS_SUCCESS = "2";
+
+	/** 发送状态:正在处理中 */
+	private final static String VOUCHER_STATUS_PROCESSING = "3";
+
+	/** 待发送的 VO List */
+	private List sendList = null;
+
+	/** ServiceLocator */
+	private ServiceLocator locator = ServiceLocator.getInstance();
+
+	/** VoucherHome */
+	private VoucherHome home = (VoucherHome) locator.getEjbHome(VoucherHome.JNDI_NAME, VoucherHome.class);
+
+	/** Voucher EJB */
+	private Voucher ejb = null;
+
+	/** 路径名 */
+	protected String directory = "";
+
+	/** 传真发送接口用来源 国旅在线："3" */
+	protected String source = OnlineConstance.SOURCE_NAME;
+
+	/** 传真发送错误详细原因 */
+	protected String errorInfo = null;
+
+	/** 处理结束后是否自动重复 */
+	protected boolean isRepeatAfterProcessing = false;
+
+	/**
+	 * Creates a new CITSendFaxUtil object.
+	 */
+	private CITSendFaxUtil() {
+		// System.out.println("init a CITSendFaxUtil().....");
+	}
+
+	/**
+	 * 取得该类唯一实例
+	 * 
+	 * @return 传真发送工具
+	 * 
+	 */
+	synchronized public static CITSendFaxUtil getInstance() {
+		if (singleObject == null) {
+			singleObject = new CITSendFaxUtil();
+		}
+
+		return singleObject;
+	}
+
+	/**
+	 * 从DB中读入数据， 根据产品类型和发送状态为条件检索传真队列表。 <br>
+	 * 全部产品类型 且 发送状态为 "未发送" 或者为 "发送失败" 的数据 <br>
+	 * 如果存在数据，设定
+	 * 
+	 */
+	private void readDataFromDB() {
+		logger.debug("从DB中读入数据 Start...");
+
+		//
+		// 根据产品类型和发送状态为条件检索传真队列表。
+
+		// 全部产品类型 且 发送状态为 "未发送" 或者为 "发送失败" 的数据
+
+		//
+		try {
+			// 选择处理的发送状态
+
+			String[] selectIncludeStatus = new String[] { VOUCHER_STATUS_NONE, // 发送状态:未发送
+
+			// VOUCHER_STATUS_FAILURE, // 发送状态:已发送失败
+
+			};
+
+			ejb = (Voucher) home.create();
+
+			sendList = ejb.selectFaxByProductTypeAndStatus(null, selectIncludeStatus);
+		} catch (AppRootRuntimeException arre) {
+			throw arre;
+		} catch (RemoteException re) {
+			logger.error("检索传真队列表时发生错误。", re);
+		} catch (CreateException ce) {
+			logger.error("检索传真队列表时发生错误。", ce);
+		}
+
+		//
+		// 根据检索结果设定线程状态
+
+		if ((sendList == null) || sendList.isEmpty()) {
+			logger.debug("检索到的记录为空则“挂起”本线程");
+
+			// 检索到的记录为空,“挂起”本线程
+			setThreadSuspended(true);
+		} else {
+			logger.debug("检索到的记录不为空则“恢复”本线程");
+
+			// 检索到的记录不为空,“恢复”本线程
+			setThreadSuspended(false);
+		}
+		// 设定处理结束后 不自动重复标识
+		setIsRepeatAfterProcessing(false);
+		// System.out.println("从DB中读入数据 1");
+		logger.debug("从DB中读入数据 End...");
+	}
+
+	/**
+	 * FTP 文件到FTP服务器
+	 * 
+	 * 
+	 * @param faxPiplineBO FaxPipelineBO
+	 * 
+	 * @return 成功:true 失败:false
+	 */
+	private boolean ftpFile2Server(FaxPipelineBO faxPiplineBO) {
+		logger.debug("FTP 文件到FTP服务器 Start...");
+
+		logger.debug("取得的传真ID = " + faxPiplineBO.getFax_id());
+		CITFTPClientUtil ftpClient = null;
+		boolean isSendSuccess = false;
+
+		try {
+			ftpClient = new CITFTPClientUtil();
+		} catch (IOException e) {
+			logger.error("生成FTP客户端失败");
+
+			return isSendSuccess;
+		}
+
+		// FTP文件到指定目录
+
+		int MAX_RETRY_TIMES = 5;
+
+		String fileName = directory + faxPiplineBO.getFile_name();
+
+		for (int i = 0; !isSendSuccess && (i < MAX_RETRY_TIMES); i++) {
+			isSendSuccess = ftpClient.storeFile(getFileNames(fileName));
+		}
+
+		// System.out.println("FTP 文件到FTP服务器 2");
+		logger.debug("FTP 文件到FTP服务器 End...");
+
+		return isSendSuccess;
+	}
+
+	/**
+	 * 调用合力金桥接口
+	 * 
+	 * @param faxPiplineBO FaxPipelineBO
+	 * 
+	 * @return 同步用传真ID
+	 */
+	private String callCCClient(FaxPipelineBO faxPiplineBO) {
+		logger.debug("调用合力金桥接口 Start...");
+
+		// // 这里改成调用YANGWR的，
+		// client c = new client();
+		CCCall c = new CCCall();
+		logger.debug(c.toString());
+
+		SendTaskInfo taskInfo = createTask(faxPiplineBO);
+		String result = c.sendFax(taskInfo, source);
+		logger.debug("result = " + result);
+
+		// System.out.println("调用合力金桥接口 3");
+		logger.debug("调用合力金桥接口 End...");
+
+		return result;
+	}
+
+	/**
+	 * <p>
+	 * baseInfo发送任务基本信息设定
+	 * 
+	 * </p>
+	 * baseInfo[0]=客户编号 <br>
+	 * baseInfo[1]=客户名称 <br>
+	 * baseInfo[2]=订单号 <br>
+	 * baseInfo[3]=要求发送时间，格式yyyy-MM-dd HH:mm:ss <br>
+	 * baseInfo[4]=传真标题/电子邮件主题 <br>
+	 * baseInfo[5]=联系号码 <br>
+	 * baseInfo[6]=电子邮件正文内容/短信内容 <br>
+	 * baseInfo[7]=电子邮件正文内容格式 text/plain text/html <br>
+	 * 
+	 * @param sendInfo 发送VO
+	 * 
+	 * @return SendTaskInfo
+	 */
+	protected SendTaskInfo createTask(FaxPipelineBO sendInfo) {
+		// 取得基本信息
+		// 注意：这里数组大小必须是10，否则合力金桥接口不能通过。
+
+		String[] taskBaseInfo = new String[10];
+
+		// 客户编号
+		taskBaseInfo[VoucherProcess.INDEX_CUSTOMER_NO] = sendInfo.getContract_entity_id();
+		logger.debug(VoucherProcess.INDEX_CUSTOMER_NO + "客户编号" + sendInfo.getContract_entity_id());
+
+		// 客户名称
+		taskBaseInfo[VoucherProcess.INDEX_CUSTOMER_NAME] = sendInfo.getContract_entity_name();
+		logger.debug(VoucherProcess.INDEX_CUSTOMER_NAME + "客户名称" + sendInfo.getContract_entity_name());
+
+		// 传真号码
+		taskBaseInfo[VoucherProcess.INDEX_CONTACT] = sendInfo.getFax_number();
+		logger.debug(VoucherProcess.INDEX_CONTACT + "传真号码" + sendInfo.getFax_number());
+
+		// 订单号
+
+		taskBaseInfo[VoucherProcess.INDEX_ORDER_NO] = sendInfo.getOrder_id();
+		logger.debug(VoucherProcess.INDEX_ORDER_NO + "订单号" + sendInfo.getOrder_id());
+
+		// 要求发送时间
+
+		if (sendInfo.getSend_time() != null) {
+			taskBaseInfo[VoucherProcess.INDEX_DEMANDTIME] = sendInfo.getSend_time().toString().substring(0, 19);
+			logger.debug(VoucherProcess.INDEX_DEMANDTIME + "要求发送时间" + sendInfo.getSend_time().toString().substring(0, 19));
+		}
+
+		// 传真标题
+		taskBaseInfo[VoucherProcess.INDEX_TEXT_TITLE] = OnlineConstance.VOUCHER_TEXT_TITLE;
+		logger.debug(VoucherProcess.INDEX_TEXT_TITLE + "传真标题" + OnlineConstance.VOUCHER_TEXT_TITLE);
+
+		// 取得文件名
+
+		String[] fileNames = null;
+
+		fileNames = getFileNames(sendInfo.getFile_name());
+
+		// 生成传送任务实例
+
+		SendTaskInfo task = new SendTaskInfo();
+
+		// 设定传送任务信息
+
+		task.setBaseInfo(taskBaseInfo);
+
+		// 设定传送文件名
+		task.setFileNames(fileNames);
+		logger.debug("设定传送文件名" + sendInfo.getFile_name());
+
+		return task;
+	}
+
+	/**
+	 * <p>
+	 * 起动一个新的线程
+	 * 
+	 * </p>
+	 * 如果该线程未被初始化:初始化，并起动该线程 <br>
+	 * 如果该线程已经存在:且处于暂停状态，则改变为运行状态 <br>
+	 * 如果该线程已经存在:且处于运行状态，维持原状态（什么也不做） <br>
+	 */
+	public void execute() {
+		if (blinker == null) {
+			logger.debug("线程未被初始化:初始化，并起动该线程");
+			blinker = new Thread(this);
+			blinker.start();
+		} else {
+			if (threadSuspended) {
+				logger.debug("线程已经存在,为暂停状态，改变为运行状态。");
+			} else {
+				// 设定线程做完当前操作停止后，重新检索。
+
+				setIsRepeatAfterProcessing(true);
+				logger.debug("线程已经存在,为运行状态。");
+			}
+		}
+	}
+
+	/**
+	 * 运行
+	 */
+	public void run() {
+		Thread thisThread = Thread.currentThread();
+
+		// System.out.println("thisThread.getName() = " + thisThread.getName());
+		// System.out.println(blinker == null);
+		// System.out.println("blinker.getName() = " + blinker.getName());
+		// 避免调用stop()方法
+		while (blinker == thisThread) {
+			try {
+				// TODO
+				Thread.sleep(interval);
+
+				// 避免调用suspened()方法。
+
+				synchronized (mutex) {
+					while (threadSuspended && (blinker == thisThread)) {
+						// System.out.println("thisThread.getName() = " +
+						// thisThread.getName());
+						// System.out.println("blinker.getName() = " +
+						// blinker.getName());
+						// System.out.println(
+						// "threadSuspended is true ,waiting...");
+						//
+						// System.out.println("this = " + this);
+						mutex.wait();
+					}
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			readDataFromDB();
+
+			if ((sendList != null) && !sendList.isEmpty()) {
+				executeSendFax();
+			}
+		}
+	}
+
+	/**
+	 * <p>
+	 * 执行传真发送处理
+	 * 
+	 * </p>
+	 * 
+	 */
+	private void executeSendFax() {
+		logger.debug("执行传真发送处理 start...");
+
+		for (Iterator it = sendList.iterator(); it.hasNext();) {
+			FaxPipelineBO processingBO = (FaxPipelineBO) it.next();
+			String callCenterReplyID = null;
+			String status = null;
+			boolean isSuccessResult = ftpFile2Server(processingBO);
+
+			// if (isSuccessResult) {
+			// //call cc center
+			// try {
+			// callCenterReplyID = callCCClient(processingBO);
+			// } catch (Throwable t) {
+			// logger.error("调用信息中心接口失败", t);
+			// }
+			//
+			// logger.debug("调用合力金桥接口,返回的FAX_ID = " + callCenterReplyID);
+			//
+			// if (VoucherProcess.processCallCenterReplyID(callCenterReplyID)) {
+			// // 发送状态:正在处理中
+
+			// status = VOUCHER_STATUS_PROCESSING;
+			// errorInfo = null;
+			// } else {
+			// // 发送状态:发送失败
+
+			// status = VOUCHER_STATUS_FAILURE;
+			// errorInfo = VoucherProcess.getErrorInfoByCCReply(callCenterReplyID);
+			// }
+			// } else {
+			// // 发送状态:发送失败
+
+			// status = VOUCHER_STATUS_FAILURE;
+			// errorInfo = "FTP 文件到指定目录失败";
+			// logger.error("FTP 文件到指定目录失败");
+			// }
+			//
+			// // 更新传真队列
+			// if (0 == updatePipleLineInfo(processingBO, callCenterReplyID, status)) {
+			// logger.error("更新传真队列数据失败");
+			// }
+
+			if (isSuccessResult) {
+				// call cc center
+				try {
+					callCenterReplyID = callCCClient(processingBO);
+				} catch (Throwable t) {
+					logger.error("调用信息中心接口失败", t);
+				}
+
+				logger.debug("调用合力金桥接口,返回的FAX_ID = " + callCenterReplyID);
+
+				if (VoucherProcess.processCallCenterReplyID(callCenterReplyID)) {
+					// 发送状态:正在处理中
+
+					status = VOUCHER_STATUS_PROCESSING;
+					errorInfo = null;
+				} else {
+
+					if (callCenterReplyID == null) {
+						// 发送状态:未发送
+
+						status = VOUCHER_STATUS_NONE;
+					} else {
+						// 发送状态:发送失败
+
+						status = VOUCHER_STATUS_FAILURE;
+					}
+					errorInfo = VoucherProcess.getErrorInfoByCCReply(callCenterReplyID);
+				}
+			} else {
+				// 发送状态:未发送
+
+				status = VOUCHER_STATUS_NONE;
+				errorInfo = "FTP 文件到指定目录失败";
+				logger.error("FTP 文件到指定目录失败");
+			}
+
+			// 更新传真队列
+			if (0 == updatePipleLineInfo(processingBO, callCenterReplyID, status)) {
+				logger.error("更新传真队列数据失败");
+			}
+		}
+
+		sendList = null;
+		// isAutoReadAfterProcessing
+		// if(String.valueOf(Boolean.TRUE).equals(isRepeatAfterProcessing)){
+		// readDataFromDB();
+		// }
+		if (isRepeatAfterProcessing) {
+			readDataFromDB();
+		}
+		logger.debug("执行传真发送处理 End...");
+	}
+
+	/**
+	 * 更新传真队列数据到传真队列表中
+	 * 
+	 * 
+	 * @param faxbo FaxPipelineBO
+	 * @param callCenterReplyID 信息中心返回的传真ID
+	 * @param status 传真状态
+	 * 
+	 * 
+	 * @return 更新的记录数
+	 */
+	protected int updatePipleLineInfo(FaxPipelineBO faxbo, String callCenterReplyID, String status) {
+		logger.debug("更新传真队列状态 Start...");
+
+		int result = 0;
+
+		// 传真状态
+
+		faxbo.setState(status);
+
+		// 信息中心返回的传真ID
+		faxbo.setCall_center_fax_id(callCenterReplyID);
+
+		// 备注：失败原因
+
+		if (errorInfo != null) {
+			faxbo.setMemo(errorInfo);
+		}
+
+		try {
+			result = ejb.updateFaxPipleLine(faxbo);
+		} catch (RemoteException e) {
+			logger.error("更新FAX队列失败", e);
+		} catch (Exception e) {
+			logger.error("更新FAX队列失败", e);
+		}
+
+		logger.debug("更新传真队列状态 End...");
+
+		return result;
+	}
+
+	/**
+	 * 设定该线程状态
+	 * 
+	 * 
+	 * @param isSuspended 要设定的新的状态
+	 * 
+	 */
+	public void setThreadSuspended(boolean isSuspended) {
+		synchronized (mutex) {
+			//
+			// 判断传入的状态和目前的状态是否一致
+
+			if (threadSuspended != isSuspended) {
+				//
+				// 传入的状态和目前的状态不一致，
+				// 设定传入的状态为新的状态。
+
+				//
+				threadSuspended = isSuspended;
+				logger.debug("set status threadSuspended = " + threadSuspended);
+
+				//
+				// 如果传入状态为“运行”，则唤醒已挂起的进程
+
+				if (!threadSuspended) {
+					logger.debug("notify");
+					mutex.notify();
+				} // end if (!threadSuspended)
+			} // end if (threadSuspended != isSuspended)
+		} // end synchronized
+	}
+
+	/**
+	 * 停止该线程
+	 * 
+	 */
+	public void stop() {
+		synchronized (mutex) {
+			logger.debug("stopping this thread.....");
+			blinker = null;
+			mutex.notify();
+		}
+	}
+
+	/**
+	 * 取出文件名数组
+	 * 
+	 * 
+	 * @param file_name 包含多个文件名的字符串。分隔符":"
+	 * 
+	 * @return 文件名数组
+	 */
+	protected String[] getFileNames(String file_name) {
+		if (file_name == null) {
+			return null;
+		} else {
+			return file_name.split(":");
+		}
+	}
+
+	/**
+	 * 取出收信人数组
+	 * 
+	 * 
+	 * @param toNames 包含多个文件名的字符串。分隔符";"
+	 * 
+	 * @return 收信人数组
+	 */
+	protected String[] getToNames(String toNames) {
+		if (toNames == null) {
+			return null;
+		} else {
+			return toNames.split(";");
+		}
+	}
+
+	/**
+	 * 设定处理结束后是否自动重复标识
+	 * 
+	 * 
+	 * @param 是否自动重复标识
+	 */
+	protected void setIsRepeatAfterProcessing(boolean repeat) {
+		isRepeatAfterProcessing = repeat;
+	}
+
+}

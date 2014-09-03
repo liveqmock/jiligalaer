@@ -1,0 +1,229 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>我的资源 - 我的网络 - 高级网络 - IP地址 - 防火墙</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript"
+	src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript"
+	src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript"
+	src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+<!--
+body {
+	background-color: #ffffff;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<script type="text/javascript">
+function save(){
+	if($("#cidr").val() == ''){
+		//alert("请输入CIDR名称");
+		//return;
+	}
+	var val1 = $("#val1").val();
+	var val2 = $("#val2").val();
+	var protocol = $("#protocol").val();
+	if(protocol == 'TCP' || protocol == 'UDP' ){
+		if(val1 == ''){
+			alert("请输入起始端口");
+			return;
+		}
+		if(val2 == ''){
+			alert("请输入终止端口");
+			return;
+		}
+	}else{
+		if(val1 == ''){
+			alert("请输入ICMP类型");
+			return;
+		}
+		if(val2 == ''){
+			alert("请输入ICMP代码");
+			return;
+		}
+	}
+	var form = document.forms.listForm;
+	form.action="${ctx}/network/saveHighFirewall.do";
+	form.submit();
+}
+
+function back(){
+	var form = document.forms.listForm;
+	form.action="${ctx}/network/highIpAddr.do";
+	form.submit();
+	//window.location.href="${ctx}/network/highIpAddr.do";
+}
+function protocolChange(selValue){
+	if(selValue=='TCP' || selValue=='UDP'){
+		document.getElementById("TCP1").style.display="block";
+		document.getElementById("TCP2").style.display="block";
+		document.getElementById("ICMP1").style.display="none";
+		document.getElementById("ICMP2").style.display="none";
+	}else{
+		document.getElementById("TCP1").style.display="none";
+		document.getElementById("TCP2").style.display="none";
+		document.getElementById("ICMP1").style.display="block";
+		document.getElementById("ICMP2").style.display="block";
+	}
+}
+function delFirewall(interfaceId){
+	var form = document.forms.listForm;
+	form.action="${ctx}/network/delHighFirewall.do?interfaceId="+interfaceId;
+	form.submit();
+}
+</script>
+<script type="text/javascript">
+var msg = '${firewallMsg}';
+if(msg!=''){
+	alert(msg);
+	var networkId = '${networkId}';
+	var ipAddrId = '${ipAddrId}';
+	window.location.href="${ctx}/network/highFirewallEdit.do?networkId="+networkId+"&ipAddrId="+ipAddrId;
+}
+</script>
+</head>
+<body onLoad="">
+<form:form modelAttribute="baseVoList" action="${ctx}/network/highFirewallEdit.do" method="post" name="listForm">
+	<input type="hidden" name="networkId" id="networkId" value="${networkId }" />
+	<input type="hidden" name="ipAddrId" id="ipAddrId" value="${ipAddrId }" />
+	
+	<table width="100%" border="0" cellspacing="0" cellpadding="0">
+		<tr bgcolor="#ffffff" height="40">
+			<td width="10"></td>
+			<td class="f16_1">来宾网络01&nbsp;&nbsp;>&nbsp;&nbsp;IP地址&nbsp;&nbsp;>&nbsp;&nbsp;防火墙</td>
+			<td width="10"></td>
+		</tr>
+		<tr>
+			<td width="10"></td>
+			<td height="2" align="left" valign="middle"><img src="${ctx}/images/buy_blue_line.jpg" width="100%" height="1" /></td>
+			<td width="10"></td>
+		</tr>
+		<tr>
+			<td colspan="3" height="15"></td>
+		</tr>
+		<tr>
+			<td width="10"></td>
+			<td align="left" valign="top">
+			<table width="100%" border="0" cellspacing="1" cellpadding="0" bgcolor="#f2f2f2">
+				<tr height="20" bgcolor="#ffffff">
+					<td>
+					<table width="100%" border="0" cellspacing="1" cellpadding="0">
+						<tr height="30">
+							<td width="10%" class="f13_1" align="right">CIDR：</td>
+							<td width="20%" class="f13_1" align="left">
+								<input type="text" name="cidr" id="cidr" value="" size="10" />
+							</td>
+							<td width="10%" class="f13_1" align="right">协&nbsp;议：</td>
+							<td width="20%" class="f13_1" align="left">
+								<select name="protocol" id="protocol" onchange="protocolChange(this.value)" style="width: 95px;">
+									<option value="TCP">TCP</option>
+									<option value="UDP">UDP</option>
+									<option value="ICMP">ICMP</option>
+								</select>
+							</td>
+							<td width="40%" class="f13_1" align="right">
+								<input type="button" value="新增" onclick="save()" class="btn_bg" style="width: 60px;" /> 
+								&nbsp;&nbsp; 
+								<input type="button" value="返回" onclick="back()" class="btn_bg" style="width: 60px;" />
+								&nbsp;&nbsp;
+							</td>
+						</tr>
+						<tr height="30">
+							<td width="10%" class="f13_1" align="right">
+								<span style="display: block;" id="TCP1">起始端口：</span>
+								<span style="display: none;" id="ICMP1">ICMP类型：</span>
+							</td>
+							<td width="20%" class="f13_1" align="left">
+								<input type="text" name="val1" id="val1" value="" size="10" />
+							</td>
+							<td width="10%" class="f13_1" align="right">
+								<span style="display: block;" id="TCP2">终止端口：</span>
+								<span style="display: none;" id="ICMP2">ICMP代码：</span>
+							</td>
+							<td width="20%" class="f13_1" align="left">
+								<input type="text" name="val2" id="val2" value="" size="10" />
+							</td>
+							<td width="40%"></td>
+						</tr>
+									
+					</table>
+					</td>
+				</tr>
+			</table>
+
+			</td>
+			<td width="10"></td>
+		</tr>
+		
+		<tr>
+			<td colspan="3" height="20"></td>
+		</tr>
+
+		<tr>
+			<td width="10"></td>
+			<td align="right" valign="top">
+			<table width="100%" border="0" cellpadding="0" cellspacing="0">
+				<tr>
+					<td align="left" valign="top" bgcolor="#FFFFFF" height="250">
+					<table width="815" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+						<tr bgcolor="#92b8c1" height="20">
+							<td width="7%" align="center" class="f12">序号</td>
+							<td width="15%" align="center" class="f12">CIDR</td>
+							<td width="10%" align="center" class="f12">协议</td>
+							<td width="15%" align="center" class="f12">起始端口</td>
+							<td width="15%" align="center" class="f12">终止端口</td>
+							<td width="15%" align="center" class="f12">ICMP类型</td>
+							<td width="15%" align="center" class="f12">ICMP代码</td>
+							<td width="8%" align="center" class="f12">操作</td>
+						</tr>
+					</table>
+					<div id="order" style="height: 440px; z-index: 1; overflow-y: scroll; overflow-x: hidden;">
+					<table width="815" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+		              	<%int i=0; %>
+						<c:forEach var="item" items="${firewallList}" >
+					        <%
+					        String bgcolor="#deecef";
+					        if(i++ % 2 == 0){bgcolor="#eef6f7"; }
+					        %>
+							<tr bgcolor="<%=bgcolor %>" height="20">
+								<td width="7%" align="center" class="f12_1"><%=i %></td>
+								<td width="15%" align="center" class="f12_1">${item.cidrlist }</td>
+								<td width="10%" align="center" class="f12_1">${item.protocol }</td>
+								<td width="15%" align="center" class="f12_1">${item.startport }</td>
+								<td width="15%" align="left" class="f12_1">${item.endport }</td>
+								<td width="15%" align="center" class="f12_1">${item.icmpcode }</td>
+								<td width="15%" align="center" class="f12_1">${item.icmptype }</td>
+								<td width="8%" align="center" class="f12_1"><a href="javascript:delFirewall('${item.interfaceId }')">删除</a></td>
+							</tr>
+						</c:forEach>
+						
+					</table>
+					</div>
+					</td>
+				</tr>
+			</table>
+			</td>
+			<td width="10"></td>
+		</tr>
+		<tr>
+			<td height="20" colspan="2"></td>
+		</tr>
+	</table>
+
+</form:form>
+</body>
+</html>

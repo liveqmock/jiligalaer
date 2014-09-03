@@ -1,0 +1,626 @@
+/*
+ * 创建日期 2005-7-7
+ *
+ */
+package sy.util2;
+
+import javax.mail.MessagingException;
+import com.cits.common.constance.OnlineConstance;
+import com.cits.online.common.config.ConfigFacade;
+import com.cits.online.common.config.ConfigNames;
+import com.cits.online.common.ioc.IoC;
+
+import org.apache.log4j.Logger;
+
+/**
+ * 发送邮件
+ * 
+ * 
+ * @author Wangzz
+ */
+public class CmnSendMail {
+	/** 日志 */
+	protected static Logger logger = (Logger) IoC.get("Logger");
+
+	// protected static Logger logger = Logger.getLogger(CmnSendMail.class);
+
+	/** SMTP 服务器 */
+	protected static String smtpServer = "";
+
+	/** SMTP 验证 */
+	protected static String smtpAuth = "";
+
+	/** SMTP 用户名 */
+	protected static String smtpUser = "";
+
+	/** SMTP 密码 */
+	protected static String smtpPassword = "";
+
+	/** SMTP 发件人 */
+	protected static String From = "";
+
+	/** 编码方式 */
+	protected static String charset = "";
+
+	/**
+	 * 从配置文件读入SMTP配置信息
+	 */
+	protected void getSMTPConfigration() {
+		smtpServer = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_HOST);
+		smtpAuth = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_AUTH);
+		smtpUser = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_USER);
+		smtpPassword = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_PASSWORD);
+		From = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_FROM);
+		charset = ConfigFacade.getProperty(ConfigNames.MAIL_CHARSET);
+
+		if ((charset == null) || charset.equals("")) {
+			charset = OnlineConstance.DEFAULT_CHARSET;
+		}
+	}
+
+	/**
+	 * 根据配置文件设置charset配置信息
+	 * @param langId 
+	 */
+	public static void setCharsetByLang(String langId) {
+		String lang = ConfigNames.MAIL_CHARSET + "." + langId.toLowerCase();
+		String chars = ConfigFacade.getProperty(lang);
+		if (chars == null || chars.equalsIgnoreCase("")) {
+			chars = "UTF-8";
+		}
+		charset = chars;
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * @param mailTo
+	 * @param mailSubject
+	 * @param mailBody
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String mailTo[], String mailSubject, String mailBody) {
+		String[] toType = null;
+		if (mailTo != null) {
+			toType = new String[mailTo.length];
+			for (int i = 0; i < mailTo.length; i++) {
+				toType[i] = "TO";
+			}
+		}
+
+		return sendMail(mailTo, toType, mailSubject, mailBody, "html");
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @param mailTo
+	 * @param mailSubject
+	 * @param mailBody
+	 * 
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String mailTo, String mailSubject, String mailBody) {
+		return sendMail(new String[] { mailTo }, new String[] { "TO" }, mailSubject, mailBody, "html");
+		// boolean result = false;
+		// CmnSendMail sendmail = new CmnSendMail();
+		// sendmail.getSMTPConfigration();
+		// logger.info("正在发送邮件,编码方式:" + charset);
+		//
+		// CITSendMailUtil sendmailutil = new CITSendMailUtil(smtpServer,
+		// smtpUser, smtpPassword, smtpAuth, charset);
+		//
+		// try {
+		// sendmailutil.setMailFrom(From);
+		// sendmailutil.setMailTo(new String[] { mailTo }, "TO");
+		//
+		// sendmailutil.setMailHtmlContent(mailBody);
+		// sendmailutil.setSubject(mailSubject);
+		// sendmailutil.sendMail();
+		// result = true;
+		// } catch (MessagingException me) {
+		// logger.error("发送邮件失败", me);
+		// } catch (Exception e) {
+		// logger.error("发送邮件失败", e);
+		// }
+		//
+		// return result;
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @param mailTo
+	 * @param sendToType DOCUMENT ME!
+	 * @param mailSubject
+	 * @param mailBody
+	 * @param mailType 发送邮件类型："html" 或者 "text"
+	 * 
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String[] mailTo, String[] sendToType, String mailSubject, String mailBody, String mailType) {
+		boolean result = false;
+		CmnSendMail sendmail = new CmnSendMail();
+		sendmail.getSMTPConfigration();
+		logger.info("正在发送邮件,编码方式:" + charset);
+
+		CITSendMailUtil sendmailutil = new CITSendMailUtil(smtpServer, smtpUser, smtpPassword, smtpAuth, charset);
+
+		try {
+			sendmailutil.setMailFrom(From);
+
+			if (mailTo == null) {
+				throw new NullPointerException("未设定收件人");
+			}
+			for (int i = 0; i < mailTo.length; i++) {
+
+				sendmailutil.setMailTo(new String[] { mailTo[i] }, sendToType[i]);
+			}
+
+			if (mailType == null) {
+				logger.error("未设定邮件类型，按方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("html")) {
+				logger.debug("按HTML方式发送邮件");
+				// 按HTML方式发送邮件
+
+				sendmailutil.setMailHtmlContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("text")) {
+				logger.debug("按TEXT方式发送邮件");
+				// 按TEXT方式发送邮件
+
+				sendmailutil.setMailContent(mailBody);
+			} else {
+				logger.error("未设定邮件类型，按方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			}
+
+			sendmailutil.setSubject(mailSubject);
+			sendmailutil.sendMail();
+			result = true;
+		} catch (MessagingException me) {
+			result = false;
+			logger.error("发送邮件失败", me);
+		} catch (Exception e) {
+			result = false;
+			logger.error("发送邮件失败", e);
+		}
+
+		return result;
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @param mailTo
+	 * @param mailSubject
+	 * @param mailBody
+	 * @param fileName 附件
+	 * 
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String mailTo, String mailSubject, String mailBody, String[] fileName) {
+		boolean result = false;
+		CmnSendMail sendmail = new CmnSendMail();
+		sendmail.getSMTPConfigration();
+
+		CITSendMailUtil sendmailutil = new CITSendMailUtil(smtpServer, smtpUser, smtpPassword, smtpAuth, charset);
+
+		try {
+			sendmailutil.setMailFrom(From);
+			sendmailutil.setMailTo(new String[] { mailTo }, "TO");
+			sendmailutil.setMailHtmlContent(mailBody);
+			sendmailutil.setSubject(mailSubject);
+			sendmailutil.setfileAttacment(fileName);
+			sendmailutil.sendMail();
+			result = true;
+		} catch (MessagingException me) {
+			me.printStackTrace();
+			logger.error("发送邮件失败", me);
+		} catch (Exception e) {
+			e.printStackTrace();
+			logger.error("发送邮件失败", e);
+		}
+
+		return result;
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * @param smtp_server
+	 * @param emailUser
+	 * @param emailPassword
+	 * @param emailFrom
+	 * @param langId
+	 * @param mailTo
+	 * @param sendToType
+	 * @param mailSubject
+	 * @param mailBody
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String smtp_server, String emailUser, String emailPassword, String emailFrom, String langId, String[] mailTo, String[] sendToType, String mailSubject,
+			String mailBody) {
+		return sendMail(smtp_server, emailUser, emailPassword, emailFrom, langId, mailTo, sendToType, mailSubject, mailBody, "html");
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * @param smtp_server
+	 * @param emailUser
+	 * @param emailPassword
+	 * @param emailFrom
+	 * @param langId
+	 * @param mailTo
+	 * @param sendToType
+	 * @param mailSubject
+	 * @param mailBody
+	 * @param mailType
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String smtp_server, String emailUser, String emailPassword, String emailFrom, String langId, String[] mailTo, String[] sendToType, String mailSubject,
+			String mailBody, String mailType) {
+		boolean result = false;
+		setCharsetByLang(langId);
+		try {
+
+			if (mailTo == null) {
+				throw new NullPointerException("未设定收件人");
+			}
+			if (sendToType == null) {
+				throw new NullPointerException("未设定发送方式");
+			}
+			if (smtp_server == null || smtp_server.trim().equalsIgnoreCase("")) {
+				throw new NullPointerException("未设定发送服务器");
+			}
+			if (emailUser == null) {
+				throw new NullPointerException("未设定邮件服务器用户名");
+			}
+			if (emailPassword == null) {
+				throw new NullPointerException("未设定邮件服务器用户密码");
+			}
+			if (emailFrom == null) {
+				throw new NullPointerException("未设定邮件回复地址");
+			}
+			CITSendMailUtil sendmailutil = new CITSendMailUtil(smtp_server, emailUser, emailPassword, "true", charset);
+			sendmailutil.setMailFrom(emailFrom);
+			for (int i = 0; i < mailTo.length; i++) {
+				logger.debug("设定收件人 = " + mailTo[i]);
+				sendmailutil.setMailTo(new String[] { mailTo[i] }, sendToType[i]);
+			}
+
+			if (mailType == null) {
+				logger.error("未设定邮件类型，按TEXT方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("html")) {
+				logger.debug("按HTML方式发送邮件");
+				// 按HTML方式发送邮件
+
+				sendmailutil.setMailHtmlContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("text")) {
+				logger.debug("按TEXT方式发送邮件");
+				sendmailutil.setMailContent(mailBody);
+			} else {
+				logger.error("未设定邮件类型，按TEXT方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			}
+			sendmailutil.setSubject(mailSubject);
+			// sendmailutil.setfileAttacment(fileName);
+			sendmailutil.sendMail();
+			result = true;
+			return result;
+		} catch (NullPointerException npe) {
+			logger.error("参数设定失败：" + npe.getMessage());
+			// AppRootRuntimeException arre = new AppRootRuntimeException(npe);
+			// throw arre;
+			return result;
+		} catch (MessagingException me) {
+			// logger.error("发送邮件失败", me);
+			String msg = me.getMessage();
+			if (msg.indexOf("javax.mail.AuthenticationFailedException") > 0) {
+				logger.error("验证失败:User = " + emailUser + ",Pwd = " + emailPassword);
+				// javax.mail.AuthenticationFailedException e = new javax.mail.AuthenticationFailedException("验证失败:User = "+emailUser+",Pwd = "+ emailPassword );
+
+				// AppRootRuntimeException arre = new AppRootRuntimeException(e);
+				// throw arre;
+			} else if (msg.indexOf("Could not connect to SMTP host") > 0) {
+				logger.error("连接不上服务器:" + smtp_server);
+				// java.net.NoRouteToHostException e = new java.net.NoRouteToHostException("连接不上服务器:"+smtp_server);
+				// AppRootRuntimeException arre = new AppRootRuntimeException(e);
+				// throw arre;
+			} else if (msg.indexOf("java.net.UnknownHostException") > 0) {
+				logger.error("服务器解释失败:" + smtp_server);
+			}
+
+			// AppRootRuntimeException arre = new AppRootRuntimeException(me);
+			// throw arre;
+			else
+				logger.error("发送邮件失败", me);
+			return result;
+		} catch (Exception e) {
+			logger.error("发送邮件失败", e);
+			// AppRootRuntimeException arre = new AppRootRuntimeException(e);
+			// throw arre;
+			return result;
+		}
+
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * @param smtp_server 邮件发送服务器
+	 * @param emailUser 邮件帐户
+	 * @param emailPassword 邮箱密码
+	 * @param emailFrom
+	 * @param langId 语言种类
+	 * @param mailTo
+	 * @param mailSubject
+	 * @param mailBody
+	 * @return  成功标志
+	 * 
+	 */
+	public static boolean sendMail(String smtp_server, String emailUser, String emailPassword, String emailFrom, String langId, String mailTo, String mailSubject, String mailBody) {
+		return sendMail(smtp_server, emailUser, emailPassword, emailFrom, langId, mailTo, mailSubject, mailBody, "html");
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * @param smtp_server 邮件发送服务器
+	 * @param emailUser 邮件帐户
+	 * @param emailPassword 邮箱密码
+	 * @param emailFrom
+	 * @param langId 语言种类
+	 * @param mailTo
+	 * @param mailSubject
+	 * @param mailBody
+	 * @param mailType
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String smtp_server, String emailUser, String emailPassword, String emailFrom, String langId, String mailTo, String mailSubject, String mailBody, String mailType) {
+		String[] mailTos = new String[] { mailTo };
+		String[] sendTos = new String[] { "TO" };
+		return sendMail(smtp_server, emailUser, emailPassword, emailFrom, langId, mailTos, sendTos, mailSubject, mailBody, mailType);
+	}
+
+	private static void setSMTPConfigrationByLang(String lang) {
+		String langId = lang.toLowerCase();
+		smtpServer = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_HOST);
+		smtpAuth = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_AUTH);
+		smtpUser = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_USER + "." + langId);
+		smtpPassword = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_PASSWORD + "." + langId);
+		From = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_FROM + "." + langId);
+		charset = ConfigFacade.getProperty(ConfigNames.MAIL_CHARSET + "." + langId);
+		if ((charset == null) || charset.equalsIgnoreCase("")) {
+			charset = OnlineConstance.DEFAULT_CHARSET;
+		}
+		// 如果smtpUserByLang 为空，则统一使用默认的smtpServer
+		if (smtpUser == null || smtpUser.equalsIgnoreCase("")) {
+			smtpUser = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_USER);
+			smtpPassword = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_PASSWORD);
+			From = ConfigFacade.getProperty(ConfigNames.MAIL_SMTP_FROM);
+		}
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @param langId 语言种类
+	 * @param mailTo
+	 * @param mailSubject
+	 * @param mailBody
+	 * @return 成功标志
+	 * 
+	 */
+	public static boolean sendMail(String langId, String mailTo, String mailSubject, String mailBody) {
+		setSMTPConfigrationByLang(langId);
+		return sendMail(smtpServer, smtpUser, smtpPassword, From, langId, mailTo, mailSubject, mailBody, "html");
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @param langId 语言种类
+	 * @param mailTo
+	 * @param mailSubject
+	 * @param mailBody
+	 * @param mailType
+	 * @return 成功标志
+	 */
+	public static boolean sendMail(String langId, String mailTo, String mailSubject, String mailBody, String mailType) {
+		setSMTPConfigrationByLang(langId);
+		return sendMail(smtpServer, smtpUser, smtpPassword, From, langId, mailTo, mailSubject, mailBody, mailType);
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @param langId 语言种类
+	 * @param mailTo  收信人列表
+	 * @param sendToType 
+	 * @param mailSubject
+	 * @param mailBody
+	 * @return 成功标志
+	 * 
+	 */
+	public static boolean sendMail(String langId, String[] mailTo, String[] sendToType, String mailSubject, String mailBody) {
+		return sendMail(langId, mailTo, sendToType, mailSubject, mailBody, "html");
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * 
+	 * @param langId 语言种类
+	 * @param mailTo 收信人列表
+	 * @param sendToType 
+	 * @param mailSubject
+	 * @param mailBody
+	 * @param mailType
+	 * @return  成功标志
+	 */
+	public static boolean sendMail(String langId, String[] mailTo, String[] sendToType, String mailSubject, String mailBody, String mailType) {
+		setSMTPConfigrationByLang(langId);
+		return sendMail(smtpServer, smtpUser, smtpPassword, From, langId, mailTo, sendToType, mailSubject, mailBody, mailType);
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * @param smtp_server
+	 * @param emailUser
+	 * @param emailPassword
+	 * @param emailFrom
+	 * @param langId
+	 * @param mailTo
+	 * @param sendToType
+	 * @param mailSubject
+	 * @param mailBody
+	 * @param fileName
+	 * @param mailType
+	 * @return  成功标志
+	 */
+	public static boolean sendMailWithFile(String smtp_server, String emailUser, String emailPassword, String emailFrom, String langId, String[] mailTo, String[] sendToType, String mailSubject,
+			String mailBody, String[] fileName, String mailType) {
+		boolean result = false;
+		setCharsetByLang(langId);
+		try {
+
+			if (mailTo == null) {
+				throw new NullPointerException("未设定收件人");
+			}
+			if (sendToType == null) {
+				throw new NullPointerException("未设定发送方式");
+			}
+			if (smtp_server == null || smtp_server.trim().equalsIgnoreCase("")) {
+				throw new NullPointerException("未设定发送服务器");
+			}
+			if (emailUser == null) {
+				throw new NullPointerException("未设定邮件服务器用户名");
+			}
+			if (emailPassword == null) {
+				throw new NullPointerException("未设定邮件服务器用户密码");
+			}
+			if (emailFrom == null) {
+				throw new NullPointerException("未设定邮件回复地址");
+			}
+			CITSendMailUtil sendmailutil = new CITSendMailUtil(smtp_server, emailUser, emailPassword, "true", charset);
+			sendmailutil.setMailFrom(emailFrom);
+			for (int i = 0; i < mailTo.length; i++) {
+				logger.debug("设定收件人 = " + mailTo[i]);
+				sendmailutil.setMailTo(new String[] { mailTo[i] }, sendToType[i]);
+			}
+
+			if (mailType == null) {
+				logger.error("未设定邮件类型，按TEXT方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("html")) {
+				logger.debug("按HTML方式发送邮件");
+				// 按HTML方式发送邮件
+
+				sendmailutil.setMailHtmlContent(mailBody);
+			} else if (mailType.equalsIgnoreCase("text")) {
+				logger.debug("按TEXT方式发送邮件");
+				sendmailutil.setMailContent(mailBody);
+			} else {
+				logger.error("未设定邮件类型，按TEXT方式发送。");
+				sendmailutil.setMailContent(mailBody);
+			}
+
+			sendmailutil.setSubject(mailSubject);
+			sendmailutil.setfileAttacment(fileName);
+			sendmailutil.sendMail();
+			result = true;
+			return result;
+		} catch (NullPointerException npe) {
+			logger.error("参数设定失败：" + npe.getMessage());
+			// AppRootRuntimeException arre = new AppRootRuntimeException(npe);
+			// throw arre;
+			return result;
+		} catch (MessagingException me) {
+			// logger.error("发送邮件失败", me);
+			String msg = me.getMessage();
+			if (msg.indexOf("javax.mail.AuthenticationFailedException") > 0) {
+				logger.error("验证失败:User = " + emailUser + ",Pwd = " + emailPassword);
+				// javax.mail.AuthenticationFailedException e = new
+				// javax.mail.AuthenticationFailedException("验证失败:User =
+				// "+emailUser+",Pwd = "+ emailPassword );
+
+				// AppRootRuntimeException arre = new
+				// AppRootRuntimeException(e);
+				// throw arre;
+			} else if (msg.indexOf("Could not connect to SMTP host") > 0) {
+				logger.error("连接不上服务器:" + smtp_server);
+				// java.net.NoRouteToHostException e = new
+				// java.net.NoRouteToHostException("连接不上服务器:"+smtp_server);
+				// AppRootRuntimeException arre = new
+				// AppRootRuntimeException(e);
+				// throw arre;
+			} else if (msg.indexOf("java.net.UnknownHostException") > 0) {
+				logger.error("服务器解释失败:" + smtp_server);
+			}
+
+			// AppRootRuntimeException arre = new AppRootRuntimeException(me);
+			// throw arre;
+			else
+				logger.error("发送邮件失败", me);
+			return result;
+		} catch (Exception e) {
+			logger.error("发送邮件失败", e);
+			// AppRootRuntimeException arre = new AppRootRuntimeException(e);
+			// throw arre;
+			return result;
+		}
+
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * @param smtp_server
+	 * @param emailUser
+	 * @param emailPassword
+	 * @param emailFrom
+	 * @param langId
+	 * @param mailTo
+	 * @param mailSubject
+	 * @param mailBody
+	 * @param fileName
+	 * @return  成功标志
+	 */
+	public static boolean sendMailWithFile(String smtp_server, String emailUser, String emailPassword, String emailFrom, String langId, String mailTo, String mailSubject, String mailBody,
+			String[] fileName) {
+		return sendMailWithFile(smtp_server, emailUser, emailPassword, emailFrom, langId, mailTo, mailSubject, mailBody, fileName, "html");
+	}
+
+	/**
+	 * 发送邮件
+	 * 
+	 * @param smtp_server
+	 * @param emailUser
+	 * @param emailPassword
+	 * @param emailFrom
+	 * @param langId
+	 * @param mailTo
+	 * @param mailSubject
+	 * @param mailBody
+	 * @param fileName
+	 * @param mailType
+	 * @return  成功标志
+	 */
+	public static boolean sendMailWithFile(String smtp_server, String emailUser, String emailPassword, String emailFrom, String langId, String mailTo, String mailSubject, String mailBody,
+			String[] fileName, String mailType) {
+		String[] mailTos = new String[] { mailTo };
+		String[] sendTos = new String[] { "TO" };
+		return sendMailWithFile(smtp_server, emailUser, emailPassword, emailFrom, langId, mailTos, sendTos, mailSubject, mailBody, fileName, mailType);
+	}
+
+}

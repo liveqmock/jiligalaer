@@ -1,0 +1,84 @@
+package sy.service.product;
+
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+
+import sy.common.model.QueryContext;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.product.CloudMdmTemplate;
+import sy.domain.vo.product.CloudMdmTemplateVo;
+import sy.domain.vo.product.CloudProductDetail;
+
+
+/**
+ * IP.
+ * @author cs
+ *
+ */
+@Service("cloudMdmTemplateService")
+public class CloudMdmTemplateService extends
+		SynchronizeDataService<CloudMdmTemplate, CloudMdmTemplateVo> implements
+		CloudMdmTemplateServiceI {
+
+	@Override
+	public List<CloudProductDetail> getCloudMdmTemplateListByItemId(
+			String itemId,String mdmZoneId,QueryContext context) throws ValidatorException {
+		String sql ="SELECT mp.id as prodId,mp.PROD_NAME as prodName,mt.id as cellId,mt.DISPLAYTEXT as displayText,mt.MEMORY as memory,mt.NAME as cellName,pp.id as priceId, mp.description as prodDesc "
+					   +" FROM cloud_mdm_product_item pi "
+					   +" inner join cloud_mdm_product mp on mp.ID=pi.PROD_ID "
+					   +" inner join cloud_product_price pp on pp.PROD_ID=mp.ID "
+					   +" inner join cloud_mdm_template mt on mt.id=pi.item_id  "
+					   +" inner join cloud_mdm_zone zo on zo.IF_ID = mt.zoneid"
+					   +"    where pi.item_type='TEMPLATE' AND pi.state='1'  and mt.DATA_STATE=1 and zo.data_state=1 and now()>=  pp.EFFECTIVE_DATE  and now() <=pp.INVALID_DATE  "
+					   +" and zo.id='"+mdmZoneId+"'";
+		if(StringUtils.isNotBlank(itemId)){
+			sql =sql+" and pi.ITEM_ID='"+itemId+"'";
+		}
+		// TODO Auto-generated method stub
+		return this.listBySql(CloudProductDetail.class,context,sql);
+	}
+
+	@Override
+	public CloudProductDetail getCloudMdmTemplateByProdId(String prodId)
+			throws ValidatorException {
+		// TODO Auto-generated method stub
+		String sql ="SELECT mp.id as prodId,mp.PROD_NAME as prodName,mp.description as prodDesc,pi.item_type as itemType,pp.hour_price as hourPrice, mt.id as cellId,mt.DISPLAYTEXT as displayText,mt.MEMORY as memory,mt.NAME as cellName,pp.id as priceId,pp.one_time_price as oneTimePrice,pp.year_price as yearPrice,pp.month_price as monthPrice,pp.day_price as dayPrice,pp.price_mode as priceMode,pi.id as prodItemId,mt.if_id as interfaceId "
+				   +" FROM cloud_mdm_product_item pi "
+				   +" inner join cloud_mdm_product mp on mp.ID=pi.PROD_ID "
+				   +" inner join cloud_product_price pp on pp.PROD_ID=mp.ID "
+				   +" inner join cloud_mdm_template mt on mt.id=pi.item_id  "
+				   +"    where pi.item_type='TEMPLATE' AND pi.state='1'  and now()>=  pp.EFFECTIVE_DATE  and now() <=pp.INVALID_DATE  and mp.id='"+prodId+"'";
+		return this.findUniqueBySql(CloudProductDetail.class,sql);
+	}
+
+	@Override
+	public CloudProductDetail getCloudMdmTemplateByComnProdId(
+			String combProdId) throws ValidatorException {
+		// TODO Auto-generated method stub
+		String sql ="SELECT mp.id as prodId,mp.PROD_NAME as prodName,mt.id as cellId,mt.DISPLAYTEXT as displayText,mt.MEMORY as memory,mt.NAME as cellName,pp.id as priceId, mp.description as prodDesc "
+				   +" FROM cloud_mdm_product_item pi "
+				   +" inner join cloud_mdm_product mp on mp.ID=pi.PROD_ID "
+				   +" inner join cloud_product_price pp on pp.PROD_ID=mp.ID "
+				   +" inner join cloud_product_combination_price cpcp on cpcp.SINGLE_PROD_ID=mp.id"
+				   +" inner join cloud_mdm_template mt on mt.id=pi.item_id  "
+				   +"    where pi.item_type='TEMPLATE' AND pi.state='1'  and mt.DATA_STATE=1 and now()>=  pp.EFFECTIVE_DATE  and now() <=pp.INVALID_DATE  and cpcp.prod_id='"+combProdId+"' and cpcp.cell_type='TEMPLATE'";
+		
+		return this.findUniqueBySql(CloudProductDetail.class,sql);
+	}
+
+	@Override
+	public CloudMdmTemplateVo getMdmTemplateByid(String id) {
+		return findUnique("From  CloudMdmTemplate Where  id = ?", id);
+	}
+
+	@Override
+	public CloudMdmTemplateVo getMdmTemplateByInterfaceId(String interfaceId) {
+		return findUnique("From  CloudMdmTemplate Where  interfaceId = ?", interfaceId);
+	}
+	
+	protected boolean voEqualsPoCondition(CloudMdmTemplateVo vo,CloudMdmTemplate po){
+		return super.voEqualsPoCondition(vo, po) && vo.getZoneid().equals(po.getZoneid());
+	}
+}

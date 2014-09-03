@@ -1,0 +1,79 @@
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<meta http-equiv="Cache-Control" content="no-store"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+<link rel="stylesheet" type="text/css" href="${ctx}/css/table.css">
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="${ctx}/scripts/basic.js"></script>
+<script type="text/javascript" src="${ctx}/scripts/autoheight.js"></script>
+<script type="text/javascript">
+function resetec() {
+	var form = document.forms.listForm;
+	
+	if (!form) {
+		form = document.forms[0];
+	}
+	if (form && form.ec_eti) {
+		form.ec_eti.value = '';
+	}
+}
+/**
+document.onkeydown = function(e) {
+	var event = window.event || e;
+	if (event.keyCode == 13) {
+		if(typeof(doQuery)=="function"){
+			doQuery();
+		}else if(typeof(doSave)=="function"){
+			doSave();
+		}
+	}
+};
+*/
+function doClose(){
+	var winObj = window.parent.parent.parent;
+	winObj.opener.frames.doQuery();
+	winObj.close();
+}
+
+</script>
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+
+<style>
+.loading_wrap{ width:100%; height:100%; position:absolute; z-index:10000;}
+.loading_bg{ width:100%; height:100%; background:#fff; filter: Alpha(Opacity=50);opacity:0.5 }
+.text_loading{width:150px; background:#fff; border: solid 1px #ccc; margin:180px 40%; padding:10px;position:absolute; z-index:10001;}
+.text_cls{  width:100px; color:#999; font-size:12px; text-align: center; padding-top:5px;}
+.loading_cls{ width:100px; height:9px; margin:0 auto;text-align: center;}
+</style>
+<script>
+function loading() {
+	resetec();
+	loading_wrap.style.display='inline';
+}
+function unloading() {
+	resetec();
+	loading_wrap.style.display='none';
+}
+</script>
+<script>
+function waitloading() {
+	waitloading_wrap.style.display='inline';
+}
+function waitunloading() {
+	waitloading_wrap.style.display='none';
+}
+</script>
+<div class="loading_wrap" id="loading_wrap" style="display:none">
+	<div class="text_loading">
+		<div class="loading_cls"><img src="<%=request.getContextPath()%>/images/loading.gif" width="100" height="9" /></div>
+	</div>
+	<div class="loading_bg"></div>
+</div>
+
+<div class="loading_wrap" id="waitloading_wrap" style="display:none">
+	<div class="text_loading">
+		<div class="loading_cls"><img src="<%=request.getContextPath()%>/images/loading.gif" width="100" height="9" /></div>
+	</div>
+	<div class="loading_bg"></div>
+</div>

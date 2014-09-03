@@ -1,0 +1,50 @@
+package sy.service.product;
+
+import java.util.List;
+
+import sy.common.model.QueryContext;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.vo.product.CloudProductPriceVo;
+import sy.domain.vo.product.ProductPriceVo;
+import sy.service.shared.BasicServiceI;
+
+
+/**
+ * 产品定价
+ * @author luobin
+ *
+ */
+public interface CloudProductPriceServiceI extends BasicServiceI<CloudProductPriceVo> {
+
+	public List<ProductPriceVo> getProdPriceInfo(QueryContext context, String prodType);
+		
+	/**
+	 * 获取单一、组合产品列表
+	 * @param context
+	 * @return
+	 */
+	public List<Object[]> getMdmProductPriceInfo(QueryContext context, String prodType);
+	
+	/**
+	 * 保存产品定价信息
+	 * @param voList
+	 * @throws ValidatorException
+	 */
+	public void saveProdPrice(List<CloudProductPriceVo> voList) throws ValidatorException;
+	
+	/**
+	 * 根据产品主表ID获取产品定价信息
+	 * @param prodId
+	 * @return
+	 */
+	public CloudProductPriceVo getPriceByProdId(String prodId) throws ValidatorException;
+	/**
+	 * 通过产品context,以及产品价格中的prodType来获取指定的CloudProductPriceVo.
+	 */
+	public CloudProductPriceVo getPriceByProdType(String prodType) throws ValidatorException;
+	
+	/**
+	 * 获取已经定价的组合产品list
+	 */
+	public List<CloudProductPriceVo> getCloudProductPriceVoByComb() throws Exception;
+}

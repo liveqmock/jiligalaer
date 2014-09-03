@@ -1,0 +1,457 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html id="content">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>我的资源 - 我的虚拟机</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<link href="${ctx}/css/popup.dialog.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+body {
+	margin:0px auto;
+	background-color:#F2F2F2;
+	background-repeat:repeat;
+	background-position:left;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+<script type="text/javascript">
+function query(){
+	var form = document.forms.listForm;
+	form.submit();
+}
+//密钥生成
+function createKey(idNo){
+	if($("#interfaceId").val() == ''){
+		alert("请选择虚拟机");
+		return;
+	}
+	setLikeCss(idNo);
+	var txt = '密钥生成<br/><hr></hr><br/><center><input type="button" name="createKey" value="生成新密钥"/>&nbsp;&nbsp;<input type="button" name="downloadKey" value="下载密钥"/></center><br/>';
+	$.prompt(txt,{
+		buttons: {'确定':1, '取消':3},
+		callback: function mycallbackform(v,m,f){
+			if(v == 3){
+				return ;
+			}
+			if(f.createKey){
+
+			}else if(f.downloadKey){
+
+			}	
+		}
+	});		
+}
+//增加磁盘方案
+function changeDisk(idNo){
+	//虚拟机未停机，不可修改配置方案
+	if($("#interfaceId").val() == ''){
+		alert("请选择虚拟机");
+		return;
+	}
+	if($("#vmState").val() == 'Running'){
+		alert("虚拟机正在运行，请先停止后再操作。");
+		return;
+	}
+	setLikeCss(idNo);
+	
+	var interfaceId = $("#interfaceId").val();
+	var vmId = $("#vmId").val();
+	var orderId = $("#orderId").val();
+	return window.openwindow("${ctx}/myVm/diskResource.do?interfaceId="+interfaceId+"&vmId="+vmId+"&orderId="+orderId,"增加磁盘方案",1024,660);
+}
+
+//变更计算方案
+function changeCpu(idNo){
+	if($("#interfaceId").val() == ''){
+		alert("请选择虚拟机");
+		return;
+	}
+	if($("#vmState").val() == 'Running'){
+		alert("虚拟机正在运行，请先停止后再操作。");
+		return;
+	}
+	setLikeCss(idNo);
+	
+	var interfaceId = $("#interfaceId").val();
+	var vmId = $("#vmId").val();
+	var orderId = $("#orderId").val();
+	var zoneType = $("#zoneType").val();
+	return window.openwindow("${ctx}/myVm/compResource.do?interfaceId="+interfaceId+"&vmId="+vmId+"&orderId="+orderId,"更改计算方案",1024,660);
+}
+//IP地址申请
+function applyIP(idNo){
+	if($("#interfaceId").val() == ''){
+		alert("请选择虚拟机");
+		return;
+	}
+	setLikeCss(idNo);
+
+	var interfaceId = $("#interfaceId").val();
+	var vmId = $("#vmId").val();
+	var orderId = $("#orderId").val();
+	if(confirm("确认申请IP地址？")){
+		waitloading();
+		$.ajax({
+			dataType: 'text',
+		   	type: "POST",
+		   	url: '${ctx}'+"/myVm/applyIP.do",
+		   	data: "interfaceId="+interfaceId+"&vmId="+vmId+"&orderId="+orderId,
+			async: true,
+		   	success: function(msg){
+		   		var obj = msg;
+				if(obj==null || obj=="" || obj=='null' || obj.length==0){
+					alert("操作失败！");
+					return false;
+				}else {
+					alert(obj);
+					waitunloading();
+				}
+			}
+		});
+	}
+}
+
+function operateInfo(rowNo){
+	setLikeCss(12);
+	
+	var interfaceId = $("#interfaceId"+rowNo).val();
+	var vmId = $("#vmId"+rowNo).val();
+	var buyType = $("#buyType"+rowNo).val();
+	var vmName = $("#vmName"+rowNo).val();
+	var orderId = $("#orderId"+rowNo).val();
+	var vmState = $("#vmState"+rowNo).val();
+	
+	//快速购买，不可修改配置方案
+	/**
+	if(buyType == 'quickBuy'){
+		document.getElementById("hideLink").style.display ="none";
+	}else{
+		document.getElementById("hideLink").style.display ="inline";
+	}*/
+	document.getElementById("hideLink").style.display ="inline";
+	
+	var rows = document.getElementById("tableId").rows.length;
+	for(var i=0; i<rows; i++){
+		if(rowNo == i){
+			document.getElementById("leftTd"+i).style.backgroundColor ="#1C9DBA";
+			document.getElementById("rightTd"+i).style.backgroundColor ="#1C9DBA";
+		}else{
+			document.getElementById("leftTd"+i).style.backgroundColor ="";
+			document.getElementById("rightTd"+i).style.backgroundColor ="";
+		}
+	}
+	$("#vmName").html(vmName);
+	
+	$("#interfaceId").val(interfaceId);
+	$("#vmId").val(vmId);
+	$("#orderId").val(orderId);
+	$("#vmState").val(vmState);
+	$("#rowCount").val(rowNo);
+	
+	vmwareInfo("detail");
+}
+
+function vmOperater(urlPath, idNo){
+	setLikeCss(idNo);
+	
+	if($("#interfaceId").val() == ''){
+		alert("请选择虚拟机");
+		return;
+	}
+	var vmState = $("#vmState").val();
+	
+	//状态可以放到controller中验证
+	if(vmState=='Destroyed'){
+		alert("虚拟机已销毁。");
+		return;
+	}
+	if((urlPath=='vmStop' || urlPath=='vmRestart') && vmState == 'Stopped'){
+		alert("虚拟机已停止运行。");
+		return;
+	}
+	if(urlPath=='changePassword' && vmState == 'Running'){
+		alert("虚拟机正在运行，请先停止后再操作。");
+		return;
+	}
+	var rowCount = $("#rowCount").val();
+	
+	
+	if(confirm("确认该项操作吗？")){
+	
+		//ajax调用，返回成功或者失败信息
+		waitloading();
+		$.ajax({
+			dataType: 'text',
+		   	type: "POST",
+		   	url: '${ctx}'+"/myVm/"+urlPath+".do",
+		   	data: "interfaceId="+$("#interfaceId").val()+"&vmId="+$("#vmId").val(),
+			async: true,
+		   	success: function(msg){
+		   		var obj = msg;
+				if(obj==null || obj=="" || obj=='null' || obj.length==0){
+					alert("操作失败！");
+					return false;
+				}else {
+					var objArr = obj.split("@");
+					alert(objArr[0]);
+					
+					if(objArr.length > 1){
+						//操作成功
+						$("#vmState").val(objArr[1].replace(/\r\n/ig,""));
+						$("#vmState"+rowCount).val(objArr[1]);
+					}
+
+					var form = document.forms.listForm;
+					form.action="${ctx}/myVm/list.do";
+					waitloading();
+					form.submit();
+				}
+			}
+		});
+	}
+}
+
+function setLikeCss(idNo){
+	for(var i=0; i<12; i++){
+		if(idNo == i){
+			$("#link"+i).removeClass('f15_2');
+			$("#link"+i).addClass('f15_1');
+		}else{
+			$("#link"+i).removeClass('f15_1');
+			$("#link"+i).addClass('f15_2');
+		}
+	}
+}
+
+function addIso(idNo){
+	if($("#interfaceId").val() == ''){
+		alert("请选择虚拟机");
+		return;
+	}
+}
+
+function viewConsole(idNo){
+	if($("#interfaceId").val() == ''){
+		alert("请选择虚拟机");
+		return;
+	}
+}
+function ipButtonHide(zoneType){
+	if(zoneType == 'Basic'){
+		document.getElementById("ipLink").style.display ="none";
+	}else{
+		document.getElementById("ipLink").style.display ="inline";
+	}
+	$("#zoneType").val(zoneType);
+}
+function buyRes(){
+	window.parent.location="${ctx }/quickBuy/selectVm.do";
+}
+</script>
+
+</head>
+  <body onLoad="operateInfo('0')">
+    <form:form modelAttribute="baseVoList" action="${ctx}/myVm/list.do" method="post" name="listForm">
+		  <input type="hidden" name="interfaceId" id="interfaceId" />
+		  <input type="hidden" name="vmId" id="vmId" />
+		  <input type="hidden" name="vmState" id="vmState" />
+		  <input type="hidden" name="orderId" id="orderId" />
+		  <input type="hidden" name="rowCount" id="rowCount" />
+		  <input type="hidden" id="zoneType" name="zoneType" />
+		  
+          <table width="962" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="center"  valign="top" bgcolor="#F2F2F2" height="670">
+              
+                <div id="middle_sheet_myR_01">
+                  <table width="230" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="38" height="50" align="center" valign="middle"><img src="${ctx}/images/myR_ico_01.png" width="20" height="21" /></td>
+                      <td width="182" align="left" valign="middle"><img src="${ctx}/images/myR_ico_02.png" width="71" height="21" align="top"/>
+                      	<span style="padding-left: 20px; letter-spacing: 1px;">
+                      	<img src="${ctx}/images/btn13.png" width="85" height="22" border="0" align="absmiddle" style="cursor:pointer;" onclick="javascript:buyRes();"/>
+                      	</span>
+					  </td>
+                    </tr>
+                    
+                    <tr valign="top">
+                      <td colspan="2">
+                      	<div id="order" style="height:295px; z-index:1; overflow-y: scroll;overflow-x:hidden; width: 98%;">
+                      		<table width="98%" align="right" border="0" cellpadding="0" cellspacing="0" id="tableId">
+								
+								<%int i=0; %>
+								<c:forEach var="item" items="${myVmList}" >
+				                    <tr height="28" valign="middle" style="cursor:pointer;" onclick="operateInfo('<%=i%>');">
+				                      <td width="10" height="28" id="leftTd<%=i %>">&nbsp;
+				                      	<input type="hidden" name="interfaceId_" id="interfaceId<%=i %>" value="${item.cloudMdmVm.interfaceId }" />
+				                      	<input type="hidden" name="vmId_" id="vmId<%=i %>" value="${item.cloudMdmVm.id }" />
+				                      	<input type="hidden" name="vmName_" id="vmName<%=i %>" value="${item.cloudMdmVm.name }" />
+				                      	<input type="hidden" name="orderId_" id="orderId<%=i %>" value="${item.orderId }" />
+				                      	<input type="hidden" name="buyType_" id="buyType<%=i %>" value="${item.buyType }" />
+				                      	<input type="hidden" name="vmState_" id="vmState<%=i %>" value="${item.cloudMdmVm.state }" />
+				                      
+				                      </td>
+				                      <td height="28" align="left" class="f13_1" id="rightTd<%=i %>" title="${item.cloudMdmVm.name }">
+				                      	${fn:substring(item.cloudMdmVm.name,0,20)}
+				                      </td>
+				                    </tr>
+									<%i++; %>
+			                    </c:forEach>
+			                    
+                      		</table>
+                      	</div>
+					  </td>
+                    </tr>
+                    
+                    <tr>
+                      <td height="5" colspan="2" align="center" valign="middle"><img src="${ctx}/images/buy_blue_line.jpg" width="210" height="2" /></td>
+                    </tr>
+                    <!-- 搜索 -->
+                    <tr>
+                      <td align="center" valign="middle" colspan="2" style="padding-left:2px;">
+                      	<input type="text" class="text13" id="keyword" name="keyword" value="${keyword }" size="20" style="height: 15px;"/>
+                      	<img src="${ctx}/images/btn7.png" width="62" height="22" border="0" align="absmiddle" style="cursor:pointer;" onclick="query()"/>
+                      </td>
+                    </tr>	
+                    				
+                  </table>
+                </div>
+                 
+                <div id="middle_sheet_myR_02">
+                  <table border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td width="12"><img src="${ctx}/images/buy_sheet_border_01.png" width="12" height="35" /></td>
+                      <td width="744" background="${ctx}/images/buy_sheet_border_02.png" align="left" class="f18_1" id="vmName"></td>
+                      <td width="10"><img src="${ctx}/images/buy_sheet_border_03.png" width="10" height="35" /></td>
+                    </tr>
+                    <tr>
+                      <td background="${ctx}/images/buy_sheet_border_04.png">&nbsp;</td>
+                      <td align="left" valign="top" bgcolor="#F0F1F2">
+                        <table width="340" border="0" cellspacing="0" cellpadding="0">
+                          <tr height="40">
+                            <td colspan="2" width="650" align="left" valign="middle">
+                            	<a href="javascript:vmOperater('vmStart',0);" class="f15_2" id="link0">启动</a>
+                            	|
+                            	<a href="javascript:vmOperater('vmRestart',1);" class="f15_2" id="link1">重启</a>
+                            	|
+                            	<a href="javascript:vmOperater('vmStop',2);" class="f15_2" id="link2">停止</a>
+                            	|
+                            	<a href="javascript:vmOperater('vmReset',3);" class="f15_2" id="link3">重置</a>                            	
+                            	|
+                            	<a href="javascript:vmOperater('vmDestroy',4);" class="f15_2" id="link4">销毁</a>
+                            	|
+                            	<a href="javascript:vmOperater('changePassword','5');" class="f15_2" id="link5">密码重置</a>
+                            	
+                            	<span id="hideLink" style="display: inline;">
+	                            	|
+	                            	<a href="javascript:changeCpu(7);" class="f15_2" id="link7">更改计算方案</a>
+	                            	|
+	                            	<a href="javascript:changeDisk(8);" class="f15_2" id="link8">增加磁盘</a>
+								</span>
+								<span id="ipLink" style="display: inline;">
+									|
+									<a href="javascript:applyIP(11);" class="f15_2" id="link11">申请IP</a>
+								</span>
+								
+                            	<span style="display: none;">
+	                            	|                            	
+	                            	<a href="javascript:addIso(6);" class="f15_2" id="link6">附加ISO</a>
+	                            	|
+	                            	<a href="javascript:createKey(9);" class="f15_2" id=link9>密钥生成</a>
+	                            	|
+	                            	<a href="javascript:viewConsole(10);" class="f15_2" id="link10">查看控制台</a>
+                            	</span>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td height="5" colspan="2" align="left" valign="middle"><img src="${ctx}/images/buy_blue_line.jpg" width="690" height="1" /></td>
+                          </tr>
+                          <tr><td colspan=2 height="12"></td></tr>
+                          <tr>
+                            <td height="5" colspan="2">
+                              <div id="middle_sheet_myR_s_name">
+                                <a href="javascript:vmwareInfo('detail')"><img src="${ctx}/images/menu_s_0_s.png" border="0" align="absmiddle" id="detail"/></a>
+                                <a href="javascript:vmwareInfo('nic')"><img src="${ctx}/images/menu_s_12.jpg" border="0" align="absmiddle" id="nic"/></a>
+                                <a href="javascript:vmwareInfo('volume')"><img src="${ctx}/images/menu_s_8.jpg" border="0" align="absmiddle" id="volume"/></a>
+                                <a href="javascript:vmwareInfo('statistic')"><img src="${ctx}/images/menu_s_13.jpg" border="0" align="absmiddle" id="statistic"/></a>
+                              </div>
+								<script type="text/javascript">
+								function vmwareInfo(url){
+									$("#detail")[0].src="${ctx}/images/menu_s_0.jpg";
+									$("#nic")[0].src="${ctx}/images/menu_s_12.jpg";
+									$("#volume")[0].src="${ctx}/images/menu_s_8.jpg";
+									$("#statistic")[0].src="${ctx}/images/menu_s_13.jpg";
+									
+									var map = getMap(); 
+									map.put("detail","${ctx}/images/menu_s_0_s.png");
+									map.put("nic","${ctx}/images/menu_s_12_s.png");
+									map.put("volume","${ctx}/images/menu_s_8_s.png");
+									map.put("statistic","${ctx}/images/menu_s_13_s.png");
+									
+									$("#"+url)[0].src=map.get(url);
+									
+									var vmId = $("#vmId").val();
+									var interfaceId = $("#interfaceId").val();
+									var orderId = $("#orderId").val();
+									document.getElementById("vmwareForm").src="${ctx}/myVm/"+url+".do?vmId="+vmId+"&interfaceId="+interfaceId+"&orderId="+orderId;
+																	
+								}
+								</script>
+								
+                              <div id="middle_sheet_myR_s">
+                              	<table width="621" border="0" cellpadding="0" cellspacing="0">
+                                  <tr>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_1.jpg" width="14" height="14" /></td>
+                                    <td width="593" height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_2.jpg"></td>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_3.jpg" width="14" height="14" /></td>
+                                  </tr>
+                                  <tr>
+                                    <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_4.jpg"></td>
+                                    <td align="center" valign="top" bgcolor="#FFFFFF">
+
+										<iframe id="vmwareForm" name="vmwareIframeForm" src="${ctx}/myVm/detail.do" frameborder="0" scrolling="no" height="500" width="100%"></iframe>
+
+                                    </td>
+                                    <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_5.jpg"></td>
+                                  </tr>
+                                  <tr>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_6.jpg" width="14" height="14" /></td>
+                                    <td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_7.jpg"></td>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_8.jpg" width="14" height="14" /></td>
+                                  </tr>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>                          
+                        </table>
+                      </td>
+                      <td background="${ctx}/images/buy_sheet_border_05.png"></td>
+                    </tr>
+                    <tr>
+                      <td><img src="${ctx}/images/buy_sheet_border_06.png" width="12" height="13" /></td>
+                      <td height="13" background="${ctx}/images/buy_sheet_border_07.png"></td>
+                      <td><img src="${ctx}/images/buy_sheet_border_08.png" width="10" height="13" /></td>
+                    </tr>
+                  </table>
+                </div> 
+                                          
+              </td>
+            </tr>
+          </table>
+    
+        
+	</form:form>
+  </body>
+</html>

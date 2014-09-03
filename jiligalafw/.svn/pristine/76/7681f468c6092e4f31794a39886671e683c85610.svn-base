@@ -1,0 +1,246 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" import="java.util.*"  contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@page import="java.net.URLEncoder"%>  
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html id="content">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>产品管理-组合产品列表</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+body {
+	margin:0px auto;
+	background-color:#F2F2F2;
+	background-repeat:repeat;
+	background-position:left;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+<script type="text/javascript">
+function prodCustom(){
+	return window.open("${ctx}/index/combinProd/selectDc.do");
+}
+function getProdItemInfo(id,name){
+	var form = document.forms.listForm;
+	form.action="${ctx}/combinProd/list.do?editType=upd&prodId="+id;
+	form.submit();
+}
+function getProdInfo(){
+	var form = document.forms.listForm;
+	form.action="${ctx}/combinProd/list.do";
+	form.submit();
+}
+function save(){
+	var form = document.forms.listForm;	
+	if($("#prodName").val() ==''){
+		alert("产品名称不能为空!");
+		return;
+	}
+	
+	form.id.value="";
+	if($("#editType").val() == 'upd'){
+		//编辑保存
+		form.action="${ctx}/combinProd/editSave.do";
+	}else{
+		form.action="${ctx}/combinProd/save.do";
+		//新增保存
+	}
+	form.submit();
+}
+function selectedProductItem(){
+	var form = document.forms.listForm;
+	form.id.value="";
+	form.action="${ctx}/combinProd/list.do?saveFlag=1";
+	form.submit();
+}
+function query(){
+	var form = document.forms.listForm;
+	form.id.value="";
+	form.submit();
+}
+</script>
+
+</head>
+  <body onLoad="">
+    <form:form modelAttribute="cloudMdmProductItemVo" action="${ctx}/combinProd/list.do" method="post" name="listForm">
+      <form:hidden path="id" id="id"/>
+      <input type="hidden" id="cpId" name="cpId" value="${cpId}"/>
+      <input type="hidden" id="editType" name="editType" value="${editType}"/>
+      
+          <table width="962" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="center"  valign="top" bgcolor="#F2F2F2">
+
+			<div id="middle_sheet_myR_01">
+			<table width="172" height="268" border="0" cellpadding="0"
+				cellspacing="0">
+				<tr>
+					<td width="38" height="38" align="center" valign="middle"><img
+						src="${ctx}/images/myR_ico_01.png" width="20" height="21" /></td>
+					<td width="132" align="left" valign="middle" class="f16_1">
+					已有产品<img src="${ctx}/images/btn6.png" width="62" height="22"
+						border="0" align="absmiddle" style="cursor: pointer;"
+						onclick="prodCustom()" /></td>
+				</tr>
+
+				<tr valign="top">
+					<td colspan="2">
+					<div id="order"
+						style="height: 180px; z-index: 1; overflow-y: scroll; overflow-x: hidden; width: 100%;">
+					<table width="100%" border="0" cellpadding="0" cellspacing="0"
+						id="tableId">
+
+						<c:forEach var="item" items="${cloudMdmProductVoList}"
+							varStatus="status">
+							<tr height="26" valign="top" style="cursor: pointer;" onclick="getProdItemInfo('${item.id}','${item.prodName}')">
+							<c:choose>
+								<c:when test="${cpId == item.id }">
+									<td width="15" height="26" bgcolor="#1C9DBA">&nbsp;</td>
+									<td height="26" align="left" bgcolor="#1C9DBA" class="f13_1">${fn:substring(item.prodName,0,15)}</td>								
+								</c:when>
+								<c:otherwise>
+									<td width="15" height="26">&nbsp;</td>
+									<td height="26" align="left" class="f13_1">${fn:substring(item.prodName,0,15)}</td>
+								</c:otherwise>
+							</c:choose>
+							</tr>
+						</c:forEach>
+					</table>
+					</div>
+					</td>
+				</tr>
+
+				<tr>
+					<td height="5" colspan="2" align="center" valign="middle"><img
+						src="${ctx}/images/buy_blue_line.jpg" width="160" height="1" /></td>
+				</tr>
+				<tr>
+					<td align="center" valign="middle" colspan="2"><input
+						type="text" class="text13" id="keyword" name="keyword"
+						value="${keyword }" size="13" style="height: 18px;" /> <img
+						src="${ctx}/images/btn7.png" width="62" height="22" border="0"
+						align="absmiddle" style="cursor: pointer;" onclick="query()" /></td>
+				</tr>
+			</table>
+			</div>
+
+			<div id="middle_sheet_myR_02">
+                  <table border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td width="12"><img src="${ctx}/images/buy_sheet_border_01.png" width="12" height="35" /></td>
+                      <td width="744" background="${ctx}/images/buy_sheet_border_02.png" align="left" class="f18_1">产品维护</td>
+                      <td width="10"><img src="${ctx}/images/buy_sheet_border_03.png" width="10" height="35" /></td>
+                    </tr>
+                    <tr>
+                      <td background="${ctx}/images/buy_sheet_border_04.png">&nbsp;</td>
+                      <td align="left" valign="top" bgcolor="#F0F1F2">
+                        <table width="336" border="0" cellspacing="0" cellpadding="0">
+                          <tr  height="40">
+                            <td colspan="2" width="687" align="left" valign="middle" class="f13_1">
+                            	产品名称：
+                            	<form:input path="mdmProduct.prodName" class="text13" size="35" id="prodName"/>
+                            	&nbsp;&nbsp;&nbsp;&nbsp;
+                            		<img src="${ctx}/images/btns1.png" alt="保存" width="101" height="30" border="0" align="absmiddle" style="cursor:pointer;" onclick="save()"/>
+                            	<!--<c:if test="${flag ==0}">
+                            	</c:if>
+                            --></td>
+                          </tr>
+						  <tr  height="35">
+                            <td colspan="2" width="687" align="left" valign="middle" class="f13_1">
+                            	产品描述：
+                            	<form:input path="mdmProduct.description" class="text13" size="65" id="description"/>
+                            </td>
+                          </tr>                          
+                          <tr>
+                            <td height="5" colspan="2" align="left" valign="middle"><img src="${ctx}/images/buy_blue_line.jpg" width="740" height="1" /></td>
+                          </tr>
+                          <tr  height="30">
+                            <td colspan="2" width="687" align="left" class="f15_1">产品属性：</td>
+                          </tr>
+                          <tr>
+                            <td height="5" colspan="2">
+                              <div id="middle_sheet_myR_s">
+                              	<table width="742" border="0" cellpadding="0" cellspacing="0">
+                                  <tr>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_1.jpg" width="14" height="14" /></td>
+                                    <td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_2.jpg"></td>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_3.jpg" width="14" height="14" /></td>
+                                  </tr>
+                                  <tr>
+                                    <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_4.jpg"></td>
+                                    <td align="center" valign="top" bgcolor="#FFFFFF">
+	                                    <table width="100%" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+	                                    <tr bgcolor="#deecef" height="25">
+                                          <td width="20%" height="25" align="left" class="f12_1">&nbsp;&nbsp;数据中心：</td>
+                                          <td width="80%" height="25" align="left" class="f12_2">&nbsp;&nbsp;${mdmZoneName}</td>
+                                        </tr>    
+                                        <tr bgcolor="#eef6f7" height="25">
+                                          <td width="20%" height="25" align="left" class="f12_1">&nbsp;&nbsp;网络方案：</td>
+                                          <td width="80%" height="25" align="left" class="f12_2">&nbsp;&nbsp;${cloudMdmNetworkSolnDetail.prodName}&nbsp;&nbsp;${cloudMdmNetworkSolnDetail.cellName}&nbsp;&nbsp;${cloudMdmNetworkSolnDetail.displayText}&nbsp;&nbsp;${cloudMdmNetworkSolnDetail.networkRate}</td>
+                                        </tr>  
+                                        <tr bgcolor="#deecef" height="25">
+                                          <td width="20%" height="25" align="left" class="f12_1">&nbsp;&nbsp;计算方案：</td>
+                                          <td width="80%" height="25" align="left" class="f12_2">&nbsp;&nbsp;${cloudMdmCPUSolnDetail.prodName}&nbsp;&nbsp;${cloudMdmCPUSolnDetail.cellName}&nbsp;&nbsp;${cloudMdmCPUSolnDetail.displayText}&nbsp;&nbsp;${cloudMdmCPUSolnDetail.cpuNumber}&nbsp;&nbsp;${cloudMdmCPUSolnDetail.cpuSpeed}&nbsp;&nbsp;${cloudMdmCPUSolnDetail.memory}</td>
+                                        </tr>   
+                                        <tr bgcolor="#eef6f7" height="25">
+                                          <td width="20%" height="25" align="left" class="f12_1">&nbsp;&nbsp;磁盘方案：</td>
+                                          <td width="80%" height="25" align="left" class="f12_2">&nbsp;&nbsp;${cloudMdmDiskSolnDetail.prodName}&nbsp;&nbsp;${cloudMdmDiskSolnDetail.cellName}&nbsp;&nbsp;${cloudMdmDiskSolnDetail.displayText}&nbsp;&nbsp;${cloudMdmDiskSolnDetail.diskSize}</td>
+                                        </tr>  
+                                        <tr bgcolor="#deecef" height="25">
+                                          <td width="20%" height="25" align="left" class="f12_1">&nbsp;&nbsp;模板：</td>
+                                          <td width="80%" height="25" align="left" class="f12_2">&nbsp;&nbsp;${cloudMdmTemplateDetail.prodName}&nbsp;&nbsp;${cloudMdmTemplateDetail.cellName}&nbsp;&nbsp;${cloudMdmTemplateDetail.displayText}</td>
+                                        </tr>   
+                                        <tr bgcolor="#eef6f7" height="25">
+                                          <td width="20%" height="25" align="left" class="f12_1">&nbsp;&nbsp;</td>
+                                          <td width="80%" height="25" align="left" class="f12_2">&nbsp;&nbsp;</td>
+                                        </tr>  
+                                        <tr bgcolor="#eef6f7" height="25">
+                                          <td width="20%" height="25" align="left" class="f12_1">&nbsp;&nbsp;</td>
+                                          <td width="80%" height="25" align="left" class="f12_2">&nbsp;&nbsp;</td>
+                                        </tr>   
+                                        <tr bgcolor="#eef6f7" height="25">
+                                          <td width="20%" height="25" align="left" class="f12_1">&nbsp;&nbsp;</td>
+                                          <td width="80%" height="25" align="left" class="f12_2">&nbsp;&nbsp;</td>
+                                        </tr>
+                                      </table>
+                                    </td>
+                                    <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_5.jpg"></td>
+                                  </tr>
+                                  <tr>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_6.jpg" width="14" height="14" /></td>
+                                    <td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_7.jpg"></td>
+                                    <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_8.jpg" width="14" height="14" /></td>
+                                  </tr>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>                          
+                        </table>
+                      </td>
+                      <td background="${ctx}/images/buy_sheet_border_05.png"></td>
+                    </tr>
+                    <tr>
+                      <td><img src="${ctx}/images/buy_sheet_border_06.png" width="12" height="13" /></td>
+                      <td height="13" background="${ctx}/images/buy_sheet_border_07.png"></td>
+                      <td><img src="${ctx}/images/buy_sheet_border_08.png" width="10" height="13" /></td>
+                    </tr>
+                  </table>
+                </div>
+                
+              </td>
+            </tr>
+          </table>
+        
+	</form:form>
+  </body>
+</html>

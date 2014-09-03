@@ -1,0 +1,62 @@
+package sy.controller.base;
+
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.SessionAttributes;
+
+import sy.common.model.ECContext;
+import sy.common.model.QueryContext;
+import sy.common.util.validator.ValidatorException;
+import sy.controller.shared.BaseControllerTemplate;
+import sy.domain.vo.base.BasicDictItemVo;
+import sy.domain.vo.shared.TreeVo;
+import sy.service.base.BasicDictItemServiceI;
+import sy.service.shared.BasicServiceI;
+
+/**
+ * 
+ * @author lidongbo
+ * 
+ */
+
+@Controller
+@RequestMapping("/dictItem")
+@SessionAttributes("basicDictItemVo")
+public class BasicDictItemController extends
+		BaseControllerTemplate<BasicDictItemVo> {
+
+	@Autowired
+	private BasicDictItemServiceI basicDictItemService;
+
+	@RequestMapping(value = "tree")
+	public String tree(HttpServletRequest request, ModelMap modelMap)
+			throws ValidatorException {
+
+		QueryContext context = new ECContext(request, modelMap, getNameSpace());
+
+		List<TreeVo> nodes = basicDictItemService.getTree(context,
+				request.getParameter("dictId"),
+				request.getParameter("levelCode"),
+				request.getParameter("state"));
+		
+		request.setAttribute("tree", nodes);
+		return "commons/ztree";
+	}
+
+	@Override
+	public BasicServiceI<BasicDictItemVo> getService() {
+		return basicDictItemService;
+	}
+
+	@Override
+	public String getViewPath() {
+		return "base";
+	}
+
+}

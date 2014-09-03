@@ -1,0 +1,117 @@
+package sy.controller.base;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.SessionAttributes;
+
+import sy.common.model.QueryContext;
+import sy.common.util.StringUtils;
+import sy.common.util.validator.ValidatorException;
+import sy.controller.shared.BaseControllerTemplate;
+import sy.domain.en.base.DataAuth;
+import sy.domain.vo.base.BasicRoleVo;
+import sy.service.base.BasicResourceServiceI;
+import sy.service.base.BasicRoleResServiceI;
+import sy.service.base.BasicRoleServiceI;
+import sy.service.shared.BasicServiceI;
+
+/**
+ *
+ * @author lidongbo
+ *
+ */
+
+@Controller
+@RequestMapping("/role")
+@SessionAttributes("basicRoleVo")
+public class BasicRoleController  extends BaseControllerTemplate<BasicRoleVo> {
+
+	@Autowired
+	private BasicRoleServiceI basicRoleService;
+	
+	@Autowired
+	private BasicResourceServiceI basicResourceService;
+
+	@Autowired
+	private BasicRoleResServiceI basicRoleResService;
+	
+	@Override
+	public BasicServiceI<BasicRoleVo> getService() {
+		return basicRoleService;
+	}
+
+	public BasicRoleServiceI getBasicRoleService() {
+		return basicRoleService;
+	}
+
+	public BasicResourceServiceI getBasicResourceService() {
+		return basicResourceService;
+	}
+
+	public void setBasicResourceService(BasicResourceServiceI basicResourceService) {
+		this.basicResourceService = basicResourceService;
+	}
+
+	public void setBasicRoleService(BasicRoleServiceI basicRoleService) {
+		this.basicRoleService = basicRoleService;
+	}
+
+	public BasicRoleResServiceI getBasicRoleResService() {
+		return basicRoleResService;
+	}
+
+	public void setBasicRoleResService(BasicRoleResServiceI basicRoleResService) {
+		this.basicRoleResService = basicRoleResService;
+	}
+
+	@Override
+	public String getViewPath() {
+		return "base";
+	}
+	
+	protected void initContextParams(HttpServletRequest request,
+			QueryContext context) {
+		context.setSort(" priority asc ");
+	}
+	
+	protected void prepareEditView(HttpServletRequest request,
+			ModelMap modelMap, BasicRoleVo obj) {
+		super.prepareEditView(request, modelMap, obj);
+		modelMap.put("dataAuths", DataAuth.values());
+		if(StringUtils.isBlank(obj.getResIds())){
+			obj.setResIds(basicRoleResService.getResIdsByRoleId(obj.getRoleId()));
+		}
+		Map<String,String> roleFlagMap = new HashMap<String,String>();
+		roleFlagMap.put("0", "管理员");
+		roleFlagMap.put("1", "账户");
+		roleFlagMap.put("2", "用户");
+		modelMap.put("roleFlag",roleFlagMap);
+	}
+	
+	
+	@RequestMapping(value = "disable")
+	public String disable(HttpServletRequest request, ModelMap modelMap,
+			BasicRoleVo vo) throws ValidatorException {
+		basicRoleService.disable(vo);
+		return getRedirectStr(getSuccesedView());
+	}
+	
+	@RequestMapping(value = "enable")
+	public String enable(HttpServletRequest request, ModelMap modelMap,
+			BasicRoleVo vo) throws ValidatorException {
+		basicRoleService.enable(vo);
+		return getRedirectStr(getSuccesedView());
+	}
+	
+//	public String getSavedView() {
+//		return getCloseView();
+//	}
+	
+}

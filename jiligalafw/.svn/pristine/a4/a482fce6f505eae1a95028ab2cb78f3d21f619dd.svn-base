@@ -1,0 +1,47 @@
+package sy.domain.vo.shared;
+
+import java.io.Serializable;
+
+/**
+ * 
+ * @author lidongbo
+ * 
+ */
+public abstract class BaseVo implements Serializable {
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	private String errors;
+	
+	private String executorId;
+	
+	private String executorName;
+
+	public String getErrors() {
+		return errors;
+	}
+
+	public void setErrors(String errors) {
+		this.errors = errors;
+	}
+
+	public String getExecutorName() {
+		return executorName;
+	}
+
+	public void setExecutorName(String executorName) {
+		this.executorName = executorName;
+	}
+
+	public String getExecutorId() {
+		return executorId;
+	}
+
+	public void setExecutorId(String executorId) {
+		this.executorId = executorId;
+	}
+	
+}

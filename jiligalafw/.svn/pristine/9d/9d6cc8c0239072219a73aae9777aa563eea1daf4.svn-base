@@ -1,0 +1,346 @@
+package sy.service.product;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import sy.common.util.cloudstack.CloudException;
+import sy.common.util.cloudstack.ProviderContext;
+import sy.common.util.cloudstack.VirtualmachineRepository;
+import sy.common.util.cloudstack.entity.NetworkType;
+import sy.common.util.cloudstack.entity.Nic;
+import sy.common.util.cloudstack.entity.SecurityGroup;
+import sy.common.util.cloudstack.entity.Virtualmachine;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.product.CloudMdmVm;
+import sy.domain.vo.cloud.CloudMdmAccountVo;
+import sy.domain.vo.product.CloudMdmCPUSolnVo;
+import sy.domain.vo.product.CloudMdmNicVo;
+import sy.domain.vo.product.CloudMdmVmVo;
+import sy.domain.vo.product.CloudMdmVolumeVo;
+import sy.domain.vo.product.CloudMdmZoneVo;
+import sy.domain.vo.product.CloudSecurityGroupVo;
+import sy.domain.vo.product.CloudVMSecuritygroupVo;
+import sy.service.cloud.CloudMdmAccountServiceI;
+
+
+/**
+ * 产品主数据 - 虚拟机
+ * @author luobin
+ *
+ */
+@Service("cloudMdmVMService")
+public class CloudMdmVMService extends
+		SynchronizeDataService<CloudMdmVm, CloudMdmVmVo> implements CloudMdmVMServiceI {
+
+	private static final Logger log = Logger
+			.getLogger(CloudMdmVMService.class);
+	
+	@Autowired
+	private CloudMdmNicServiceI cloudMdmNicService;
+	
+	@Autowired
+	private CloudMdmAccountServiceI cloudMdmAccountService;
+	
+	@Autowired
+	private CloudMdmZoneServiceI cloudMdmZoneService;
+	
+	@Autowired
+	private CloudMdmVMSecuritygroupServiceI cloudMdmVMSecuritygroupService;
+	
+	@Autowired
+	private CloudMdmIPServiceI cloudMdmIPService;
+	
+	@Autowired
+	private CloudMdmNetworkServiceI cloudMdmNetworkService;
+	
+	@Autowired
+	private CloudMdmCPUSolnServiceI cloudMdmCPUSolnService;
+	
+	@Autowired
+	private CloudMdmVolumeServiceI cloudMdmVolumeService;
+	
+	protected void invalid(String interfaceId) throws ValidatorException{
+		update("Update CloudMdmNic Set dataState = 0 Where virtualmachineId = ? ", interfaceId);
+		update("Update CloudVMSecuritygroup Set dataState = 0 Where virtualmachineid = ? ", interfaceId);
+	}
+	
+	protected void afterSync(List<CloudMdmVmVo> vos) throws ValidatorException{
+		
+		List<CloudMdmNicVo> params = new ArrayList<CloudMdmNicVo>();
+		
+		for (CloudMdmVmVo cloudMdmVmVo : vos) {
+			params.addAll(cloudMdmVmVo.getNic());
+			
+			update("Delete From CloudVMSecuritygroup Where virtualmachineid = ? ", cloudMdmVmVo.getInterfaceId());
+			List<CloudSecurityGroupVo> cloudSecurityGroupVos = cloudMdmVmVo.getSecuritygroup();
+			for (CloudSecurityGroupVo securityGroup : cloudSecurityGroupVos) {
+				
+				CloudVMSecuritygroupVo vo = new CloudVMSecuritygroupVo();
+				vo.setSyncTime(new Date());
+				vo.setDataState(1);
+				vo.setSecuritygroupid(securityGroup.getInterfaceId());
+				vo.setVirtualmachineid(cloudMdmVmVo.getInterfaceId());
+				cloudMdmVMSecuritygroupService.save(vo);
+			}
+		}
+		
+		cloudMdmNicService.sync(params);
+	}
+
+	/*
+	 create(
+account=dev
+&domainid=cc74ec96-d9d9-4a4b-a9e3-cda23437e02a
+zoneid=c7650b06-4c5b-4077-a53c-6103aba25f69
+serviceofferingid=9bc5a94c-d71d-446e-a36b-d45572acce5e
+diskofferingid=dccf8dba-86b7-4f76-8bc5-dc19db8566b9
+templateid=238ccebf-fe33-4d28-9d7c-4661a815a119
+networkids=8885fc35-fcce-46c2-9f46-5eef74ab2a23
+displayname=研发部主机_1
+,0
+,'2012-11-30 00:00:00'
+
+
+
+
+http://172.16.21.2:8096/client/api?command=deployVirtualMachine&domainid=cc74ec96-d9d9-4a4b-a9e3-cda23437e02a&account=dev&zoneid=c7650b06-4c5b-4077-a53c-6103aba25f69&serviceofferingid=53c0b79f-825c-4ac1-97c5-25752fe34b39&diskofferingid=acbf5c5f-ef06-4090-9f67-98d9dda895c4&templateid=238ccebf-fe33-4d28-9d7c-4661a815a119&networkids=8885fc35-fcce-46c2-9f46-5eef74ab2a23&displayname=%E7%A0%94%E5%8F%91%E9%83%A8%E4%B8%BB%E6%9C%BA_1&stoptime=2012-11-30%2000:00:00
+http://172.16.21.2:8096/client/api?command=deployVirtualMachine&domainid=cc74ec96-d9d9-4a4b-a9e3-cda23437e02a&account=dev&zoneid=c7650b06-4c5b-4077-a53c-6103aba25f69&serviceofferingid=53c0b79f-825c-4ac1-97c5-25752fe34b39&templateid=238ccebf-fe33-4d28-9d7c-4661a815a119&networkids=8885fc35-fcce-46c2-9f46-5eef74ab2a23&name=%E7%A0%94%E5%8F%91%E9%83%A8%E4%B8%BB%E6%9C%BA_1&stoptime=2012-11-30%2000:00:00
+
+)
+
+
+	 */
+	public CloudMdmVmVo create(String accountName, String zoneid, String serviceofferingid,String diskofferingid,
+			String templateid, List<String> networkOrSecuritygroupIds, String name,Integer disksize,Date stoptime) throws ValidatorException,CloudException{
+		
+		CloudMdmAccountVo account = cloudMdmAccountService.findAccountByName(accountName);
+		if(account == null){
+			throw new ValidatorException("接口中不存在该账户."+accountName);
+		}
+		
+		ProviderContext context = new ProviderContext();
+		VirtualmachineRepository service = new VirtualmachineRepository(context);
+		
+		CloudMdmZoneVo cloudMdmZoneVo = cloudMdmZoneService.findZone(zoneid);
+		if (cloudMdmZoneVo == null) {
+			throw new ValidatorException("接口中不存在该数据中心." + zoneid);
+		}
+		
+		NetworkType networkType = cloudMdmZoneVo.getNetworkTypeAsObj();
+		
+		Virtualmachine vm = service.create(account.getDomainid(),accountName,zoneid,serviceofferingid,diskofferingid,templateid,networkOrSecuritygroupIds,name,networkType,disksize,stoptime);
+		CloudMdmVmVo vmvo = createVo(vm);
+		save(vmvo);
+		
+		List<Nic> nics = vm.getNic();
+		for (Nic nic : nics) {
+			CloudMdmNicVo vo = cloudMdmNicService.createVo(nic);
+			vo.setVirtualmachineId(vm.getId());
+			cloudMdmNicService.save(vo);
+		}
+
+		List<SecurityGroup> securitygroups = vm.getSecuritygroup();
+		for (SecurityGroup securitygroup : securitygroups) {
+			CloudVMSecuritygroupVo vo = new CloudVMSecuritygroupVo();
+			vo.setSecuritygroupid(securitygroup.getId());
+			vo.setVirtualmachineid(vm.getId());
+			vo.setSyncTime(new Date());
+			vo.setDataState(1);
+			cloudMdmVMSecuritygroupService.save(vo);
+		}
+		
+		
+		try {
+			/*虚拟机创建完 需重新同步 
+			 * 1.网络（因为基础Zone或根据安全组创建网络）
+			 * 2.IP(创建虚拟机后如果选择网络没有IP则会创建)
+			 */
+			cloudMdmIPService.sync();
+			cloudMdmNetworkService.sync();
+		} catch (Exception e) {
+			log.error("同步失败"+e.getMessage(), e);
+		}
+		
+		return vmvo;
+	}
+
+	@Override
+	public void startup(String virtualmachineid) throws ValidatorException,
+			CloudException {
+		ProviderContext context = new ProviderContext();
+		VirtualmachineRepository service = new VirtualmachineRepository(context);
+		service.startup(virtualmachineid);
+		sync(virtualmachineid, context);
+	}
+
+	@Override
+	public void stop(String virtualmachineid, Boolean forced)
+			throws ValidatorException, CloudException {
+		ProviderContext context = new ProviderContext();
+		VirtualmachineRepository service = new VirtualmachineRepository(context);
+		service.stop(virtualmachineid, forced);
+		sync(virtualmachineid, context);
+	}
+
+	@Override
+	public void reboot(String virtualmachineid) throws ValidatorException,
+			CloudException {
+		ProviderContext context = new ProviderContext();
+		VirtualmachineRepository service = new VirtualmachineRepository(context);
+		service.reboot(virtualmachineid);
+		sync(virtualmachineid, context);
+	}
+
+	@Override
+	public void destroy(String virtualmachineid) throws ValidatorException,
+			CloudException {
+		ProviderContext context = new ProviderContext();
+		VirtualmachineRepository service = new VirtualmachineRepository(context);
+		service.destroy(virtualmachineid);
+		sync(virtualmachineid, context);
+	}
+
+	@Override
+	public void restore(String virtualmachineid) throws ValidatorException,
+			CloudException {
+		ProviderContext context = new ProviderContext();
+		VirtualmachineRepository service = new VirtualmachineRepository(context);
+		service.restore(virtualmachineid);
+		sync(virtualmachineid, context);
+	}
+
+	@Override
+	public void resetPassword(String virtualmachineid) throws ValidatorException,
+			CloudException {
+		ProviderContext context = new ProviderContext();
+		VirtualmachineRepository service = new VirtualmachineRepository(context);
+		service.resetPassword(virtualmachineid);
+		sync(virtualmachineid, context);
+	}
+	
+	@Override
+	public CloudMdmVmVo getVmById(String vmId) throws ValidatorException{
+		CloudMdmVmVo vo = this.get(vmId);
+		CloudMdmCPUSolnVo cpuVo = this.cloudMdmCPUSolnService.getMdmCPUSolnByInterfaceId(vo.getServiceOfferingId());
+		vo.setCloudMdmCPUSoln(cpuVo);
+		CloudMdmZoneVo zoneVo = this.cloudMdmZoneService.findZone(vo.getZoneid());
+		vo.setCloudMdmZone(zoneVo);
+		return vo;
+	}
+	
+	@Override
+	public CloudMdmVmVo getVmByInterfaceId(String interfaceId) throws ValidatorException{
+		CloudMdmVmVo vo = this.findUnique("from CloudMdmVm where interfaceId=?", interfaceId);
+		CloudMdmCPUSolnVo cpuVo = this.cloudMdmCPUSolnService.getMdmCPUSolnByInterfaceId(vo.getServiceOfferingId());
+		vo.setCloudMdmCPUSoln(cpuVo);
+		
+		return vo;
+	}
+	
+	/**更改计算方案，需要先停止虚拟机.*/
+	public void changeService(String virtualmachineid,String serviceofferingid) throws ValidatorException{
+		ProviderContext context = new ProviderContext();
+		VirtualmachineRepository service = new VirtualmachineRepository(context);
+		service.changeService(virtualmachineid, serviceofferingid);
+		sync(virtualmachineid, context);
+	}
+	
+	
+	/**添加磁盘方案，无需停止虚拟机.*/
+	public void addDiskService(String virtualmachineid, 
+			String accountName,
+			String diskofferingid, Long disksize) throws ValidatorException{
+		
+		CloudMdmVmVo vm = super.findUnique("From CloudMdmVm Where interfaceId = ? And dataState = 1", virtualmachineid);
+		String zoneid = vm.getZoneid();
+		
+		CloudMdmVolumeVo volume = cloudMdmVolumeService.create(accountName, zoneid, accountName, diskofferingid, disksize);
+		
+		ProviderContext context = new ProviderContext();
+		VirtualmachineRepository service = new VirtualmachineRepository(context);
+		try{
+			service.addDiskService(virtualmachineid, volume.getInterfaceId());
+		}catch(RuntimeException e){
+			//如果挂载失败，则移除刚创建的卷
+			cloudMdmVolumeService.delete(volume.getInterfaceId());
+			throw e;
+		}
+		
+		sync(virtualmachineid, context);
+	}
+	
+	public CloudMdmNicServiceI getCloudMdmNicService() {
+		return cloudMdmNicService;
+	}
+
+	public void setCloudMdmNicService(CloudMdmNicServiceI cloudMdmNicService) {
+		this.cloudMdmNicService = cloudMdmNicService;
+	}
+
+	public CloudMdmAccountServiceI getCloudMdmAccountService() {
+		return cloudMdmAccountService;
+	}
+
+	public void setCloudMdmAccountService(
+			CloudMdmAccountServiceI cloudMdmAccountService) {
+		this.cloudMdmAccountService = cloudMdmAccountService;
+	}
+
+	public CloudMdmZoneServiceI getCloudMdmZoneService() {
+		return cloudMdmZoneService;
+	}
+
+	public void setCloudMdmZoneService(CloudMdmZoneServiceI cloudMdmZoneService) {
+		this.cloudMdmZoneService = cloudMdmZoneService;
+	}
+
+	public CloudMdmVMSecuritygroupServiceI getCloudMdmVMSecuritygroupService() {
+		return cloudMdmVMSecuritygroupService;
+	}
+
+	public void setCloudMdmVMSecuritygroupService(
+			CloudMdmVMSecuritygroupServiceI cloudMdmVMSecuritygroupService) {
+		this.cloudMdmVMSecuritygroupService = cloudMdmVMSecuritygroupService;
+	}
+
+	public CloudMdmIPServiceI getCloudMdmIPService() {
+		return cloudMdmIPService;
+	}
+
+	public void setCloudMdmIPService(CloudMdmIPServiceI cloudMdmIPService) {
+		this.cloudMdmIPService = cloudMdmIPService;
+	}
+
+	public CloudMdmNetworkServiceI getCloudMdmNetworkService() {
+		return cloudMdmNetworkService;
+	}
+
+	public void setCloudMdmNetworkService(
+			CloudMdmNetworkServiceI cloudMdmNetworkService) {
+		this.cloudMdmNetworkService = cloudMdmNetworkService;
+	}
+
+	public CloudMdmCPUSolnServiceI getCloudMdmCPUSolnService() {
+		return cloudMdmCPUSolnService;
+	}
+
+	public void setCloudMdmCPUSolnService(
+			CloudMdmCPUSolnServiceI cloudMdmCPUSolnService) {
+		this.cloudMdmCPUSolnService = cloudMdmCPUSolnService;
+	}
+
+	public CloudMdmVolumeServiceI getCloudMdmVolumeService() {
+		return cloudMdmVolumeService;
+	}
+
+	public void setCloudMdmVolumeService(
+			CloudMdmVolumeServiceI cloudMdmVolumeService) {
+		this.cloudMdmVolumeService = cloudMdmVolumeService;
+	}
+	
+}

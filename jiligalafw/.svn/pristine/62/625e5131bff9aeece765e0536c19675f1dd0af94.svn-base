@@ -1,0 +1,41 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html charset=utf-8" />
+<title>瑞云云计算门户系统</title>
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<link href="${ctx}/css/css_cycle.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.4.3.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery.nivo.slider.pack.js"></script>
+
+<style type="text/css">
+body {
+	background-color: #000000;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+</head>
+
+	<body>
+		<div class="top">
+			<jsp:include page="/header/display.do"></jsp:include>
+		</div>
+		
+		<div id="middle_bg"  style="position:relative;display: block;">
+			 <iframe name="main" id="mainForm" frameborder="0" scrolling="no" width="100%"  height="680"></iframe>
+		</div>
+		
+		<div>
+			<jsp:include page="/commons/foot.jsp"></jsp:include>
+		</div>
+		
+	</body>
+	
+</html>

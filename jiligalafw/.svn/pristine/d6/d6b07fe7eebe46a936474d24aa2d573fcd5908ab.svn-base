@@ -1,0 +1,437 @@
+package sy.common.util.cloudstack;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import sy.common.util.cloudstack.entity.CreateUsing;
+import sy.common.util.cloudstack.entity.EntityClass;
+import sy.common.util.cloudstack.http.RequestMethod;
+import sy.common.util.generics.GenericsUtils;
+import sy.common.util.valuesetter.Reference;
+
+/**
+ * 
+ * @author lidongbo
+ * 
+ */
+public abstract class AbstractServiceSupport<T extends CloudBean> {
+
+	public static final Logger log = Logger
+			.getLogger(AbstractServiceSupport.class);
+
+	protected ProviderContext provider;
+
+	protected Class<T> beanClzz;
+
+	@SuppressWarnings("unchecked")
+	public AbstractServiceSupport(ProviderContext provider) {
+		this.beanClzz = GenericsUtils.getSuperClassGenricType(getClass(), 0);
+		this.provider = provider;
+	}
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private void handleChildren(Field childField, CloudBean bean, Node parentNode) {
+		Object list;
+		try {
+			list = childField.get(bean);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			return;
+		}
+
+		if (!childField.isAnnotationPresent(EntityClass.class)
+				|| !(list instanceof ArrayList)) {
+			return;
+		}
+
+		EntityClass entityClass = childField.getAnnotation(EntityClass.class);
+		Class<? extends CloudBean> childClass = entityClass.cloudBean();
+		CloudBean childBean;
+		try {
+			childBean = childClass.newInstance();
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+			return;
+		}
+
+		boolean isBean = false;
+
+		NodeList children = parentNode.getChildNodes();
+		for (int k = 0; k < children.getLength(); k++) {
+
+			Node childNode = children.item(k);
+			String name = childNode.getNodeName();
+			String value = null;
+			if (childNode.hasChildNodes() && childNode.getChildNodes().getLength() > 0) {
+				value = childNode.getFirstChild().getNodeValue();
+				isBean = true;
+				Field childBeanField;
+				try {
+					childBeanField = childClass.getDeclaredField(name);
+					childBeanField.setAccessible(true);
+					
+					if (childNode.getFirstChild().getNodeType() == Node.TEXT_NODE) {
+						if(Date.class.isAssignableFrom(childBeanField.getType())){
+							childBeanField.set(childBean, provider.parseTime(value));
+						}else if(Boolean.class.isAssignableFrom(childBeanField.getType())){
+							childBeanField.set(childBean, provider.parseBoolean(value));
+						}else if(Integer.class.isAssignableFrom(childBeanField.getType())){
+							childBeanField.set(childBean, provider.parseInteger(value));
+						}else{
+							childBeanField.set(childBean, value);
+						}
+					} else if (childNode.getFirstChild().getNodeType() == Node.ELEMENT_NODE) {
+						handleChildren(childBeanField, childBean, childNode);
+					}
+					
+				} catch (Exception e) {
+					log.debug(e.getMessage(), e);
+					continue;
+				}
+			}
+		}
+		if (isBean) {
+			Field[] fields = childBean.getClass().getDeclaredFields();
+			for (Field field : fields) {
+				if(!field.isAnnotationPresent(Reference.class)){
+					continue;
+				}
+				try {
+					field.setAccessible(true);
+					field.set(childBean, bean.getId());
+				} catch (Exception e) {
+				}
+			}
+			((ArrayList) list).add(childBean);
+		}
+
+	}
+
+	public List<T> doc2beans(Document doc, String beanName) {
+		NodeList nodeList = doc.getElementsByTagName(beanName);
+		List<T> resulit = new ArrayList<T>();
+		for (int i = 0; i < nodeList.getLength(); i++) {
+			T bean;
+			try {
+				bean = beanClzz.newInstance();
+			} catch (Exception e) {
+				throw new CloudException(e);
+			}
+			Node node = nodeList.item(i);
+			NodeList attributes = node.getChildNodes();
+			boolean isBean = false;
+
+			for (int j = 0; j < attributes.getLength(); j++) {
+				Node attribute = attributes.item(j);
+				if (attribute.getNodeType() == Node.TEXT_NODE) {
+					continue;
+				}
+				String name = attribute.getNodeName();
+				String value = null;
+				if (attribute.hasChildNodes()
+						&& attribute.getChildNodes().getLength() > 0) {
+					value = attribute.getFirstChild().getNodeValue();
+					isBean = true;
+					try {
+						Field field = beanClzz.getDeclaredField(name);
+						field.setAccessible(true);
+
+						if (attribute.getFirstChild().getNodeType() == Node.TEXT_NODE) {
+							if(Date.class.isAssignableFrom(field.getType())){
+								field.set(bean, provider.parseTime(value));
+							}else if(Boolean.class.isAssignableFrom(field.getType())){
+								field.set(bean, provider.parseBoolean(value));
+							}else if(Integer.class.isAssignableFrom(field.getType())){
+								field.set(bean, provider.parseInteger(value));
+							}else{
+								field.set(bean, value);
+							}
+						} else if (attribute.getFirstChild().getNodeType() == Node.ELEMENT_NODE) {
+							handleChildren(field, bean, attribute);
+						}
+
+					} catch (Exception e) {
+						log.debug(e.getMessage(), e);
+						continue;
+					}
+				}
+			}
+			if (isBean) {
+				resulit.add(bean);
+			}
+		}
+		return resulit;
+	}
+
+	public List<T> list(CSQuqeyContext context) {
+		RequestMethod method = new RequestMethod(provider);
+		String url = method.buildUrl(getListCommand(),
+				context.getParametersAsArray());
+		Document doc;
+		try {
+			doc = method.get(url);
+			return doc2beans(doc, getTagName());
+		} catch (CloudException e) {
+//			if (e.getHttpCode() == 431) {
+//				return null;
+//			}
+//			if (e.getMessage() != null
+//					&& (e.getMessage().contains("does not have permission"))) {
+//				return null;
+//			}
+			throw e;
+		}
+	}
+	
+	public T get(String id) {
+		CSQuqeyContext qc = new CSQuqeyContext(new Param("listall", "true"),
+				new Param("id", id));
+		List<T> result = list(qc);
+		if (result == null || result.isEmpty()) {
+			return null;
+		}
+		return result.iterator().next();
+	}
+
+	public T create(T bean) {
+		RequestMethod method = new RequestMethod(provider);
+		List<Param> parameters = new ArrayList<Param>();
+		Field[] fields = beanClzz.getDeclaredFields();
+		for (Field field : fields) {
+			if (field.isAnnotationPresent(CreateUsing.class)) {
+				field.setAccessible(true);
+				try {
+					Object value = field.get(bean);
+					if (value != null) {
+						Param param = new Param(field.getName(),
+								field.get(bean));
+						parameters.add(param);
+					}
+				} catch (Exception e) {
+					throw new CloudException(e);
+				}
+			}
+		}
+		String url = method.buildUrl(getCreateCommand(),
+				parameters.toArray(new Param[] {}));
+
+		Document doc;
+		try {
+			doc = method.get(url);
+			
+			try {
+				Method createmethod = getClass().getDeclaredMethod("getCreateCommand");
+				if(createmethod.isAnnotationPresent(Asynchronous.class)){
+					doc = waitForJob(doc, getCreateCommand()+" job.");
+				}
+			} catch (Exception e) {
+				throw new CloudException(e);
+			}
+			
+			List<T> beans = doc2beans(doc, getCreatedTagName());
+			if (beans != null) {
+				return beans.get(0);
+			}
+			return null;
+		} catch (CloudException e) {
+//			if (e.getHttpCode() == 431) {
+//				return null;
+//			}
+//			if (e.getMessage() != null
+//					&& (e.getMessage().contains("does not have permission"))) {
+//				return null;
+//			}
+			throw e;
+		}
+	}
+
+	protected abstract String getListCommand();
+
+	protected abstract String getTagName();
+
+	protected String getCreateCommand() {
+		throw new UnsupportedOperationException();
+	}
+	
+	protected String getCreatedTagName() {
+		return getTagName();
+	}
+	
+	protected Document waitForJob(Document doc, String jobName)
+			throws CloudException {
+		NodeList matches = doc.getElementsByTagName("jobid");
+		if (matches.getLength() > 0) {
+			return waitForJob(matches.item(0).getFirstChild().getNodeValue(),
+					jobName);
+		}
+		return null;
+	}
+
+	protected Document waitForJob(String jobId, String jobName)
+			throws CloudException {
+		RequestMethod method = new RequestMethod(provider);
+		String url = method.buildUrl("queryAsyncJobResult", new Param("jobId",
+				jobId));
+
+		while (true) {
+			try {
+				Thread.sleep(5000L);
+			} catch (InterruptedException e) { /* ignore */
+			}
+			Document doc = method.get(url);
+
+			// 0:运行中状态
+			// 1:执行成功结束
+			// 2:执行失败结束
+			NodeList matches = doc.getElementsByTagName("jobstatus");
+			int jobstatus = 0;
+
+			if (matches.getLength() > 0) {
+				jobstatus = Integer.parseInt(matches.item(0).getFirstChild()
+						.getNodeValue());
+			}
+			if (jobstatus > 0) {
+				int code = jobstatus;
+
+				if (jobstatus == 1) {
+					return doc;
+				}
+				if (jobstatus == 2) {
+					matches = doc.getElementsByTagName("jobresult");
+					if (matches.getLength() > 0) {
+						String str = matches.item(0).getFirstChild()
+								.getNodeValue();
+
+						if (str == null || str.trim().length() < 1) {
+							NodeList nodes = matches.item(0).getChildNodes();
+							String message = null;
+
+							for (int i = 0; i < nodes.getLength(); i++) {
+								Node n = nodes.item(i);
+
+								if (n.getNodeName().equalsIgnoreCase(
+										"errorcode")) {
+									try {
+										code = Integer.parseInt(n
+												.getFirstChild().getNodeValue()
+												.trim());
+									} catch (NumberFormatException ignore) {
+										// ignore
+									}
+								} else if (n.getNodeName().equalsIgnoreCase(
+										"errortext")) {
+									message = n.getFirstChild().getNodeValue()
+											.trim();
+								}
+							}
+							throw new CloudException(code, message);
+						} else {
+							throw new CloudException(str);
+						}
+					} else {
+						throw new CloudException(jobName + " unkonw state "
+								+ jobstatus);
+					}
+				}
+			}
+		}
+	}
+	
+	protected void delete(String idName, String interfaceId, String command,boolean isAsync,Param ... params) {
+		RequestMethod method = new RequestMethod(provider);
+		List<Param> parameters = new ArrayList<Param>();
+
+		Param param = new Param(idName, interfaceId);
+		parameters.add(param);
+
+		if (params != null) {
+			for (Param par : params) {
+				parameters.add(par);
+			}
+		}
+		
+		String url = method.buildUrl(command,
+				parameters.toArray(new Param[] {}));
+
+		Document doc;
+		try {
+			doc = method.get(url);
+			if(isAsync){
+				try {
+					doc = waitForJob(doc, command + " job.");
+				} catch (Exception e) {
+					throw new CloudException(e);
+				}
+			}
+		} catch (CloudException e) {
+			throw e;
+		}
+	}
+	
+	protected void delete(String idName, String interfaceId, String command,Param ... params) {
+		delete(idName, interfaceId, command, true, params);
+	}
+	
+	
+	protected Document executeAsyncCMD(String command,Param ... params) {
+		RequestMethod method = new RequestMethod(provider);
+		List<Param> parameters = new ArrayList<Param>();
+
+		if(params == null || params.length == 0 ){
+			throw new CloudException("参数不允许为空!");
+		}
+		
+		for (Param param : params) {
+			parameters.add(param);
+		}
+		
+		String url = method.buildUrl(command,
+				parameters.toArray(new Param[] {}));
+
+		
+		Document doc;
+		try {
+			doc = method.get(url);
+			
+			try {
+				doc = waitForJob(doc, command + " job.");
+			} catch (Exception e) {
+				throw new CloudException(e);
+			}
+		} catch (CloudException e) {
+			throw e;
+		}
+		return doc;
+	}
+	
+	
+	protected Document executeSyncCMD(String command,Param ... params) {
+		RequestMethod method = new RequestMethod(provider);
+		List<Param> parameters = new ArrayList<Param>();
+
+		if(params == null || params.length == 0 ){
+			throw new CloudException("参数不允许为空!");
+		}
+		
+		for (Param param : params) {
+			parameters.add(param);
+		}
+		
+		String url = method.buildUrl(command,
+				parameters.toArray(new Param[] {}));
+
+		try {
+			return method.get(url);
+		} catch (CloudException e) {
+			throw e;
+		}
+	}
+}

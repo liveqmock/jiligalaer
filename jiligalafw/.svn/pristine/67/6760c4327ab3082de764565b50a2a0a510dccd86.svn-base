@@ -1,0 +1,223 @@
+package sy.controller.finance;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.SessionAttributes;
+
+import sy.common.model.ECContext;
+import sy.common.model.QueryContext;
+import sy.common.util.DateUtil;
+import sy.common.util.validator.ValidatorException;
+import sy.controller.shared.BaseControllerTemplate;
+import sy.domain.vo.base.BasicUserVo;
+import sy.domain.vo.expense.AccountExpenseVo;
+import sy.domain.vo.finance.AccountRefundVo;
+import sy.service.expense.AccountExpenseServiceI;
+import sy.service.finance.AccountRefundServiceI;
+import sy.service.shared.BasicServiceI;
+
+/**
+ * 账户申请退款
+ * @author luobin
+ * 
+ */
+@Controller
+@RequestMapping("/applyRefund")
+@SessionAttributes("accountRefundVo")
+public class AccountRefundController extends BaseControllerTemplate<AccountRefundVo> {
+	
+	@Autowired
+	private AccountRefundServiceI accountRefundService;
+	@Autowired
+	private AccountExpenseServiceI accountExpenseService;
+	
+	public AccountRefundServiceI getAccountRefundService() {
+		return accountRefundService;
+	}
+
+	public void setAccountRefundService(AccountRefundServiceI accountRefundService) {
+		this.accountRefundService = accountRefundService;
+	}
+
+	public AccountExpenseServiceI getAccountExpenseService() {
+		return accountExpenseService;
+	}
+
+	public void setAccountExpenseService(
+			AccountExpenseServiceI accountExpenseService) {
+		this.accountExpenseService = accountExpenseService;
+	}
+
+	public String getViewPath() {
+		return "finance";
+	}
+
+	@Override
+	public BasicServiceI<AccountRefundVo> getService() {
+		return accountRefundService;
+	}
+	
+	
+	/**
+	 * 获取账户已申请退款信息
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "list")
+	public String list(HttpServletRequest request, ModelMap modelMap) throws ValidatorException {
+		QueryContext context = new ECContext(request, modelMap, getNameSpace());
+		//清理上一次查询参数
+		context.clearParmeters();
+		//默认查询当前用户的退款申请记录
+		BasicUserVo basicUser = this.getCurrentUser(request);
+		context.put("$eq_basicUser_userId", basicUser.getUserId());
+		
+		String queryType = request.getParameter("queryType");
+		request.setAttribute("queryType", queryType);
+		
+		if("0".equals(queryType)){//处理状态一键式
+			String stateFlag = request.getParameter("stateFlag");
+			context.put("$eq_state", stateFlag);
+			
+		}else if("1".equals(queryType)){//申请日期一键式
+			// 1:今日    2:本周     3:上周    4: 本月     5:上月     6:其它
+			String timeFlag = request.getParameter("timeFlag");
+			if ("1".equals(timeFlag)){
+				context.put("$ge_applyDate", DateUtil.getTodayDate());
+				context.put("$le_applyDate", DateUtil.getTodayDate());
+				
+			} else if ("2".equals(timeFlag)){
+				context.put("$ge_applyDate", DateUtil.getFirstDayOfCurrWeek());
+				context.put("$le_applyDate", DateUtil.getLastDayOfCurrWeek());
+				
+			} else if ("3".equals(timeFlag)){
+				context.put("$ge_applyDate", DateUtil.getFirstDayOfLastWeek());
+				context.put("$le_applyDate", DateUtil.getLastDayOfLastWeek());
+				
+			} else if ("4".equals(timeFlag)){
+				context.put("$ge_applyDate", DateUtil.getMonthFirstDay(null));
+				context.put("$le_applyDate", DateUtil.getMonthLastDay(null));
+				
+			} else if ("5".equals(timeFlag)){
+				context.put("$ge_applyDate", DateUtil.getFirstDayOfLastMonth());
+				context.put("$le_applyDate", DateUtil.getLastDayOfLastMonth());
+				
+			} else if ("6".equals(timeFlag)){
+				context.put("$lt_applyDate", DateUtil.getFirstDayOfLastMonth());
+			}			
+			
+		}else{//高级搜索
+			
+			//充值日期
+			String dateS = request.getParameter("dateS");
+			String dateE = request.getParameter("dateE");
+			context.put("$ge_applyDate", dateS);
+			context.put("$le_applyDate", dateE);
+			request.setAttribute("dateS", dateS);
+			request.setAttribute("dateE", dateE);
+			
+			String[] stateArr = request.getParameterValues("state");
+			String stateStr = "";
+			if(stateArr != null && stateArr.length > 0){
+				for(int i=0; i<stateArr.length; i++){
+					stateStr += stateArr[i] + ",";
+				}
+				context.put("$in_state", stateStr.substring(0, stateStr.length()-1));
+				request.setAttribute("stateStr", stateStr.substring(0, stateStr.length()-1));
+			}			
+		}
+		
+		List<?> refundList = this.accountRefundService.list(context);
+		context.initTotalRows(modelMap);
+		modelMap.put("list", refundList);
+		
+		AccountExpenseVo expVo = this.accountExpenseService.getExpenseByUserId(basicUser.getUserId());
+		modelMap.put("expVo", expVo);
+		
+		return "finance/applyRefundList";
+	}
+
+	/**
+	 * 退款申请编辑页面
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "edit")
+	public String edit(HttpServletRequest request, ModelMap modelMap, String refundId) throws ValidatorException {
+		super.edit(request, modelMap, refundId);
+		
+		return "finance/applyRefundEdit";
+	}
+	
+	/**
+	 * 保存申请退款信息
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 */
+	@RequestMapping(method = RequestMethod.POST, value = "save")
+	public String save(HttpServletRequest request, ModelMap modelMap, @Valid AccountRefundVo vo, BindingResult errors) {
+		//验证申请退款金额是否合理（是否大于总余额）
+		BasicUserVo basicUser = this.getCurrentUser(request);
+		String applyAmount = request.getParameter("applyAmount");
+		String applyRemark = request.getParameter("applyRemark");
+		
+		vo = new AccountRefundVo();
+		vo.setApplyDate(new Date());
+		vo.setApplyAmount(Double.parseDouble(applyAmount));
+		vo.setApplyRemark(applyRemark);
+		vo.setBasicUser(basicUser);
+		vo.setState(0);//未处理
+		
+		//super.save(request, modelMap, vo, errors);
+		//return getRedirectStr("/applyRefund/list.do");
+		
+		try {
+			this.accountRefundService.save(vo);
+			modelMap.put("applyRefundMsg", "退款申请成功，请等待系统审核确认。");
+			
+		} catch (ValidatorException e) {
+			modelMap.put("applyRefundMsg", "退款申请失败，"+e.getMessage());
+			e.printStackTrace();
+		}
+		
+		modelMap.put("list", new ArrayList<Object[]>());
+		return "finance/applyRefundList";
+	}
+
+	@Override
+	public String delete(HttpServletRequest request, ModelMap modelMap, String id) throws ValidatorException {
+		AccountRefundVo vo = this.accountRefundService.get(id);
+		//如果账户申请退款后，停留在退款申请页面，待管理员处理退款完成，在删除该条申请记录时需要验证。
+		if(vo.getState() != 1){
+			super.delete(request, modelMap, id);
+		}else{
+			throw new ValidatorException("删除失败");
+		}
+		
+		return getRedirectStr("/applyRefund/list.do");
+	}
+
+	
+}

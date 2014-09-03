@@ -1,0 +1,266 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>我的订单</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<link href="${ctx}/css/popup.dialog.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+<!--
+body {
+	background-color: #F2F2F2;
+	margin-left: 5px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+-->
+</style>
+<script type="text/javascript">
+function query(queryType){
+	loading();
+	document.getElementById('queryType').value=queryType;
+	document.forms.listForm.submit();
+}
+function dateQuery(val){
+	var form = document.forms.listForm;
+	form.queryType.value='1';
+	form.timeFlag.value=val;
+	form.action="${ctx}/order/myOrder.do";
+	loading();
+	form.submit();
+}
+function billingTypeQuery(val){
+	var form = document.forms.listForm;
+	form.queryType.value='0';
+	form.billingTypeFlag.value=val;
+	form.action="${ctx}/order/myOrder.do";
+	loading();
+	form.submit();
+}
+function open_high(){
+	document.getElementById('search').style.display='block';
+	document.getElementById('openSearch').style.display='none';
+}
+function close_high(){
+	document.getElementById('search').style.display='none';
+	document.getElementById('openSearch').style.display='block';
+}
+function checkbox(){
+	var stateStr = '${billingTypeArrStr}';
+	var sts = stateStr.split(",");
+	var st = document.getElementsByName("billingType");
+	for(var i=0;i<st.length;i++){
+		for(var j=0;j<sts.length;j++){
+   			if(st[i].value==sts[j]){
+    			st[i].checked=true;
+ 			}
+		}
+	}
+}
+function display(){
+	var queryType = '${queryType}';
+	if(queryType == '2'){
+		open_high();
+	}
+} 
+</script>
+
+</head>
+  <body onLoad="checkbox();display();">
+    <form:form modelAttribute="cloudUserOrderVoList" action="${ctx}/order/myOrder.do" method="post" name="listForm">
+		
+		<input type="hidden"" name="timeFlag" value="" id="timeFlag" />
+		<input type="hidden"" name="billingTypeFlag" value="" id="billingTypeFlag" />
+		<input type="hidden"" name="queryType" value="" id="queryType" />
+		
+        <!-- 外层边框 -->
+		<div id="middle_sheet_s">
+			<table width="950" height="680" border="0" cellpadding="0" cellspacing="0" align="center">
+		      <tr>
+		        <td align="center" valign="top" bgcolor="#F2F2F2">
+		       	
+					<table width="915" border="0" cellspacing="0" cellpadding="0">
+					  <tr>
+	                    <td height="2" align="center" valign="middle"><img src="${ctx}/images/sheet_line_2.jpg" width="915" height="2" /></td>
+	                  </tr>					
+                  	  <tr>
+                    	<td align="left" valign="top">
+                    	  <table width="100%" border="0" cellspacing="1" cellpadding="0" bgcolor="#a0a0a0">
+	                      	<tr height="20" bgcolor="#f2f2f2" >
+                                    <td>
+									  <table width="100%" border="0" cellspacing="1" cellpadding="0">
+                                   	  	<!-- 简单搜索 -->
+                                        <tr height="25">
+                                      	  <td></td>
+                                          <td width="80" class="f13_1" align="left">计费方式：</td>
+                                          <td width="690" >
+											<a href="javascript:billingTypeQuery('')" class="f13_3">全部</a>&nbsp;&nbsp;&nbsp;&nbsp;
+											<a href="javascript:billingTypeQuery('0')" class="f13_3">一次性</a>&nbsp;&nbsp;&nbsp;&nbsp;
+											<a href="javascript:billingTypeQuery('1')" class="f13_3">周期性</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                                          </td>
+                                          <td></td>
+                                        </tr>                                   	  	
+                                        <tr height="25">
+                                      	  <td></td>
+                                          <td width="80" class="f13_1" align="left">购买日期：</td>
+                                          <td width="690" >
+											<a href="javascript:dateQuery('')" class="f13_3">全部</a>&nbsp;&nbsp;&nbsp;&nbsp;
+											<a href="javascript:dateQuery('1')" class="f13_3">今日</a>&nbsp;&nbsp;&nbsp;&nbsp;
+											<a href="javascript:dateQuery('2')" class="f13_3">本周</a>&nbsp;&nbsp;&nbsp;&nbsp;
+											<a href="javascript:dateQuery('3')" class="f13_3">上周</a>&nbsp;&nbsp;&nbsp;&nbsp;
+											<a href="javascript:dateQuery('4')" class="f13_3">本月</a>&nbsp;&nbsp;&nbsp;&nbsp;
+											<a href="javascript:dateQuery('5')" class="f13_3">上月</a>&nbsp;&nbsp;&nbsp;&nbsp;
+											<a href="javascript:dateQuery('6')" class="f13_3">其它</a>&nbsp;&nbsp;&nbsp;&nbsp;
+                                          </td>
+                                          <td></td>
+                                        </tr>
+                                      
+                                        <!-- 高级搜索 -->
+                                        <tr height="25" style="cursor:pointer;" onclick="open_high()">
+                                      	  <td></td>
+                                          <td colspan="2" align="left" class="f15">
+                                        	<table width="100%" border="0" cellspacing="0" cellpadding="0">
+                                        	  <tr>
+	                                          	<td width="20" align="left"><img src="${ctx}/images/ico14.png" width="20" height="20" /></td>
+	                                          	<td width="80" align="center">高级搜索</td>
+	                                          	<td width="20" align="left"><img id="openSearch" src="${ctx}/images/ico15.png" width="20" height="20" /></td>
+	                                          	<td>&nbsp;</td>
+	                                          <tr>
+                                        	</table>
+                                          </td>
+                                          <td></td>
+                                        </tr>
+                                        
+                                        <tr>
+                                      	  <td width="15"></td>
+                                      	  <td colspan="2">
+                                      	    <table width="100%" border="0" cellspacing="1" cellpadding="0" id="search" style="display:none;">
+                                      	  	  <tr>
+                                      	        <td colspan="3" align="left" valign="top">
+                                      	        	<hr style="border: 1px dashed #ccc; width: 100%; height:1px;" />
+                                      	        </td>
+                                              </tr>
+		                                      <tr height="25">
+		                                      	<td width="30">&nbsp;</td>
+		                                        <td width="80" class="f13_1" align="left">计费方式：</td>
+		                                        <td class="f13_3" >
+		                                           	<input type="checkbox" name="checkall" id="checkall" onclick="checkAll('checkall','billingType')" style="vertical-align:middle; margin-top:0px;"/>全部&nbsp;&nbsp;&nbsp;&nbsp;
+		                                           	<input type="checkbox" name="billingType" id="billingType" value="0" style="vertical-align:middle; margin-top:0px;"/>一次性&nbsp;&nbsp;&nbsp;&nbsp;
+		                                           	<input type="checkbox" name="billingType" id="billingType" value="1" style="vertical-align:middle; margin-top:0px;"/>周期性&nbsp;&nbsp;&nbsp;&nbsp;
+		                                        </td>
+		                                      </tr>
+                                              <tr height="25">
+	                                          	<td width="30">&nbsp;</td>
+                                              	<td width="80" class="f13_1" align="left">产品名称：</td>
+												<td align="left">
+                                                	<input type="text" name="prodName" value="${prodName }"/>
+                                              	</td>
+                                              </tr>
+                                              <tr height="25">
+	                                          	<td width="30">&nbsp;</td>
+                                              	<td width="80" class="f13_1" align="left">购买日期：</td>
+                                              	<td align="left" class="f13_1">
+                                              		从<input name="dateS" type="text" value="${dateS }" onfocus="WdatePicker()" readonly class="date_but"/>
+                          	                    	到<input name="dateE" type="text" value="${dateE }" onfocus="WdatePicker()" readonly class="date_but"/>
+                                              	</td>
+                                              </tr>
+                                              <tr height="50">
+		                                          <td width="30">&nbsp;</td>
+	                                              <td colspan="2" align="left"  valign="middle">
+	                                              	<a href="javascript:void(0)"><img src="${ctx}/images/btns2.png" alt="提交" onclick="query('2')" width="101" height="29" border="0"/></a>
+	                                              	&nbsp;&nbsp;&nbsp;&nbsp;
+	                                              	<a href="javascript:void(0)"><img src="${ctx}/images/btnc1.png" alt="重置" onclick="document.forms.listForm.reset();return false;" width="101" height="30" border="0"/></a>
+	                                              </td>
+                                              </tr>
+                                              <tr valign="bottom">
+	                                          	<td colspan="3" align="center"><img src="${ctx}/images/close.png" width="80" height="18" border="0" style="cursor:pointer;" onclick="close_high()"/></td>
+                                              </tr>
+                                            </table>
+                                          </td>
+                                	<td width="15"></td>
+                              	  </tr>
+                              	  
+                            	</table>
+                          	  </td>
+                        	</tr>
+                      	  </table>
+                      	  
+                    	</td>
+                      </tr>
+                    
+	                  <tr><td height="2"></td></tr>
+	                  <tr>
+	                    <td height="2" align="center" valign="middle"><img src="${ctx }/images/sheet_line_2.jpg" width="915" height="2" /></td>
+	                  </tr>
+                	
+					  <tr><td height="20"></td></tr>
+					  
+                      <tr>
+						<td align="left" valign="top">                
+
+							<ec:table items="list" var="item" onInvokeAction="query('${queryType }')" form="listForm"
+						        retrieveRowsCallback="limit" sortRowsCallback="limit" sortable="false" style="width:100%" tableId="${tableId}"
+							    action="${ctx}/order/myOrder.do" showPagination="true" cellspacing="1">
+								<ec:row>
+									<ec:column property="_rowNumber" title="序号" cell="rowNumber" style="text-align:center; width:5%"/>
+									<%--
+									<ec:column property="cloudUserOrder.orderId" title="订单ID" style="width:25%; text-align: left;" alias="orderId"/>
+									--%>
+									<ec:column property="cloudMdmProduct.prodName" title="产品名称" style="width:20%; text-align: left;" alias="prodName"/>
+									<ec:column property="cloudMdmProductItem.itemTypeName" title="产品类型" style="width:10%; text-align: left;" alias="itemTypeName" />									
+									<ec:column property="cloudUserOrder.orderTime" title="购买日期" cell="date" format="yyyy-MM-dd HH:mm" style="width:10%; text-align: center;"/>									
+									
+									<ec:column property="null" title="计费方式" style="width:10%; text-align: left;">
+						            	<c:choose>
+						            		<c:when test="${item.billingType == '1' }">周期性 /
+												<c:if test="${item.cloudUserOrder.billingCycle == '2' }">年收费</c:if>
+												<c:if test="${item.cloudUserOrder.billingCycle == '3' }">月收费</c:if>
+												<c:if test="${item.cloudUserOrder.billingCycle == '4' }">天收费</c:if>
+												<c:if test="${item.cloudUserOrder.billingCycle == '5' }">小时收费</c:if>
+						            		</c:when>
+						            		<c:otherwise>
+						            			一次性收费
+						            		</c:otherwise>
+						            	</c:choose>
+									</ec:column>
+									<ec:column property="1" title="价格（元）" style="width:10%; text-align: right;">
+						            	<c:choose>
+						            		<c:when test="${item.billingType == '1' }">
+												<c:if test="${item.cloudUserOrder.billingCycle == '2' }">${item.cloudProductPrice.yearPrice }</c:if>
+												<c:if test="${item.cloudUserOrder.billingCycle == '3' }">${item.cloudProductPrice.monthPrice }</c:if>
+												<c:if test="${item.cloudUserOrder.billingCycle == '4' }">${item.cloudProductPrice.dayPrice }</c:if>
+												<c:if test="${item.cloudUserOrder.billingCycle == '5' }">${item.cloudProductPrice.hourPrice }</c:if>
+						            		</c:when>
+						            		<c:otherwise>
+						            			${item.cloudProductPrice.oneTimePrice }
+						            		</c:otherwise>
+						            	</c:choose>										
+									</ec:column>
+									<ec:column property="cloudUserOrder.basicUser.userName" title="用户" style="width:5%; text-align: left;"/>
+									<ec:column property="resDestroyTime" title="状态" style="width:6%; text-align: center;" value="${item.resDestroyTime != null ? '销毁' : '有效' }"/>
+									<ec:column property="buyName" title="备注" style="width:24%; text-align: left;"/>
+								</ec:row>
+							</ec:table>
+						
+					    </td>
+					  </tr>
+
+		       	  </table>
+		        </td>
+		      </tr>
+			</table>
+		</div>
+                    
+	</form:form>
+  </body>
+</html>

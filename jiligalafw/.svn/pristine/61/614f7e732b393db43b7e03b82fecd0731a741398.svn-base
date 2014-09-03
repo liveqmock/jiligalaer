@@ -1,0 +1,148 @@
+package sy.domain.vo.product;
+
+import java.util.Date;
+
+import sy.common.util.valuesetter.Update;
+import sy.domain.vo.shared.BaseVo;
+
+/**
+ * 产品管理-产品定价VO
+ * 
+ * @author luobin
+ * 
+ */
+public class CloudProductPriceVo extends BaseVo {
+
+	private static final long serialVersionUID = 6615363709143182939L;
+
+	private String id;
+	
+	/**
+	 * 产品
+	 */
+	private CloudMdmProductVo cloudMdmProduct;
+	/**
+	 * 产品子表
+	 */
+	private CloudMdmProductItemVo cloudMdmProductItem;
+	/**
+	 * 一次性收费
+	 */
+	private Double oneTimePrice;
+	/**
+	 * 年收费
+	 */
+	private Double yearPrice;
+	/**
+	 * 月收费
+	 */
+	private Double monthPrice;
+	/**
+	 * 天收费
+	 */
+	private Double dayPrice;
+	/**
+	 * 价格方式 （一次性、年、月、日）
+	 */
+	private String priceMode;
+	/**
+	 * 生效日期
+	 */
+	private String effectiveDate;
+	
+	@Update
+	private Date updated;
+	
+	@Update
+	private String updatedBy;
+
+	
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public CloudMdmProductVo getCloudMdmProduct() {
+		return cloudMdmProduct;
+	}
+
+	public void setCloudMdmProduct(CloudMdmProductVo cloudMdmProduct) {
+		this.cloudMdmProduct = cloudMdmProduct;
+	}
+
+	public Double getOneTimePrice() {
+		return oneTimePrice;
+	}
+
+	public void setOneTimePrice(Double oneTimePrice) {
+		this.oneTimePrice = oneTimePrice;
+	}
+
+	public Double getYearPrice() {
+		return yearPrice;
+	}
+
+	public void setYearPrice(Double yearPrice) {
+		this.yearPrice = yearPrice;
+	}
+
+	public Double getMonthPrice() {
+		return monthPrice;
+	}
+
+	public void setMonthPrice(Double monthPrice) {
+		this.monthPrice = monthPrice;
+	}
+
+	public Double getDayPrice() {
+		return dayPrice;
+	}
+
+	public void setDayPrice(Double dayPrice) {
+		this.dayPrice = dayPrice;
+	}
+
+	public String getPriceMode() {
+		return priceMode;
+	}
+
+	public void setPriceMode(String priceMode) {
+		this.priceMode = priceMode;
+	}
+
+	public String getEffectiveDate() {
+		return effectiveDate;
+	}
+
+	public void setEffectiveDate(String effectiveDate) {
+		this.effectiveDate = effectiveDate;
+	}
+
+	public Date getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(Date updated) {
+		this.updated = updated;
+	}
+
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public CloudMdmProductItemVo getCloudMdmProductItem() {
+		return cloudMdmProductItem;
+	}
+
+	public void setCloudMdmProductItem(CloudMdmProductItemVo cloudMdmProductItem) {
+		this.cloudMdmProductItem = cloudMdmProductItem;
+	}
+
+}

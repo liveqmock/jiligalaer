@@ -1,0 +1,233 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html id="content">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>账户升级</title>
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/scripts/IdCardValidate.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/scripts/autoheight.js"></script>
+<style type="text/css">
+body {
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+	background: #F2F2F2;
+}
+</style>
+<script type="text/javascript">
+	function submitInfo() {
+		var userIdentityState = $("#userIdentityState").val().replace(/\s/g, "");
+		var companyName = $("#companyName").val().replace(/\s/g, "");
+		var businessLicense = $("#businessLicense").val().replace(/\s/g, "");
+		var businewssOrgCode = $("#businewssOrgCode").val().replace(/\s/g, "");
+		var taxCode = $("#taxCode").val().replace(/\s/g, "");
+		var identityCard = $("#identityCard").val().replace(/\s/g, "");
+		var tel = $("#tel").val().replace(/\s/g, "");
+		if(tel ==''){
+			alert("联系电话不能为空!");
+			return;
+		}
+		if(!checkTel(tel)){
+			alert("请填写正确的联系电话。\n例如：13911884488 或 010-36880728");
+			return;
+		}
+		
+		if(userIdentityState =='gongsiidentity'){
+			if(companyName==''){
+				alert("公司名称不能为空!");
+				//$("#companyNameMessage").html("公司名称不能为空!");
+				//$("#businewssOrgCodeMessage").html("");
+				//$("#identityCardMessage").html("");
+				//$("#taxCodeMessage").html("");
+				//$("#businessLicenseMessage").html("");
+				return;
+			}
+			if(businewssOrgCode==''){
+				alert("企业组织机构代码不能为空!");
+				//$("#businewssOrgCodeMessage").html("企业组织机构代码不能为空!");
+				//$("#companyNameMessage").html("");
+				//$("#identityCardMessage").html("");
+				//$("#taxCodeMessage").html("");
+				//$("#businessLicenseMessage").html("");
+				return;
+			}
+			if(taxCode==''){
+				alert("税务登记证不能为空!");
+				//$("#taxCodeMessage").html("税务登记证不能为空!");
+				//$("#businewssOrgCodeMessage").html("");
+				//$("#identityCardMessage").html("");
+				//$("#companyNameMessage").html("");
+				//$("#businessLicenseMessage").html("");
+				return;
+			}
+			if(businessLicense==''){
+				alert("营业执照号不能为空!");
+				//$("#businessLicenseMessage").html("营业执照号不能为空!");
+				//$("#businewssOrgCodeMessage").html("");
+				//$("#identityCardMessage").html("");
+				//$("#companyNameMessage").html("");
+				//$("#taxCodeMessage").html("");
+				return;
+			}	
+			
+		}else{
+			if(identityCard==''){
+				alert("身份证号不能为空!");
+				//$("#identityCardMessage").html("身份证号不能为空!");
+				//$("#businewssOrgCodeMessage").html("");
+				//$("#companyNameMessage").html("");
+				//$("#taxCodeMessage").html("");
+				//$("#businessLicenseMessage").html("");
+				return;
+			}
+			if(!IdCardValidate(identityCard)){
+				alert("身份证号填写错误");
+				return;
+			}
+		}
+		document.getElementById("repassword").value=document.getElementById("password").value;
+		var form = document.forms.basicUserVoForm;
+		form.submit();
+	}
+
+	function checkAccountIndetity(){
+		var userIdentityId = '${userIdentityId}';
+		if(userIdentityId == 'gongsiidentity'){
+			document.getElementById('gongsi0').style.display = '';
+			document.getElementById('gongsi1').style.display = '';
+			document.getElementById('gongsi2').style.display = '';
+			document.getElementById('gongsi3').style.display = '';
+			document.getElementById('gongsi4').style.display = '';
+			document.getElementById('geren').style.display = 'none';
+		}else{
+			document.getElementById('gongsi0').style.display = 'none';
+			document.getElementById('gongsi1').style.display = 'none';
+			document.getElementById('gongsi2').style.display = 'none';
+			document.getElementById('gongsi3').style.display = 'none';
+			document.getElementById('gongsi4').style.display = 'none';
+			document.getElementById('geren').style.display = '';
+		}
+	}
+</script>
+<script type="text/javascript">
+var msg = '${errors}';
+if(msg!=''){
+	alert(msg);
+	window.opener.location.reload();
+	window.close();
+	
+}
+</script>
+</head>
+<body onLoad="checkAccountIndetity()">
+	<form:form modelAttribute="basicUserVo" action="${ctx}/account/saveUpgradeAccount.do" method="post" name="basicUserVoForm" enctype="multipart/form-data" >
+    <form:hidden path="userPassword"  id="password"/>
+    <form:hidden path="reUserPassword"  id="repassword"/>
+	<form:errors path="errors" cssClass="commomError" />
+	<form:hidden path="state" />
+	<form:hidden path="userIdentityDictItem.dictItemId" id="userIdentityState"/>
+	
+	<div id="middle_sheet_content" style="width: 584px;">
+		<table width="570" align="center" border="0" cellpadding="0" cellspacing="0">
+			<tr>
+				<td align="center" valign="top" bgcolor="#F2F2F2">
+					<table align="center" width="570" border="0" cellpadding="0" cellspacing="0">
+						<tr>
+							<td height="43" align="center" valign="middle"><span class="f18b2">账户升级</span></td>
+						</tr>
+						<tr>
+							<td height="2" align="center" valign="middle">
+								<hr width="570">
+							</td>
+						</tr>
+
+						<tr>
+							<td  valign="top">
+								<table  border="0" align="center" cellpadding="0" cellspacing="0">
+									<tr height="30">
+										<td width="150" align="left" class="f13_1">电子邮箱：</td>
+										<td align="left" class="f13_1">${user.userAccount }</td>
+										<td align="left"></td>
+									</tr>
+									<tr height="30">
+										<td width="150" align="left" class="f13_1">账户身份：</td>
+										<td align="left" class="f13_1">${userIdentity }</td>
+										<td align="left"></td>
+									</tr>
+									
+									<tr height="30">
+										<td width="150" align="left" class="f13_1">
+											<form:label path="tel">联系电话</form:label><span style="color: #ff0000">*</span>：
+										</td>
+										<td align="left"><form:input path="tel" class="text13" size="30" id="tel" maxlength="12"/></td>
+									    <td align="left" style="color: red; font-size: 13px; height: 10px;" id="telMessage" /></td>
+									</tr>
+									<tr height="30" id="gongsi0">
+										<td width="150" align="left" class="f13_1">
+											<form:label path="companyName">公司名称</form:label><span style="color: #ff0000">*</span>：
+										</td>
+										<td align="left"><form:input path="companyName" class="text13" size="30" id="companyName" /></td>
+										<td align="left" style="color: red; font-size: 13px; height: 10px;" id="companyNameMessage" /></td>
+									</tr>
+									<tr height="30" id="gongsi1">
+										<td width="150" align="left" class="f13_1">
+											<form:label path="businewssOrgCode">企业组织机构代码</form:label><span style="color: #ff0000">*</span>：
+										</td>
+										<td align="left"><form:input path="businewssOrgCode" class="text13" size="30" id="businewssOrgCode" /></td>
+										<td align="left" style="color: red; font-size: 13px; height: 10px;" id="businewssOrgCodeMessage" /></td>
+									</tr>
+									<tr height="30" id="gongsi2">
+										<td align="left" width="150" class="f13_1">公司LOGO：</td>
+										<td align="left"><input type="file" name="companyLogoFile" size="30"></input></td>
+										<td align="left" ></td>
+									</tr>
+									<tr height="30" id="gongsi3">
+										<td width="150" align="left" class="f12_1"><form:label path="taxCode">税务登记证</form:label><span style="color: #ff0000">*</span>：</td>
+										<td align="left"><form:input path="taxCode" class="text13" 	size="30" id="taxCode" /></td>
+										<td align="left" style="color: red; font-size: 13px; height: 10px;" id="taxCodeMessage" /></td>
+									</tr>
+									<tr height="30" id="gongsi4">
+										<td width="150" align="left" class="f13_1"><form:label path="businessLicense">营业执照号</form:label><span style="color: #ff0000">*</span>：</td>
+									    <td align="left"><form:input path="businessLicense" class="text13" size="30" id="businessLicense" /></td>
+										<td align="left" style="color: red; font-size: 13px; height: 10px;" id="businessLicenseMessage" /></td>	
+									</tr>
+									<tr height="30" id="geren">
+										<td width="150" align="left" class="f12_1"><form:label path="identityCard">身份证号</form:label><span style="color: #ff0000">*</span>：</td>
+										<td align="left"><form:input path="identityCard" class="text13" size="30" id="identityCard" /></td>
+										<td align="left" style="color: red; font-size: 13px; height: 10px;" id="identityCardMessage" /></td>
+										<td align="left"></td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+						
+						<tr>
+							<td align="center" valign="middle" height="100" >
+								<table width="394" border="0" cellspacing="0" cellpadding="0">
+									<tr>
+										<td width="197" align="center" valign="top">
+											<a href="javascript:submitInfo();">
+												<img src="${ctx}/images/btns1.png" alt="升级" width="101" height="30" border="0" align="middle" />
+											</a>
+											<a href="javascript:window.close();"><img src="${ctx}/images/btn8.png" alt="关闭" width="101" height="30" border="0" align="middle"/></a>
+										</td>
+									</tr>
+								</table>
+							</td>
+						</tr>
+				</table>
+		</table>
+	</div>
+
+	</form:form>
+</body>
+</html>

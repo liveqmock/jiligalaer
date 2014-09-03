@@ -1,0 +1,464 @@
+package sy.service.base;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.hibernate.Query;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import sy.common.util.Constants;
+import sy.common.util.move.Mover;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.base.BasicRole;
+import sy.domain.model.base.BasicUser;
+import sy.domain.model.base.BasicUserRole;
+import sy.domain.model.finance.AccountPay;
+import sy.domain.vo.base.BasicRoleVo;
+import sy.domain.vo.base.BasicUserVo;
+import sy.domain.vo.cloud.CloudMdmAccountVo;
+import sy.domain.vo.expense.AccountExpenseVo;
+import sy.domain.vo.finance.AccountPayVo;
+import sy.domain.vo.product.CloudMdmVolumeVo;
+import sy.service.cloud.CloudMdmAccountServiceI;
+import sy.service.expense.AccountExpenseServiceI;
+import sy.service.finance.AccountPayServiceI;
+import sy.service.shared.BaseServiceTemplate;
+
+/**
+ * 
+ * @author lidongbo
+ *
+ */
+@Service("basicUserService")
+public class BasicUserService extends BaseServiceTemplate<BasicUser,BasicUserVo> implements BasicUserServiceI {
+
+	@SuppressWarnings("unused")
+	private static final Logger log = Logger.getLogger(BasicUserService.class);
+	
+	@Autowired
+	private BasicUserRoleServiceI basicUserRoleService;
+	@Autowired
+	private CloudMdmAccountServiceI cloudMdmAccountService;
+	@Autowired
+	private BasicUserQuotaServiceI basicUserQuotaService;
+	@Autowired
+	private AccountPayServiceI accountPayService;
+	@Autowired
+	private AccountExpenseServiceI accountExpenseService;
+	
+	public BasicUserRoleServiceI getBasicUserRoleService() {
+		return basicUserRoleService;
+	}
+
+	public void setBasicUserRoleService(BasicUserRoleServiceI basicUserRoleService) {
+		this.basicUserRoleService = basicUserRoleService;
+	}
+	
+	public CloudMdmAccountServiceI getCloudMdmAccountService() {
+		return cloudMdmAccountService;
+	}
+
+	public void setCloudMdmAccountService(
+			CloudMdmAccountServiceI cloudMdmAccountService) {
+		this.cloudMdmAccountService = cloudMdmAccountService;
+	}
+	
+	public BasicUserQuotaServiceI getBasicUserQuotaService() {
+		return basicUserQuotaService;
+	}
+
+	public void setBasicUserQuotaService(
+			BasicUserQuotaServiceI basicUserQuotaService) {
+		this.basicUserQuotaService = basicUserQuotaService;
+	}
+
+	public AccountPayServiceI getAccountPayService() {
+		return accountPayService;
+	}
+
+	public void setAccountPayService(AccountPayServiceI accountPayService) {
+		this.accountPayService = accountPayService;
+	}
+
+	public AccountExpenseServiceI getAccountExpenseService() {
+		return accountExpenseService;
+	}
+
+	public void setAccountExpenseService(
+			AccountExpenseServiceI accountExpenseService) {
+		this.accountExpenseService = accountExpenseService;
+	}
+	
+	
+	private int getTestUserNumber(){
+		List<BasicUserVo> list = this.find("from BasicUser where userTypeDictItem.dictItemId=?", Constants.USER_TYPE_SHIYONG);
+		if(list != null){
+			return list.size();
+		}else{
+			return 0;
+		}
+	}
+
+	@Override
+	public void presave(BasicUserVo vo,BasicUser po) throws ValidatorException{
+		if(!isUnique(po, "userAccount")){
+			throw new ValidatorException("userAccount","账户名已存在!");
+		}
+		
+		//验证测试账户个数
+		if(vo.getUserFlag() == Constants.USER_FLAG_ACCOUNT 
+				&& vo.getUserTypeDictItem().getDictItemId().equals(Constants.USER_TYPE_SHIYONG)
+				&& vo.getUserId() == null){
+			int textUserNum = this.basicUserQuotaService.getTestUserNumber();
+			if(textUserNum != -1 && getTestUserNumber()+1 > textUserNum){
+				throw new ValidatorException("userAccount","试用账户个数已试用完，请联系管理人员。");
+			}
+		}
+
+		if(null == vo.getRegisterDate()){
+			po.setRegisterDate(new Date());
+		}
+	}
+	
+	@Override
+	public void postsave(BasicUserVo vo,BasicUser po) throws ValidatorException{
+		if(StringUtils.isNotBlank(vo.getRoleIds())){
+			basicUserRoleService.save(po.getUserId(),vo.getRoleIds());
+		}else if(vo.getUserFlag()==Constants.USER_FLAG_ACCOUNT && vo.getState()==Constants.USER_STATE_PASS){
+			basicUserRoleService.save(po.getUserId(),"2");
+		}
+		
+		//试用账户：如果设置了试用账户额度，则生成一笔充值费用
+		this.createCreditAmount(vo);
+		
+		//调用接口插入账户信息
+		if(vo.getUserFlag() == Constants.USER_FLAG_ACCOUNT){
+			CloudMdmAccountVo accountVO = this.cloudMdmAccountService.findAccountByName(vo.getUserAccount());
+			if(accountVO == null){
+				this.cloudMdmAccountService.create(vo.getUserAccount(), vo.getUserAccount());
+			}
+		}
+	}
+
+	/**
+	 * 生成试用账户 - 试用额度充值记录
+	 * @param vo
+	 * @throws ValidatorException 
+	 */
+	public void createCreditAmount(BasicUserVo user) throws ValidatorException{
+		if(user.getUserFlag() == Constants.USER_FLAG_ACCOUNT && user.getUserTypeDictItem().getDictItemId().equals(Constants.USER_TYPE_SHIYONG)){
+			Double creditAmount = this.basicUserQuotaService.getTestCredit();
+			if(creditAmount != null & creditAmount != 0){
+				AccountPay po = super.findUnique(AccountPay.class, "from AccountPay where payType="+Constants.PAY_TYPE_GIFT+" and basicUser.userId=?", user.getUserId());
+				
+				//如果已赠送过试用金额，则不再进行赠送。
+				if(po == null){
+					AccountExpenseVo expVo = this.accountExpenseService.getExpenseByUserId(user.getUserId());
+					if(null == expVo){
+						expVo = new AccountExpenseVo();
+						expVo.setBasicUser(user);
+						expVo.setExpTotalAmount(0d);
+					}
+					
+					//总金额 = 上次总金额 + 本次充值金额
+					Double totalAmount = (null==expVo.getPayTotalAmount()) ? 0 : expVo.getPayTotalAmount();
+					expVo.setPayTotalAmount(creditAmount + totalAmount);
+					expVo.setPayUpdated(new Date());
+					
+					//充值明细信息
+					AccountPayVo payVo = new AccountPayVo();
+					payVo.setBasicUser(user);
+					Double remainingAmount = 0d;
+					if(null != expVo){
+						//充值后余额 = 充值总金额  - 费用总金额
+						remainingAmount = expVo.getPayTotalAmount() - expVo.getExpTotalAmount();
+					}
+					payVo.setRemainingAmount(remainingAmount);
+					payVo.setPayAmount(creditAmount);
+					payVo.setPayType(Constants.PAY_TYPE_GIFT);
+					
+					List<AccountPayVo> payList = new ArrayList<AccountPayVo>();
+					payList.add(payVo);
+					
+					this.accountPayService.savePay(payList, expVo);
+				}
+			}
+		}
+		
+	}
+	
+	/**
+	 * 根据用户名获取用户详细信息.
+	 */
+	@Override
+	public BasicUserVo getBasicUserVoByUserAccount(String userAccount)
+			throws Exception {
+		// TODO Auto-generated method stub
+    	BasicUserVo basicUserVo = null;
+		BasicUser basicUser = null;
+		if(StringUtils.isNotBlank(userAccount)){
+			basicUser =(BasicUser) createQuery("from BasicUser where userAccount=?", userAccount).uniqueResult();
+			if(null != basicUser){
+				basicUserVo = Mover.getInstance().move(basicUser,new BasicUserVo());
+			}
+		}
+		return basicUserVo;
+	}
+	
+	/**
+	 * 根据userId获取用户.
+	 */
+	@Override
+	public BasicUserVo getBasicUserVoByUserId(String userId)
+			throws Exception {
+		// TODO Auto-generated method stub
+    	BasicUserVo basicUserVo = null;
+		BasicUser basicUser = null;
+		if(StringUtils.isNotBlank(userId)){
+			basicUser =(BasicUser) createQuery("from BasicUser where userId=?", userId).uniqueResult();
+			if(null != basicUser){
+				basicUserVo = Mover.getInstance().move(basicUser,new BasicUserVo());
+			}
+		}
+		return basicUserVo;
+	}
+
+	@Override
+	public BasicRoleVo getBasicRoleVoByUserId(String userId) throws Exception {
+		// TODO Auto-generated method stub
+		BasicRoleVo basicRoleVo = null;
+		BasicRole basicRole = null;
+		if(StringUtils.isNotBlank(userId)){
+			basicRole =(BasicRole) createQuery("select r from BasicUserRole ur, BasicRole r where r.roleId=ur.basicRole and ur.basicUser='"+userId+"'").uniqueResult();
+			if(null != basicRole){
+				basicRoleVo = Mover.getInstance().move(basicRole,new BasicRoleVo());
+			}
+		}
+		
+		return basicRoleVo;
+	}
+
+	@Override
+	public List<BasicUserVo> getFilterBasicUserVoList(List<BasicUserVo> users,
+			List<BasicUserRole> basicUserRoleList) {
+		// TODO Auto-generated method stub
+		if(null == users || users.size() ==0){
+			return users;
+		}
+		if(null == basicUserRoleList || basicUserRoleList.size() ==0){
+			return users;
+		}
+		for(int i=0;i<users.size();i++){
+			for(int j=0;j<basicUserRoleList.size();j++){
+				if(users.get(i).getUserId().equals(basicUserRoleList.get(j).getBasicUser().getUserId())){
+					if(StringUtils.isBlank(users.get(i).getRoleName())){
+						users.get(i).setRoleName(basicUserRoleList.get(j).getBasicRole().getRoleName());
+					}else{
+						users.get(i).setRoleName(users.get(i).getRoleName()+","+basicUserRoleList.get(j).getBasicRole().getRoleName());
+					}	
+								
+				}
+			}
+		}
+		return users;
+	}
+
+	@Override
+	public String getParamByRequest(String[] requestValue) throws Exception {
+		// TODO Auto-generated method stub
+		String param ="";
+		if (requestValue != null && requestValue.length > 0) {
+			for (int i = 0; i < requestValue.length; i++) {
+				param += requestValue[i] + ",";
+			}
+			param=param.substring(0, param.length() - 1);
+		}
+		return param;
+	}
+
+	@Override
+	public List<BasicUserVo> getBaiscUserVoListByParentBaiscUserVo(
+			BasicUserVo basicUserVo) throws ValidatorException {
+		// TODO Auto-generated method stub
+		List<BasicUserVo> users = null;
+			if(null == basicUserVo){
+				return users;
+			}
+			users =this.find("from BasicUser bu where bu.parentBasicUser.userId=?", basicUserVo.getUserId());
+		
+		return users;
+	}
+
+	@Override
+	public int getBasicUserVoCount(String userId,int userFlag,String userAccountType) throws Exception {
+		StringBuilder sb = new StringBuilder();
+		sb.append("select count(*) from BasicUser u where 1=1");
+		if(userFlag != Constants.USER_FLAG_ADMIN){
+			sb.append(" and  u.parentBasicUser.userId='"+userId+"' ");
+		}else{
+			sb.append(" and  u.parentBasicUser is null");
+			sb.append(" and  u.userFlag ='1'");
+		}
+		if(null !=userAccountType && !"".equals(userAccountType)){
+			sb.append(" and u.userTypeDictItem.dictItemId in ("+userAccountType+")");
+		}
+		Query query=this.createQuery(sb.toString());
+		int count=((Number)query.iterate().next()).intValue();
+		return count;
+	}
+
+	
+	public int getNoApprovalUserCount(String userType, String userId){
+		StringBuilder sb = new StringBuilder();
+		sb.append("select count(*) from BasicUser u where 1=1 and u.state='"+Constants.USER_STATE_ACTIVE+"' ");
+		if(!"".equals(userType)){
+			sb.append(" and u.userTypeDictItem.dictItemId = '"+userType+"'");
+		}
+		if(!"".equals(userId)){
+			sb.append(" and u.parentBasicUser.userId = '"+userId+"'");
+		}
+		
+		Query query=this.createQuery(sb.toString());
+		int count=((Number)query.iterate().next()).intValue();
+		return count;
+	}
+	
+	public int getIpCount(String userType, String userId){
+		StringBuilder sb = new StringBuilder();
+		sb.append("select count(*) from CloudMdmIP i where 1=1 and i.dataState=1 ");
+		if(!"".equals(userId)){
+			sb.append(" and i.account = '"+userId+"'");
+		}
+		
+		Query query=this.createQuery(sb.toString());
+		int count=((Number)query.iterate().next()).intValue();
+		return count;
+	}
+
+	public Long getStorageSize(String userType, String userAccount){
+		StringBuilder sb = new StringBuilder();
+		sb.append("from CloudMdmVolume where dataState=1 ");
+		if(!"".equals(userAccount)){
+			sb.append(" and account = '"+userAccount+"' ");
+		}
+		List<CloudMdmVolumeVo> list = this.find(CloudMdmVolumeVo.class, sb.toString());
+		Long size = 0l;
+		for(CloudMdmVolumeVo vo : list){
+			if(null != vo.getSize()){
+				size += Long.valueOf(vo.getSize());
+			}
+		}
+		return size;
+	}
+	
+	public int getVmCount(String userType, String userId, String vmState){
+		StringBuilder sb = new StringBuilder();
+		sb.append("select 	count(*) ");
+		sb.append("from 	cloud_mdm_vm v join basic_user u on v.account=u.user_account ");
+		sb.append("where 	u.user_flag=1 and v.DATA_STATE=1 and v.STATE<>'"+Constants.VM_STATE_DESTROYED+"' ");
+		if(!"".equals(userType)){
+			//管理员查询
+			sb.append(" and u.USER_ACCOUNT_TYPE_ID='"+userType+"' ");
+		}
+		if(!"".equals(userId)){
+			sb.append(" and v.account='"+userId+"' ");
+		}
+		if(!"".equals(vmState)){
+			sb.append(" and v.STATE='"+vmState+"' ");
+		}
+		
+		Long count = super.getBaseDao().countBySQL(sb.toString());
+		return count.intValue();
+	}
+	
+	
+	public String getSubUserByParentUserId(String parentUserId){
+		String str = parentUserId + ",";
+		try{
+			List<BasicUserVo> userList = this.getBaiscUserVoListByParentBaiscUserVo(this.get(parentUserId));
+			if(userList != null && userList.size() > 0){
+				for(BasicUserVo vo : userList){
+					str += vo.getUserId() + ",";
+				}
+			}
+		} catch (ValidatorException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return str.substring(0, str.length()-1);
+	}
+	
+	public List<BasicUserVo> getRecommendedUsers(String accountId, String startDate, String endDate){
+		//审批通过账户
+		String sql = "from BasicUser where inviteBasicUser.userId=? and state="+Constants.USER_STATE_PASS+" ";
+		if(startDate != null){
+			sql += " and registerDate >= '"+startDate+"' ";
+		}
+		if(endDate != null){
+			sql += " and registerDate <= '"+endDate+"' ";
+		}
+		return this.find(sql, accountId);
+	}
+	
+	public String getRecommendedUserStr(String accountId, String startDate, String endDate){
+		List<BasicUserVo> list = this.getRecommendedUsers(accountId, startDate, endDate);
+		
+		String str = "";
+		if(list != null && list.size() > 0){
+			for(BasicUserVo vo : list){
+				str += "'" + vo.getUserId() + "',";
+			}
+		}
+		
+		if(!"".equals(str)){
+			str = str.substring(0, str.length()-1);
+		}
+		return str;
+	}
+	
+	public void batchStopOrEnabledUser(List<BasicUserVo> userList, BasicUserVo currUser, String state) throws ValidatorException{
+		int userState = Constants.USER_STATE_BLOCK;
+		if(Integer.parseInt(state) == Constants.USER_STATE_PASS){
+			userState = Constants.USER_STATE_PASS;
+		}
+		if(userList != null){
+			for(BasicUserVo vo : userList){
+				vo.setState(userState);
+				vo.setUpdated(new Date());
+				vo.setUpdatedBy(currUser.getUserAccount());
+				this.save(vo);
+				
+				List<BasicUserVo> subUserList = this.getBaiscUserVoListByParentBaiscUserVo(vo);
+				
+				if(subUserList != null){
+					//停用、启用账户下用户
+					for (BasicUserVo subUser : subUserList) {
+						subUser.setState(userState);
+						subUser.setUpdated(new Date());
+						subUser.setUpdatedBy(currUser.getUserAccount());
+						this.save(subUser);
+					}
+				}
+			}
+		}
+	}
+	
+	public void batchApproval(List<BasicUserVo> userList, BasicUserVo currUser, String approvalState, String rejectRemark) throws ValidatorException{
+		
+	}
+	
+	public boolean userCardIsExist(String userCard, String userAccount){
+		BasicUserVo basicUser = this.findUnique("from BasicUser where userAccount<>? and identityCard=?",userAccount,userCard);
+		if(null != basicUser){
+			return true;
+		}else{
+			return false;
+		}
+	}
+
+}

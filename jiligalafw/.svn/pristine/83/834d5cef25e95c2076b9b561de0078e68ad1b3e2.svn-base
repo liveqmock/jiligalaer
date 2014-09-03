@@ -1,0 +1,135 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>我的资源 - 我的虚拟机 - 更改服务</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+body {
+	margin:0px auto;
+	background-color:#F2F2F2;
+	background-repeat:repeat;
+	background-position:left;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+<script type="text/javascript">
+function selectResource(){
+
+}
+function enter(){
+	//alert(document.getElementsByName("radio").value);
+	//alert($("#radio1",document.frames('resourceForm').document).value);
+	//alert(document.getElementById('resourceForm').document.getElementsByName("radio").lenght);
+}
+</script>
+
+</head>
+  <body onLoad="">
+    <form:form modelAttribute="baseVoList" action="${ctx}/singleProd/selectResource.do" method="post" name="listForm">
+
+          <table width="962" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="center"  valign="top" bgcolor="#F2F2F2">
+                <table border="0" cellpadding="0" cellspacing="0">
+                  <tr>
+                    <td height="43" align="left" valign="middle"><span class="f18b2">更改服务</span></td>
+                    <td align="left" valign="middle">&nbsp;</td>
+                  </tr>
+                  <tr>
+                    <td height="5" colspan="2" ></td>
+                  </tr>
+                  <tr>
+                    <td height="2" colspan="2" align="center" valign="middle"><img src="${ctx}/images/sheet_line_2.jpg" width="940" height="2" /></td>
+                  </tr>
+                  <tr>
+                    <td height="10" colspan="2" ></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" >
+                      <div id="middle_sheet_pm_s_name">
+                        <a href="javascript:resourceInfo('compResource');"><img src="${ctx}/images/menu_s_21_s.png" border="0" align="absmiddle" id="compResource" /></a>
+                        <a href="javascript:resourceInfo('diskResource');"><img src="${ctx}/images/menu_s_22.png" border="0" align="absmiddle" id="diskResource" /></a>
+                      </div>
+                      
+						<script type="text/javascript">
+						function resourceInfo(url){
+							$("#compResource")[0].src="${ctx}/images/menu_s_21.png";
+							$("#diskResource")[0].src="${ctx}/images/menu_s_22.png";
+							
+							var map = getMap(); 
+							map.put("compResource","${ctx}/images/menu_s_21_s.png");
+							map.put("diskResource","${ctx}/images/menu_s_22_s.png");
+							
+							$("#"+url)[0].src=map.get(url);
+							
+							document.getElementById("serviceForm").src="${ctx}/vmware/"+url+".do";
+						}
+						</script>	
+	                      
+                      <div id="middle_sheet_pm_s">
+                      	<table width="855" border="0" cellpadding="0" cellspacing="0">
+                          <tr>
+                            <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_1.jpg" width="14" height="14" /></td>
+                            <td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_2.jpg"></td>
+                            <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_3.jpg" width="14" height="14" /></td>
+                          </tr>
+                          <tr>
+                            <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_4.jpg"></td>
+                            <td align="left" valign="top" bgcolor="#FFFFFF" height="380">
+                    			    
+                    			<iframe id="serviceForm" name="serviceIframeForm" src="${ctx}/vmware/compResource.do" frameborder="0" scrolling="no" height="100%" width="100%"></iframe>
+                    			    
+                            </td>
+                            <td width="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_5.jpg"></td>
+                          </tr>
+                          <tr>
+                            <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_6.jpg" width="14" height="14" /></td>
+                            <td height="14" align="left" valign="top" background="${ctx}/images/sheet_s_border_7.jpg"></td>
+                            <td width="14" height="14" align="left" valign="top"><img src="${ctx}/images/sheet_s_border_8.jpg" width="14" height="14" /></td>
+                          </tr>
+                          <tr><td colspan=3 height="10"></td></tr>
+                        </table>
+                      </div>
+                                          	
+                    </td>
+                  </tr>
+                  <tr>
+                    <td height="2" colspan="2" align="center" valign="middle"><img src="${ctx}/images/sheet_line_2.jpg" width="940" height="2" /></td>
+                  </tr>
+                  <tr>
+                    <td height="10" colspan="2" ></td>
+                  </tr>
+                  <tr>
+                    <td colspan="2" align="center" valign="middle">
+                    	<table width="394" border="0" cellspacing="0" cellpadding="0">
+                        <tr>
+                          <td align="center" valign="top"><a href="javascript:enter()"><img src="${ctx}/images/btn11.png" alt="确定" width="101" height="30" border="0" align="absmiddle"/></a></td>
+                          <td align="center" valign="top"><a href="javascript:window.close()"><img src="${ctx}/images/btn8.png" alt="关闭" width="101" height="30" border="0" align="absmiddle"/></a></td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td height="10" colspan="2" ></td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        
+	</form:form>
+  </body>
+</html>

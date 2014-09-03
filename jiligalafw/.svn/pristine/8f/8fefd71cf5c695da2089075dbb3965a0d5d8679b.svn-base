@@ -1,0 +1,159 @@
+/**
+ * 全部选中checkbok
+ */
+function checkAll(boxName,checkName){
+	var box=document.getElementById(boxName);
+	var boxList=document.getElementsByName(checkName);
+	for(var i=0;i<boxList.length;i++){
+		if(box.type=="checkbox" && boxList[i].type=="checkbox"){
+			if(box.checked==true){
+				boxList[i].checked=true;
+			}else{
+				boxList[i].checked=false;
+			}	
+		}
+	}
+}
+
+function openwindow(url,name,iWidth,iHeight){
+	var url; //转向网页的地址;
+	var name; //网页名称，可为空;
+	var iWidth; //弹出窗口的宽度;
+	var iHeight; //弹出窗口的高度;
+	var iTop = (window.screen.availHeight-60-iHeight)/2; //获得窗口的垂直位置;
+	var iLeft = (window.screen.availWidth-10-iWidth)/2; //获得窗口的水平位置;
+	window.open(url,name,'height='+iHeight+',,innerHeight='+iHeight+',width='+iWidth+',innerWidth='+iWidth+',top='+iTop+',left='+iLeft+',toolbar=no,menubar=no,scrollbars=yes,resizable=yes,location=no,status=no');
+}
+
+/**
+ * 定义简单Map
+ * @returns {___map_0}
+ */  
+function getMap() {
+	//初始化map_,给map_对象增加方法，使map_像Map    
+	var map_ = new Object();
+	map_.put = function(key, value) {
+		map_[key + '_'] = value;
+	};
+	map_.get = function(key) {
+		return map_[key + '_'];
+	};
+	map_.remove = function(key) {
+		delete map_[key + '_'];
+	};
+	map_.keyset = function() {
+		var ret = "";
+		for ( var p in map_) {
+			if (typeof p == 'string' && p.substring(p.length - 1) == "_") {
+				ret += ",";
+				ret += p.substring(0, p.length - 1);
+			}
+		}
+		if (ret == "") {
+			return ret.split(",");
+		} else {
+			return ret.substring(1).split(",");
+		}
+	};
+	return map_;    
+}  
+
+/**
+ * 金额验证
+ * @param val
+ * @returns
+ */
+function checkAmount(val){
+	if(val == ''){
+		return true;
+	}
+	reg = /^[-\+]?\d+(\.\d+)?$/;
+	return reg.test(val);
+}
+
+/**
+ * 获取当前日期
+ * @returns {String}
+ */
+function getCurrDate(){
+	var date = new Date();
+	var yy=date.getFullYear();
+	var mm=date.getMonth()+1;
+	var dd=date.getDate();
+	var dateStr=yy+'-';
+	if(mm<10){
+		dateStr = dateStr + '0' + mm + '-';
+	}else{
+		dateStr = dateStr + mm + '-';
+	}
+	if(dd<10){
+		dateStr = dateStr + '0' + dd;
+	}else{
+		dateStr = dateStr + dd;
+	}
+	return dateStr;
+}
+
+function onlyNum(frm)
+{
+   if(window.event.keyCode>57||window.event.keyCode<48)
+     {
+       window.event.keyCode=0;
+     }
+}
+
+//对电子邮件的验证
+function checkEmail(emailAddr){
+   //var myreg = /^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/;
+   //var myreg = /^([a-zA-Z0-9]+[_|_|.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|_|.]?)*[a-zA-Z0-9]+\.(?:com|cn)$/;
+   var myreg = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/;
+   /*
+   if(!myreg.test(emailAddr)){
+        //alert('提示\n\n请输入有效的E_mail！');
+        return false;
+   }*/
+   return myreg.test(emailAddr);
+}
+
+//去除单列中多行重复的文本，只保留第一行的文本
+function colapsnRowsText(cellNum){
+	//列名
+	var cellText = '';
+	$(".odd,.even").each(function(j,m){
+		//j=行
+		$(m).find("td").each(function(i,n){
+			//i=列
+			switch(i){
+				case cellNum:
+				if(cellText == $(n).text()){
+					$(this).text(""); 
+				}else{
+					cellText = $(n).text();
+				}
+				break;
+			} 
+		});
+	
+	}); 
+}
+
+function colapsnRowsHtml(cellNum){
+	//列名
+	var cellHtml = '';
+	$(".odd,.even").each(function(j,m){
+		//j=行
+		$(m).find("td").each(function(i,n){
+			//i=列
+			switch(i){
+				case cellNum:
+				if(cellHtml == $(n).html()){
+					$(this).html(""); 
+				}else{
+					cellHtml = $(n).html();
+				}
+				break;
+			} 
+		});
+	
+	}); 
+}

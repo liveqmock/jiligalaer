@@ -1,0 +1,255 @@
+package sy.domain.vo.product;
+
+import java.util.Date;
+
+import sy.domain.model.product.CloudMdmZone;
+import sy.domain.model.product.CloudUserOrder;
+import sy.domain.vo.base.BasicUserVo;
+import sy.domain.vo.shared.BaseVo;
+
+/**
+ * 订单资源审批VO
+ * 
+ * @author LB
+ * 
+ */
+public class CloudOrderApprovalVo extends BaseVo {
+	
+	private static final long serialVersionUID = -3624971544758545616L;
+	
+	private String id;
+	/**
+	 * 订单ID
+	 */
+	private CloudUserOrderVo cloudUserOrder;
+	/**
+	 * 订单用户
+	 */
+	private BasicUserVo basicUser;
+	/**
+	 * 订单账户
+	 */
+	private BasicUserVo basicAccount;
+	/**
+	 * 审批标记
+	 */
+	private String approvalFlag;
+	
+	private CloudMdmZoneVo cloudMdmZone;
+	
+	
+	/**
+	 * 数据中心：接口ID 36位
+	 */
+	private CloudMdmVmVo cloudMdmVm;
+	/**
+	 * 计算方案：接口ID 36位
+	 */
+	private CloudMdmCPUSolnVo cloudCpuSoln;
+	/**
+	 * 磁盘方案：接口ID 36位
+	 */
+	private CloudMdmDiskSolnVo cloudMdmDiskSoln;
+	/**
+	 * 磁盘大小：自定义时才有
+	 */
+	private Double diskSize;
+	/**
+	 * 模板：接口ID 36位
+	 */
+	private CloudMdmTemplateVo cloudMdmTemplate;
+	/**
+	 * 网络方案：接口ID 36位
+	 */
+	private CloudMdmNetworkSolnVo cloudMdmNetworkSoln;
+	/**
+	 * IP地址：接口ID 36位
+	 */
+	private CloudMdmIPVo cloudMdmIP;
+	
+	/**
+	 * 虚拟机名称
+	 */
+	private String vmName;
+	/**
+	 * 停机时间
+	 */
+	private Date stopTime;
+	/**
+	 * 网络ID：如果有多个,分割
+	 */
+	private String netIds;
+	
+	
+	private String createdBy;
+	
+	private Date created;
+	
+	private String updatedBy;
+	
+	private Date updated;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+
+	public BasicUserVo getBasicUser() {
+		return basicUser;
+	}
+
+	public void setBasicUser(BasicUserVo basicUser) {
+		this.basicUser = basicUser;
+	}
+
+	public BasicUserVo getBasicAccount() {
+		return basicAccount;
+	}
+
+	public void setBasicAccount(BasicUserVo basicAccount) {
+		this.basicAccount = basicAccount;
+	}
+
+	public String getApprovalFlag() {
+		return approvalFlag;
+	}
+
+	public void setApprovalFlag(String approvalFlag) {
+		this.approvalFlag = approvalFlag;
+	}
+
+	public CloudMdmVmVo getCloudMdmVm() {
+		return cloudMdmVm;
+	}
+
+	public void setCloudMdmVm(CloudMdmVmVo cloudMdmVm) {
+		this.cloudMdmVm = cloudMdmVm;
+	}
+
+	public CloudMdmCPUSolnVo getCloudCpuSoln() {
+		return cloudCpuSoln;
+	}
+
+	public CloudUserOrderVo getCloudUserOrder() {
+		return cloudUserOrder;
+	}
+
+	public void setCloudUserOrder(CloudUserOrderVo cloudUserOrder) {
+		this.cloudUserOrder = cloudUserOrder;
+	}
+
+	public void setCloudCpuSoln(CloudMdmCPUSolnVo cloudCpuSoln) {
+		this.cloudCpuSoln = cloudCpuSoln;
+	}
+
+	public CloudMdmDiskSolnVo getCloudMdmDiskSoln() {
+		return cloudMdmDiskSoln;
+	}
+
+
+	public void setCloudMdmDiskSoln(CloudMdmDiskSolnVo cloudMdmDiskSoln) {
+		this.cloudMdmDiskSoln = cloudMdmDiskSoln;
+	}
+
+	public Double getDiskSize() {
+		return diskSize;
+	}
+
+	public void setDiskSize(Double diskSize) {
+		this.diskSize = diskSize;
+	}
+
+	public CloudMdmTemplateVo getCloudMdmTemplate() {
+		return cloudMdmTemplate;
+	}
+
+	public void setCloudMdmTemplate(CloudMdmTemplateVo cloudMdmTemplate) {
+		this.cloudMdmTemplate = cloudMdmTemplate;
+	}
+
+	public CloudMdmNetworkSolnVo getCloudMdmNetworkSoln() {
+		return cloudMdmNetworkSoln;
+	}
+
+	public void setCloudMdmNetworkSoln(CloudMdmNetworkSolnVo cloudMdmNetworkSoln) {
+		this.cloudMdmNetworkSoln = cloudMdmNetworkSoln;
+	}
+
+	public CloudMdmIPVo getCloudMdmIP() {
+		return cloudMdmIP;
+	}
+
+	public void setCloudMdmIP(CloudMdmIPVo cloudMdmIP) {
+		this.cloudMdmIP = cloudMdmIP;
+	}
+
+	public String getVmName() {
+		return vmName;
+	}
+
+	public void setVmName(String vmName) {
+		this.vmName = vmName;
+	}
+
+	public Date getStopTime() {
+		return stopTime;
+	}
+
+	public void setStopTime(Date stopTime) {
+		this.stopTime = stopTime;
+	}
+
+	public String getNetIds() {
+		return netIds;
+	}
+
+	public void setNetIds(String netIds) {
+		this.netIds = netIds;
+	}
+
+	public String getCreatedBy() {
+		return createdBy;
+	}
+
+	public void setCreatedBy(String createdBy) {
+		this.createdBy = createdBy;
+	}
+
+	public Date getCreated() {
+		return created;
+	}
+
+	public void setCreated(Date created) {
+		this.created = created;
+	}
+
+	public String getUpdatedBy() {
+		return updatedBy;
+	}
+
+	public void setUpdatedBy(String updatedBy) {
+		this.updatedBy = updatedBy;
+	}
+
+	public Date getUpdated() {
+		return updated;
+	}
+
+	public void setUpdated(Date updated) {
+		this.updated = updated;
+	}
+
+	public CloudMdmZoneVo getCloudMdmZone() {
+		return cloudMdmZone;
+	}
+
+	public void setCloudMdmZone(CloudMdmZoneVo cloudMdmZone) {
+		this.cloudMdmZone = cloudMdmZone;
+	}
+
+	
+}

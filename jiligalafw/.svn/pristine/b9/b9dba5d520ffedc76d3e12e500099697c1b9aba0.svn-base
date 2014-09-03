@@ -1,0 +1,80 @@
+package sy.service.product;
+
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+
+import sy.common.model.QueryContext;
+import sy.common.util.validator.ValidatorException;
+import sy.domain.model.product.CloudMdmCPUSoln;
+import sy.domain.vo.product.CloudMdmCPUSolnVo;
+import sy.domain.vo.product.CloudProductDetail;
+
+/**
+ * 计算方案表
+ * 
+ * @author cs
+ * 
+ */
+@Service("cloudMdmCPUSolnService")
+public class CloudMdmCPUSolnService extends
+		SynchronizeDataService<CloudMdmCPUSoln, CloudMdmCPUSolnVo> implements
+		CloudMdmCPUSolnServiceI {
+
+	@Override
+	public List<CloudProductDetail> getCloudMdmCPUSolnListByItemId(
+			String itemId, QueryContext context) throws ValidatorException {
+		String sql ="SELECT mp.id as prodId,mp.PROD_NAME as prodName, mcs.id as cellId,mcs.DISPLAYTEXT as displayText ,mcs.CPUNUMBER as cpuNumber ,mcs.CPUSPEED as cpuSpeed ,mcs.MEMORY as memory,mcs.NAME  as cellName,pp.id as priceId"
+				   +" FROM cloud_mdm_product_item pi "
+				   +"  inner join cloud_mdm_cpu_soln mcs on mcs.id=pi.item_id   "
+				   +" inner join cloud_mdm_product mp on mp.ID=pi.PROD_ID "
+				   +" inner join cloud_product_price pp on pp.PROD_ID=mp.ID "
+				   +"    where pi.item_type='CPUSOLN' AND pi.state='1' and mcs.DATA_STATE=1 and now()>=  pp.EFFECTIVE_DATE  and now() <=pp.INVALID_DATE  ";
+		if(StringUtils.isNotBlank(itemId)){
+			sql =sql+" and pi.ITEM_ID='"+itemId+"'";
+		}
+		System.out.println(sql);
+		// TODO Auto-generated method stub
+		return this.listBySql(CloudProductDetail.class,context,sql);
+	}
+
+	@Override
+	public CloudProductDetail getCloudMdmCPUSolnDetailByProdId(String prodId)
+			throws ValidatorException {
+		// TODO Auto-generated method stub
+		String sql ="SELECT mp.id as prodId,mp.PROD_NAME as prodName, mcs.id as cellId,mcs.DISPLAYTEXT as displayText ,mcs.CPUNUMBER as cpuNumber ,mcs.CPUSPEED as cpuSpeed ,mcs.MEMORY as memory,mcs.NAME  as cellName,pp.id as priceId,pp.one_time_price as oneTimePrice,pp.year_price as yearPrice,pp.month_price as monthPrice,pp.day_price as dayPrice,pp.price_mode as priceMode,pi.id as prodItemId,mcs.if_id as interfaceId"
+				   +" FROM cloud_mdm_product_item pi "
+				   +"  inner join cloud_mdm_cpu_soln mcs on mcs.id=pi.item_id   "
+				   +" inner join cloud_mdm_product mp on mp.ID=pi.PROD_ID "
+				   +" inner join cloud_product_price pp on pp.PROD_ID=mp.ID "
+				   +"    where pi.item_type='CPUSOLN' AND pi.state='1'  and mcs.DATA_STATE=1 and now()>=  pp.EFFECTIVE_DATE  and now() <=pp.INVALID_DATE and mp.id='"+prodId+"'";
+		
+		return this.findUniqueBySql(CloudProductDetail.class, sql);
+	}
+
+	@Override
+	public CloudProductDetail getCloudMdmCPUSolnDetailByCombProdId(
+			String comnProdId) throws ValidatorException {
+		// TODO Auto-generated method stub
+		String sql ="SELECT mp.id as prodId,mp.PROD_NAME as prodName, mcs.id as cellId,mcs.DISPLAYTEXT as displayText ,mcs.CPUNUMBER as cpuNumber ,mcs.CPUSPEED as cpuSpeed ,mcs.MEMORY as memory,mcs.NAME  as cellName,pp.id as priceId"
+				   +" FROM cloud_mdm_product_item pi "
+				   +"  inner join cloud_mdm_cpu_soln mcs on mcs.id=pi.item_id   "
+				   +" inner join cloud_mdm_product mp on mp.ID=pi.PROD_ID "
+				   +" inner join cloud_product_price pp on pp.PROD_ID=mp.ID "
+				   +" inner join cloud_product_combination_price cpcp on cpcp.SINGLE_PROD_ID=mp.id"
+				   +"    where pi.item_type='CPUSOLN' AND pi.state='1'  and mcs.DATA_STATE=1 and now()>=  pp.EFFECTIVE_DATE  and now() <=pp.INVALID_DATE and cpcp.prod_id='"+comnProdId+"' and cpcp.cell_type='CPUSOLN'" ;
+		
+		return this.findUniqueBySql(CloudProductDetail.class, sql);
+	}
+
+	@Override
+	public CloudMdmCPUSolnVo getMdmCPUSolnByid(String id) {
+		return findUnique("From  CloudMdmCPUSoln Where  id = ?", id);
+	}
+	
+	@Override
+	public CloudMdmCPUSolnVo getMdmCPUSolnByInterfaceId(String interfaceId){
+		return findUnique("From  CloudMdmCPUSoln Where  interfaceId = ?", interfaceId);
+	}
+}

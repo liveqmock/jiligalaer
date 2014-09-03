@@ -1,0 +1,92 @@
+日期：2012-08-31 用户状态、登录操作
+/** 用户状态  0：停用，1：未激活，2：已激活待审批，3：审批通过，-2：审批拒绝，-1：注销 */
+/** 用户类型  0：超管，1：账户，2：用户*/
+
+晴耕雨读 2013-8-29 9:51:44
+已激活的账号，系统管理员可以审核了，审核通过后，账户才可以进入系统
+用户也一样，只是是账户来审核
+
+晴耕雨读  9:58:42
+账户（用户），注册成功后，是未激活状态。点击邮件链接后，是已激活状态。管理员（账户）审批通过后，是已审核状态，只有已审批通过的状态，才可以登入系统
+已激活和未审批，是表示一个状态
+
+晴耕雨读  9:59:47
+审核时，可以拒绝，就是拒绝状态，也是不可以登入系统的
+对已审批通过，做停用动作，就是停用状态，停用后，不可以进入系统
+
+晴耕雨读  10:03:12
+账户（用户）停用时，再次登入，系统提示用户已被停用，用户是否要激活，用户确认激活后，发送激活链接至用户邮箱，用户点击邮箱链接，即可以重新激活账户。
+
+晴耕雨读  10:04:13
+用户审批时，弹出页面，用于填写通过或拒绝的原因
+注销，就是那个涉及到钱的问题，必须账户钱为0，才可以注销。
+
+晴耕雨读  10:05:50
+且没有任何虚拟机
+注销后，就不可以再次登入，必须管理员修改状态，才可以登入
+整个流程就是这样的
+
+
+jsp - > controller　对应关系
+我的订单
+	myOrderList.jsp
+	MyOrderController.java
+
+我的账单
+	myAccountBillList.jsp
+	MyAccountBillController.java
+
+我的警告
+	myWarningList.jsp
+	WarningController.java
+	
+我的提醒
+	myWarningList.jsp
+	RemindController.java
+
+我的公告
+	noticeMessagesList.jsp
+	noticeMessagesEdit.jsp
+	NoticeMessagesController.java
+
+用户审批
+	userApprovalList.jsp
+	UserApprovalController.java
+
+资源审批
+	resourcesApprovalList.jsp
+	resourcesApprovalController.java
+
+账户控制板
+	accountPanel.jsp
+	UserPanelController.java
+
+管理员控制板
+	basicUserQuotaEdit.jsp
+	UserPanelController.java
+
+用户配额设置
+	basicUserQuotaEdit.jsp
+	BasicUserQuotaController.java
+
+产品购买-快速购买
+	productQuickBuy_finishBuy.jsp
+	productQuickBuy_hostConfig.jsp
+	productQuickBuy_selectVm.jsp
+	BasicUserQuotaController.java
+
+产品购买-自定义购买
+	productCustomBuy_computResource.jsp
+	productCustomBuy_diskResource.jsp
+	productCustomBuy_finishBuy.jsp
+	productCustomBuy_hostConfig.jsp
+	productCustomBuy_infoConfirm.jsp
+	productCustomBuy_networkSolution.jsp
+	productCustomBuy_selectDc.jsp
+	productCustomBuy_selectNet.jsp
+	productCustomBuy_selectTemplate.jsp
+	ProductCustomBuyController.java
+
+账户审批
+	accountApprovalList.jsp
+	accountApprovalController.java

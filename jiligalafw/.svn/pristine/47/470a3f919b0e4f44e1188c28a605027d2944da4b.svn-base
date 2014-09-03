@@ -1,0 +1,151 @@
+package sy.common.util;
+
+
+public class Constants {
+
+	/** 默认错误提示信息 */
+	public static final String DEFAULT_EXCEPTION_MSG = "系统错误";
+	/** 错误处理类型 */
+	public static final String EXCEPTION_TYPE_MSG = "msg";
+	
+	/** 用户审批邮件通知主题 */
+	public static final String USER_APPROVAL_MAIL_THEME = "瑞云浩天云计算@userType系统用户审批邮件";
+	/** 用户审批拒绝邮件模板 */
+	public static final String USER_APPROVAL_REJECT_TEMPLATE = "，您好！<br>@userType{userAccount}因为以下原因未通过审批：";
+	/** 用户审批通过邮件模板 */
+	public static final String USER_APPROVAL_PASS_TEMPLATE = "，您好！<br>@userType{userAccount}已通过审批！";
+	
+	/** 用户状态  0：停用，1：未激活，2：已激活待审批，3：审批通过，-2：审批拒绝，-1：注销 */
+	public static final int USER_STATE_BLOCK = 0;
+	public static final int USER_STATE_NOACTIVE = 1;
+	public static final int USER_STATE_ACTIVE = 2;
+	public static final int USER_STATE_PASS = 3;
+	public static final int USER_STATE_REJECT = -2; 
+	public static final int USER_STATE_LOGOFF = -1;
+	
+	/** 用户类型  0：超管，1：账户，2：用户*/
+	public static final int USER_FLAG_ADMIN = 0;
+	public static final int USER_FLAG_ACCOUNT = 1;
+	public static final int USER_FLAG_USER = 2;
+	
+	/** 市场促销活动类型 **/
+	public static final String PROMOTIONTYPE_SINA="singleActivity";
+	public static final String PROMOTIONTYPE_COMB="combinationActivity";
+	public static final String PROMOTIONTYPE_FIRST="firstRechargeActivity";
+	public static final String PROMOTIONTYPE_RECHARGE="rechargeRebateActivity";
+	public static final String PROMOTIONTYPE_RECOMMEND="recommendationActivity";
+	/** Session 存放用户*/
+	public static final String SESSION_USER_KEY ="_user";
+	/** Session 存放用户角色*/
+	public static final String SESSION_USER_ROLE_KEY ="_role";
+	
+	/**当前用户的资源信息*/
+	public static final String SESSION_RES_KEY ="_resources";
+	
+	/** 正式账户（字典项表中的值） */
+	public static final String USER_TYPE_ZHENGSHI="zhengshiaccount";
+	/** 试用账户（字典项表中的值） */
+	public static final String USER_TYPE_SHIYONG="shiyongaccount";
+	
+	/** 产品类型 ：单一*/
+	public static final String PROD_TYPE_SINGLE="0";
+	/** 产品类型：组合*/
+	public static final String PROD_TYPE_COMPLAINTION="1";
+	
+	/** 系统数据状态常量 */
+	/** 有效 */
+	public static final Integer VALID_STATE=1;
+	/** 无效 */
+	public static final Integer INVALID_STATE=0;
+	
+	/** 产品类型（单一和组合） */
+	/** 单一 ：计算方案 */
+	public static final String PROD_TYPE_CPU_SOLN="cpuSoln";
+	/** 单一 ：磁盘方案 */
+	public static final String PROD_TYPE_DISK_SOLN="diskSoln";
+	/** 单一 ：网络方案 */
+	public static final String PROD_TYPE_NETWORK_SOLN="networkSoln";
+	/** 单一 ：模板 */
+	public static final String PROD_TYPE_TEMPLATE="template";
+	/** 单一 ：IP */
+	public static final String PROD_TYPE_IP="ip";
+	/** 组合产品 */
+	public static final String PROD_TYPE_COMP_PROD="compProd";
+	
+	/** 充值类型：银联、支付宝、现金、转账、测试赠送、首次充值、充值返利、推荐返利 */
+	/** 现金 */
+	public static final Integer PAY_TYPE_CASH=1;
+	/** 转账 */
+	public static final Integer PAY_TYPE_TRANSFER=2;
+	/** 测试赠送 */
+	public static final Integer PAY_TYPE_GIFT=3;
+	/** 银联 */
+	public static final Integer PAY_TYPE_UNIONPAY=4;
+	/** 支付宝 */
+	public static final Integer PAY_TYPE_ALIPAY=5;
+	/** 首次充值 */
+	public static final Integer PAY_TYPE_FIRSTPAY=6;
+	/** 充值返利 */
+	public static final Integer PAY_TYPE_TOPUPREBATE=7;
+	/** 推荐返利 */
+	public static final Integer PAY_TYPE_RECOMMEND=8;
+	
+	/** 产品定价:一次性定价 */
+	public static final String PRICE_MODE_ONE_TIME="0";
+	/** 产品定价:周期性定价 */
+	public static final String PRICE_MODE_CYCLE="1";
+	
+	/** 计费类型：一次性 */
+	public static final String BILLING_TYPE_SINGLE="0";
+	
+	/** 计费类型：周期性 */
+	public static final String BILLING_TYPE_CYCLE="1";
+	
+	/** 计费周期 ：年*/
+	public static final String BILLING_CYCLE_YEAR="2";
+	/** 计费周期 ：月*/
+	public static final String BILLING_CYCLE_MONTH="3";
+	/** 计费周期 ：天*/
+	public static final String BILLING_CYCLE_DAY="4";
+	/** 计费周期 ：时*/
+	public static final String BILLING_CYCLE_HOUR="5";
+	
+	/** 计费标记：未开始 */
+	public static final Integer BILLING_FALG_STOP=0;
+	/** 计费标记：已开始 */
+	public static final Integer BILLING_FALG_START=1;
+	
+	/** IP地址单一产品初始化时，产品ID */
+	public static final String IP_PRODUCT_ID = "ipprice";
+	
+	/** 产品购买类型 */
+	public static final String PROD_BUY_SINGLE="singleBuy";
+	public static final String PROD_BUY_QUICK="quickBuy";
+	public static final String PROD_BUY_CUSTOM="customBuy";
+	/*订单类型*/
+	public static final Integer ORDER_TYPE_NETWORK=1;
+	public static final Integer ORDER_TYPE_IP=2;
+	public static final Integer ORDER_TYPE_VM=3;
+	public static final Integer ORDER_TYPE_DISK=4;
+	public static final Integer ORDER_TYPE_CPU=5;
+	
+	public static final String HTML_LINE = "<BR>";
+	
+	/** 警告消息类型 */
+	/** info */
+	public static final String EVENT_LEVEL_INFO="INFO";
+	/** error */
+	public static final String EVENT_LEVEL_ERROR="ERROR";
+	
+	/**虚拟机状态*/
+	public static final String VM_STATE_RUNNING="Running";
+	public static final String VM_STATE_STOPPED="Stopped";
+	public static final String VM_STATE_DESTROYED="Destroyed";
+	
+	/**促销返利类型*/
+	/**比例返利*/
+	public static final int REBATE_FLAG_RATIO = 1;
+	/**金额返利*/
+	public static final int REBATE_FLAG_AMOUNT = 2;
+	
+}

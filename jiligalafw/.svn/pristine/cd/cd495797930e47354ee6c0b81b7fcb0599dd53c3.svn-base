@@ -1,0 +1,336 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html id="content">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>控制板</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+body {
+	background-color: #F2F2F2;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}	
+</style>
+
+</head>
+  <body>
+    <form:form modelAttribute="baseVoList" action="${ctx}/panel/adminPanel.do" method="post" name="listForm">
+
+          <table width="962" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td align="center" bgcolor="#F2F2F2">
+              	
+                <div id="control_1">
+                  <table width="264" height="193" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="133" height="33"><img src="${ctx}/images/control_title_1.png" alt="" width="112" height="29" /></td>
+                      <td colspan="2"></td>
+                    </tr>
+                    <tr>
+                      <td rowspan="4" align="center" valign="bottom"><img src="${ctx}/images/control_ico_1.png" width="97" height="127" /></td>
+                      <td colspan="2" height="30"></td>
+                    </tr>
+                    <tr>
+                      <td align="left" height="50" width="42" class="f13_4" >总计:</td>
+                      <td align="left" class="f13_4"><a href="#" class="f18b1">${totalVm }</a>台</td>
+                    </tr>
+                    <tr>
+                      <td align="right" height="40" class="f13_4">正式:</td>
+                      <td align="left" class="f13_4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="f18b1">${zsVmCount }</a>台</td>
+                    </tr>
+                    <tr>
+                      <td align="right" height="40" class="f13_4">试用:</td>
+                      <td align="left" class="f13_4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="f18b1">${csVmCount }</a>台</td>
+                    </tr>
+                  </table>
+                </div>
+                <div id="control_1">
+                  <table width="264" height="193" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="133" height="33"><img src="${ctx}/images/control_title_2.png" alt="" width="112" height="29" /></td>
+                      <td colspan="2"></td>
+                    </tr>
+                    <tr>
+                      <td rowspan="4" align="center" valign="bottom"><img src="${ctx}/images/user_account.png" width="89" height="88" /></td>
+                      <td colspan="2" height="30"></td>
+                    </tr>
+                    <tr>
+                      <td align="left" height="50" width="42" class="f13_4" >总计:</td>
+                      <td align="left" class="f13_4"><a href="#" class="f18b1">${totalAccount}</a>个</td>
+                    </tr>
+                    <tr>
+                      <td align="right" height="40" class="f13_4">正式:</td>
+                      <td align="left" class="f13_4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="f18b1">${zhengshiAccount}</a>个</td>
+                    </tr>
+                    <tr>
+                      <td align="right" height="40" class="f13_4">试用:</td>
+                      <td align="left" class="f13_4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="f18b1">${shiyongAccount}</a>个</td>
+                    </tr>
+                  </table>
+                </div>
+                <div id="control_1">
+                  <table width="264" height="193" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="112" height="33"><img src="${ctx}/images/control_title_3.png" alt="" width="112" height="29" /></td>
+                      <td colspan="2"></td>
+                    </tr>
+                    <tr>
+                      <td rowspan="4" align="center" valign="bottom"><img src="${ctx}/images/control_ico_3.png" width="79" height="75" /></td>
+                      <td colspan="2" height="55"></td>
+                    </tr>
+                    <tr>
+                      <td align="right" height="40" class="f13_4">余额 :</td>
+                      <td align="left" class="f13_4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="f18b1">${balanceAmount }</a>元</td>
+                    </tr>
+                    <tr>
+                      <td align="right" height="40" class="f13_4">本月收入:</td>
+                      <td align="left" class="f13_4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="f18b1">${expAmount }</a>元</td>
+                    </tr>
+                    <tr>
+                      <td colspan="2" height="25"></td>
+                    </tr>
+                  </table>
+                </div>
+                
+                
+                <div id="control_1">
+                  <table width="264" height="193" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="112" height="33"><img src="${ctx}/images/control_title_4.png" alt="" width="112" height="29" /></td>
+                      <td colspan="2"></td>
+                    </tr>
+                    <tr>
+                      <td rowspan="4" align="center" valign="bottom"><img src="${ctx}/images/control_ico_4.png" width="57" height="81" /></td>
+                      <td colspan="2" height="30"></td>
+                    </tr>
+                    <tr>
+                      <td align="left" height="50" width="100" class="f13_4" >总计:</td>
+                      <td align="left" class="f13_4"><a href="#" class="f18b1">${zsApprovalCount+syApprovalCount }</a>个</td>
+                    </tr>
+                    <tr>
+                      <td align="right" height="40" class="f13_4">正式待审批账户:</td>
+                      <td align="center" class="f13_4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="f18b1">${zsApprovalCount }</a>个</td>
+                    </tr>
+                    <tr>
+                      <td align="right" height="40" class="f13_4">试用待审批账户:</td>
+                      <td align="center" class="f13_4">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" class="f18b1">${syApprovalCount }</a>个</td>
+                    </tr>
+                  </table>
+                </div>
+                <div id="control_2">  
+                  <table height="193" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="133" height="33"><img src="${ctx}/images/control_title_5.png" alt="" width="112" height="29" /></td>
+                      <td colspan="2" align="left" valign="bottom" class="f13_4">&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td height="54" colspan="3" align="left" valign="bottom"><img src="${ctx}/images/temp/control_ico_5.png" width="589" height="172" /></td>
+                    </tr>
+                  </table>
+                </div>
+         
+                <div id="control_4" align="center"><img src="${ctx}/images/sheet_line_1.jpg" width="900" height="2" /></div>
+                
+                <div id="control_3">
+                  <table width="900" border="0" cellpadding="0" cellspacing="0">
+                  	<tr>
+                      <td height="33"><img src="${ctx}/images/control_title_6.png" alt="" width="112" height="29" /></td>
+                    </tr>
+                    <tr>
+                      <td width="900" height="104" background="${ctx}/images/control_bg_02.jpg">
+                        <table width="100%" border="0" cellspacing="1" cellpadding="1">
+                          <tr height="30">
+                            <td width="20%" align="left"></td>
+                            <td width="20%" align="left" class="f15_1">共用IP地址</td>
+                            <td width="20%" align="left" class="f15_1">内存</td>
+                            <td width="20%" align="left" class="f15_1">存储</td>
+                            <td width="20%" align="left" class="f15_1">CPU</td>
+                          </tr>
+                          <tr height="20">
+                          	<td width="20%" align="left"></td>
+                            <td width="20%" align="left" class="f12_1">13个 / 48个</td>
+                            <td width="20%" align="left" class="f12_1">200GB / 800GB</td>
+                            <td width="20%" align="left" class="f12_1">200TB / 800TB</td>
+                            <td width="20%" align="left" class="f12_1">200GHZ / 800GHZ</td>
+                          </tr>
+                          <tr height="51">
+                          	<td width="20%" align="left" class="f12_1">&nbsp;&nbsp;区域：022<br></br>&nbsp;&nbsp;天津电信本部机房A-2</td>
+                            <td width="20%" align="left"><img src="${ctx}/images/temp/control_ico_6.jpg" alt="" width="122" height="18" /></td>
+                            <td width="20%" align="left"><img src="${ctx}/images/temp/control_ico_6.jpg" alt="" width="122" height="18" /></td>
+                            <td width="20%" align="left"><img src="${ctx}/images/temp/control_ico_6.jpg" alt="" width="122" height="18" /></td>
+                            <td width="20%" align="left"><img src="${ctx}/images/temp/control_ico_6.jpg" alt="" width="122" height="18" /></td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td height="10"></td>
+                    </tr>
+                    <tr>
+                      <td width="900" height="104" background="${ctx}/images/control_bg_02.jpg">
+                        <table width="100%" border="0" cellspacing="1" cellpadding="1">
+                          <tr height="30">
+                            <td width="20%" align="left"></td>
+                            <td width="20%" align="left" class="f15_1">共用IP地址</td>
+                            <td width="20%" align="left" class="f15_1">内存</td>
+                            <td width="20%" align="left" class="f15_1">存储</td>
+                            <td width="20%" align="left" class="f15_1">CPU</td>
+                          </tr>
+                          <tr height="20">
+                          	<td width="20%" align="left"></td>
+                            <td width="20%" align="left" class="f12_1">13个 / 48个</td>
+                            <td width="20%" align="left" class="f12_1">200GB / 800GB</td>
+                            <td width="20%" align="left" class="f12_1">200TB / 800TB</td>
+                            <td width="20%" align="left" class="f12_1">200GHZ / 800GHZ</td>
+                          </tr>
+                          <tr height="51">
+                          	<td width="20%" align="left" class="f12_1">&nbsp;&nbsp;区域：022<br></br>&nbsp;&nbsp;天津电信本部机房A-2</td>
+                            <td width="20%" align="left"><img src="${ctx}/images/temp/control_ico_6.jpg" alt="" width="122" height="18" /></td>
+                            <td width="20%" align="left"><img src="${ctx}/images/temp/control_ico_6.jpg" alt="" width="122" height="18" /></td>
+                            <td width="20%" align="left"><img src="${ctx}/images/temp/control_ico_6.jpg" alt="" width="122" height="18" /></td>
+                            <td width="20%" align="left"><img src="${ctx}/images/temp/control_ico_6.jpg" alt="" width="122" height="18" /></td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <div id="control_4" align="center"><img src="${ctx}/images/sheet_line_1.jpg" width="900" height="2" /></div>
+         
+                <div id="control_3">
+                  <table width="264" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="133" height="33"><img src="${ctx}/images/control_title_7.png" alt="" width="99" height="26" /></td>
+                      <td align="right" class="f13_4"><a href="#">更多</a>&nbsp;&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" align="left" valign="top">
+                      	<table width="264" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+                          <tr bgcolor="#92b8c1" height="20">
+                            <td width="13%" align="center" class="f12">序号</td>
+                            <td width="30%" align="center" class="f12">日期</td>
+                            <td width="57%" align="center" class="f12">内容</td>
+                          </tr>
+                        </table>
+                        
+                        <marquee height="120" scrollamount="1" direction="down" onmouseout="start()" onmouseover="stop()">
+                          <table width="264" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+                          <%int i=0; %>
+                          <c:forEach var="item" items="${messList}" >
+					        <%
+					        String bgcolor="#eef6f7";
+					        if(i++ % 2 == 0){bgcolor="#deecef"; }
+					        %>
+	                          <tr bgcolor="<%=bgcolor %>" height="20">
+	                            <td width="13%" align="center" class="f12_1"><%=i %></td>
+	                            <td width="30%" align="center" class="f12_1">
+	                            	<fmt:formatDate value="${item.created }" pattern="yyyy-MM-dd"/>
+	                            </td>
+	                            <td width="57%" align="left" class="f12_1"><a href="#">${item.messTitle }</a></td>
+	                          </tr>
+	                      </c:forEach>
+	                      </table>
+	                    </marquee>
+	                      
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <div id="control_3" style="height: 180px;">
+                  <table width="264" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="133" height="33"><img src="${ctx}/images/control_title_8.png" alt="" width="99" height="26" /></td>
+                      <td align="right" class="f13_4"><a href="#">更多</a>&nbsp;&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" align="left" valign="top">
+                      	<table width="264" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+                          <tr bgcolor="#92b8c1" height="20">
+                            <td width="13%" align="center" class="f12">序号</td>
+                            <td width="30%" align="center" class="f12">日期</td>
+                            <td width="57%" align="center" class="f12">内容</td>
+                          </tr>
+						</table>
+						
+						<marquee height="120" scrollamount="1" direction="down" onmouseout="start()" onmouseover="stop()">
+                          <table width="264" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+                          <%int m=0; %>
+                          <c:forEach var="item" items="${eventList}" >
+					        <%
+					        String bgcolor="#eef6f7";
+					        if(m++ % 2 == 0){bgcolor="#deecef"; }
+					        %>
+	                          <tr bgcolor="<%=bgcolor %>" height="20">
+	                            <td width="13%" align="center" class="f12_1"><%=m %></td>
+	                            <td width="30%" align="center" class="f12_1">
+	                            	<fmt:formatDate value="${item.created }" pattern="yyyy-MM-dd"/>
+	                            </td>
+	                            <td width="57%" align="left" class="f12_1"><a href="#">${item.description }</a></td>
+	                          </tr>
+	                      </c:forEach>
+                          </table>
+                        </marquee>
+                        
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <div id="control_3" style="padding-bottom: 15px;">
+                  <table width="264" border="0" cellpadding="0" cellspacing="0">
+                    <tr>
+                      <td width="133" height="33"><img src="${ctx}/images/control_title_9.png" alt="" width="99" height="26" /></td>
+                      <td align="right" class="f13_4"><a href="#">更多</a>&nbsp;&nbsp;</td>
+                    </tr>
+                    <tr>
+                      <td colspan="3" align="left" valign="top">
+                      	<table width="264" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+                          <tr bgcolor="#92b8c1" height="20">
+                            <td width="13%" align="center" class="f12">序号</td>
+                            <td width="30%" align="center" class="f12">日期</td>
+                            <td width="57%" align="center" class="f12">内容</td>
+                          </tr>
+                        </table>
+                        
+                        <marquee height="120" scrollamount="1" direction="down" onmouseout="start()" onmouseover="stop()">
+                          <table width="264" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+                          <%int n=0; %>
+                          <c:forEach var="item" items="${remindList}" >
+					        <%
+					        String bgcolor="#eef6f7";
+					        if(n++ % 2 == 0){bgcolor="#deecef"; }
+					        %>
+	                          <tr bgcolor="<%=bgcolor %>" height="20">
+	                            <td width="13%" align="center" class="f12_1"><%=n %></td>
+	                            <td width="30%" align="center" class="f12_1">
+	                            	<fmt:formatDate value="${item.created }" pattern="yyyy-MM-dd"/>
+	                            </td>
+	                            <td width="57%" align="left" class="f12_1"><a href="#">${item.message }</a></td>
+	                          </tr>
+	                      </c:forEach>
+                          </table>
+                        </marquee>
+                        
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                    
+              </td>
+            </tr>
+          </table>
+                   
+	</form:form>
+  </body>
+</html>

@@ -1,0 +1,456 @@
+package sy.controller.promotion;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.SessionAttributes;
+
+import sy.common.model.ECContext;
+import sy.common.model.QueryContext;
+import sy.common.util.Constants;
+import sy.common.util.DateUtil;
+import sy.common.util.StringUtils;
+import sy.common.util.validator.ValidatorException;
+import sy.controller.shared.BaseControllerTemplate;
+import sy.domain.vo.base.BasicDictItemVo;
+import sy.domain.vo.promotion.CloudPromotionActivityVo;
+import sy.domain.vo.promotion.CloudPromotionInfoVo;
+import sy.service.base.BasicDictItemServiceI;
+import sy.service.promotion.CloudPromotionInfoServiceI;
+import sy.service.promotion.CloudPromotionProductServiceI;
+import sy.service.shared.BasicServiceI;
+
+/**
+ * 促销活动维护
+ * @author luobin
+ * 
+ */
+@Controller
+@RequestMapping("/promotion")
+@SessionAttributes("cloudPromotionActivityVo")
+public class PromotionActivityController extends BaseControllerTemplate<CloudPromotionInfoVo> {
+	
+	@RequestMapping(value = "list")
+	public String list(HttpServletRequest request, ModelMap modelMap)
+			throws ValidatorException {
+		QueryContext context = new ECContext(request,modelMap,getNameSpace());
+		context.clearParmeters();
+		String startDateS = request.getParameter("startDateS");
+		String startDateE = request.getParameter("startDateE");
+		String endDateS = request.getParameter("endDateS");
+		String endDateE = request.getParameter("endDateE");
+		//context.clearParmeters();
+		initContextParams(request, context);
+		List<BasicDictItemVo> promotionTypeList = null;
+		try {
+			promotionTypeList = basicDictItemService
+					.getBaiscDictItemListByDictType("promotionType");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		request.setAttribute("promotionTypeList", promotionTypeList);
+		
+		String queryType = request.getParameter("queryType");
+		if ("0".equals(queryType) || "1".equals(queryType)
+				|| "2".equals(queryType) || "3".equals(queryType)) {
+			//context.put("$lk_userName", null);
+			context.put("$eq_basicPromotionType_itemCode", null);
+			context.put("$eq_rebateFlag", null);
+			context.put("$eq_state", null);
+			context.put("$in_basicPromotionType_itemCode", null);
+			context.put("$in_rebateFlag", null);
+			context.put("$in_state", null);
+			context.put("$le_startDate", null);
+			context.put("$ge_startDate", null);
+			context.put("$le_endDate",null);
+			context.put("$ge_endDate",null);
+			if ("0".equals(queryType)) {
+				String promotionType = request.getParameter("promotionType");
+				context.put("$eq_basicPromotionType_itemCode",promotionType);
+			} else if ("1".equals(queryType)) {
+				String rebateFlag = request.getParameter("rebateFlag");
+				context.put("$eq_rebateFlag",rebateFlag);
+			} else if ("2".equals(queryType)) {
+				String stateFlag = request.getParameter("stateFlag");
+				context.put("$eq_state", stateFlag);
+			} else if ("3".equals(queryType)) {
+				// 1:今日    2:本周     3:上周    4: 本月     5:上月     6:其它
+				String timeFlag = request.getParameter("timeFlag");
+				if ("1".equals(timeFlag)){
+					context.put("$le_startDate", DateUtil.getTodayDate());
+					context.put("$ge_endDate", DateUtil.getTodayDate());
+					
+				} else if ("2".equals(timeFlag)){
+					context.put("$le_startDate", DateUtil.getFirstDayOfCurrWeek());
+					context.put("$ge_endDate", DateUtil.getLastDayOfCurrWeek());
+					
+				} else if ("3".equals(timeFlag)){
+					context.put("$le_startDate", DateUtil.getFirstDayOfLastWeek());
+					context.put("$ge_endDate", DateUtil.getLastDayOfLastWeek());
+					
+				} else if ("4".equals(timeFlag)){
+					context.put("$le_startDate", DateUtil.getMonthFirstDay(null));
+					context.put("$ge_endDate", DateUtil.getMonthLastDay(null));
+					
+				} else if ("5".equals(timeFlag)){
+					context.put("$le_startDate", DateUtil.getFirstDayOfLastMonth());
+					context.put("$ge_endDate", DateUtil.getLastDayOfLastMonth());
+					
+				} else if ("6".equals(timeFlag)){
+					context.put("$le_endDate", DateUtil.getFirstDayOfLastMonth());
+				}
+			} 
+		} else {
+			try{
+				if (startDateS != null && startDateS.length()>0){
+					context.put("$ge_startDate", startDateS);
+				}
+				if (startDateE != null && startDateE.length()>0){
+					context.put("$le_startDate", startDateE);
+				}
+				if (endDateS != null && endDateS.length()>0){
+					context.put("$ge_endDate", endDateS);
+				}
+				if (endDateE != null && endDateE.length()>0){
+					context.put("$le_endDate", endDateE);
+				}
+				
+				String[] promotionTypeArr = request.getParameterValues("chkPromotionType");
+				String [] reBateArr = request.getParameterValues("chkRebate");
+				String [] stateArr = request.getParameterValues("state");
+				
+				String conPromotionType = getConditionFromArray(promotionTypeArr);
+				String conReBate =getConditionFromArray(reBateArr);
+				String conState =getConditionFromArray(stateArr);
+				
+				if(StringUtils.isNotBlank(conPromotionType)){
+					context.put("$in_basicPromotionType_itemCode", conPromotionType);
+					request.setAttribute("chkPromotionType",conPromotionType);
+				}
+				
+				if(StringUtils.isNotBlank(conReBate)){
+					context.put("$in_rebateFlag", conReBate);
+					request.setAttribute("chkRebate",conReBate);
+				}
+				
+				if(StringUtils.isNotBlank(conState)){
+					context.put("$in_state", conState);
+					request.setAttribute("state",conState);
+				}
+			}catch(Exception e){
+				e.printStackTrace();
+			}
+		}
+		
+		List<CloudPromotionInfoVo> list = getService().list(context);
+		afterQueryList(request, list, context, modelMap);
+		request.setAttribute("pageFlag", request.getParameter("pageFlag"));
+		request.setAttribute("queryType", queryType);
+		request.setAttribute("startDateS", startDateS);
+		request.setAttribute("startDateE", startDateE);
+		request.setAttribute("endDateS", endDateS);
+		request.setAttribute("endDateE", endDateE);
+		return getListView();
+	}
+	
+	/**
+	 * 已有促销活动列表
+	 */
+	@RequestMapping(value = "listSp")
+	public String listSp(HttpServletRequest request, ModelMap modelMap)
+			throws ValidatorException {
+
+		QueryContext context = new ECContext(request,modelMap,getNameSpace());
+		context.clearParmeters();
+		
+		String promotionType=request.getParameter("promotionType");
+		if(promotionType != null && promotionType.length()>0) {
+			context.put("$eq_basicPromotionType_itemCode", promotionType);
+		}
+		
+		initContextParams(request, context);
+		List<CloudPromotionInfoVo> list = getService().list(context);
+		afterQueryList(request, list, context, modelMap);
+		return getViewPath()+"/promotionListSp";
+	}
+	
+	@RequestMapping(value = "delete")
+	public String delete(HttpServletRequest request, ModelMap modelMap,
+			String id) throws ValidatorException {
+		cloudPromotionProductService.deleteByPromId(id);
+		getService().delete(id);
+		return getRedirectStr(getDeletedView());
+	}
+	
+	@RequestMapping(value = "edit")
+	public String edit(HttpServletRequest request, ModelMap modelMap, String id)
+			throws ValidatorException {
+		
+		CloudPromotionInfoVo po = getService().get(id);
+		
+		String promotionType = po.getBasicPromotionType().getItemCode();
+		
+		CloudPromotionActivityVo cloudPromotionActivityVo = new CloudPromotionActivityVo();
+		cloudPromotionActivityVo.setPromotionId(po.getPromotionId());
+		cloudPromotionActivityVo.setPromotionType(promotionType);
+		cloudPromotionActivityVo.setActivityName(po.getActivityName());
+		cloudPromotionActivityVo.setStartDate(DateUtil.format(po.getStartDate(),"yyyy-MM-dd"));
+		cloudPromotionActivityVo.setEndDate(DateUtil.format(po.getEndDate(),"yyyy-MM-dd"));
+		cloudPromotionActivityVo.setRebateFlag(po.getRebateFlag());
+		cloudPromotionActivityVo.setRebateAmount(po.getRebateAmount().toString());
+		if (null != po.getRebateThresholdValue()){
+			cloudPromotionActivityVo.setRebateThresholdValue(po.getRebateThresholdValue().toString());
+		}
+		cloudPromotionActivityVo.setState(po.getState());
+		modelMap.put("cloudPromotionActivityVo", cloudPromotionActivityVo);
+		return getForwardPathByPromotionType(promotionType);
+	}
+	
+	/**
+	 * 单一产品列表
+	 */
+	@RequestMapping(value = "singleProductList")
+	public String singleProductList(HttpServletRequest request, ModelMap modelMap)
+			throws ValidatorException {
+		String promotionId = request.getParameter("promotionId");
+		String prodName=request.getParameter("prodName");
+		List<Object[]> singleProdList = this.cloudPromotionInfoService.getSingleProdList(promotionId,prodName);
+		request.setAttribute("singleProdList", singleProdList);
+		return getViewPath()+"/singleProductList";
+	}
+	
+	/**
+	 * 组合产品列表
+	 */
+	@RequestMapping(value = "combinationProductList")
+	public String combinationProductList(HttpServletRequest request, ModelMap modelMap)
+			throws ValidatorException {
+		String promotionId = request.getParameter("promotionId");
+		String prodName=request.getParameter("prodName");
+		List<Object[]> combProdList = this.cloudPromotionInfoService.getcombProdList(promotionId,prodName);
+		request.setAttribute("combProdList", combProdList);
+		return getViewPath()+"/combinationProductList";
+	}
+
+	/**
+	 * 初始化编辑页面
+	 */
+	@RequestMapping(method = RequestMethod.GET, value = "initEdit")
+	public String initEdit(HttpServletRequest request , HttpServletResponse response , CloudPromotionActivityVo vo , ModelMap modelMap) {
+		String promotionType=request.getParameter("promotionType");
+		CloudPromotionActivityVo cloudPromotionActivityVo = new CloudPromotionActivityVo();
+		
+		if(Constants.PROMOTIONTYPE_SINA.equals(promotionType)){
+			//获取已经创建的单一产品，在创建活动时需要选择具体产品
+			cloudPromotionActivityVo.setRebateFlag(1);
+			cloudPromotionActivityVo.setState(1);
+			cloudPromotionActivityVo.setPromotionType(Constants.PROMOTIONTYPE_SINA);
+			modelMap.put("cloudPromotionActivityVo", cloudPromotionActivityVo);
+			return getForwardPathByPromotionType(Constants.PROMOTIONTYPE_SINA);
+		}else if(Constants.PROMOTIONTYPE_COMB.equals(promotionType)){
+			//获取已经创建的组合产品，在创建活动时需要选择具体产品
+			cloudPromotionActivityVo.setRebateFlag(1);
+			cloudPromotionActivityVo.setState(1);
+			cloudPromotionActivityVo.setPromotionType(Constants.PROMOTIONTYPE_COMB);
+			modelMap.put("cloudPromotionActivityVo", cloudPromotionActivityVo);
+			return getForwardPathByPromotionType(Constants.PROMOTIONTYPE_COMB);
+		}else if(Constants.PROMOTIONTYPE_FIRST.equals(promotionType)){
+			//获取已经存在的首次充值礼包活动
+			cloudPromotionActivityVo.setPromotionType(Constants.PROMOTIONTYPE_FIRST);
+			cloudPromotionActivityVo.setState(1);
+			modelMap.put("cloudPromotionActivityVo", cloudPromotionActivityVo);
+			return getForwardPathByPromotionType(Constants.PROMOTIONTYPE_FIRST);
+		}else if(Constants.PROMOTIONTYPE_RECHARGE.equals(promotionType)){
+			//获取已经存在的首次充值返利活动
+			cloudPromotionActivityVo.setRebateFlag(1);
+			cloudPromotionActivityVo.setState(1);
+			cloudPromotionActivityVo.setPromotionType(Constants.PROMOTIONTYPE_RECHARGE);
+			modelMap.put("cloudPromotionActivityVo", cloudPromotionActivityVo);
+			return getForwardPathByPromotionType(Constants.PROMOTIONTYPE_RECHARGE);
+		}else if(Constants.PROMOTIONTYPE_RECOMMEND.equals(promotionType)){
+			//获取已经存在的首次推荐返利活动
+			cloudPromotionActivityVo.setRebateFlag(1);
+			cloudPromotionActivityVo.setState(1);
+			cloudPromotionActivityVo.setPromotionType(Constants.PROMOTIONTYPE_RECOMMEND);
+			modelMap.put("cloudPromotionActivityVo", cloudPromotionActivityVo);
+			return getForwardPathByPromotionType(Constants.PROMOTIONTYPE_RECOMMEND);
+		}
+		
+		return null;
+	}
+	
+	/**
+	 * 保存促销活动信息
+	 */
+	@RequestMapping(value = "savePromotionInfo")
+	public String savePromotionInfo(HttpServletRequest request,ModelMap modelMap, @Valid CloudPromotionActivityVo vo, BindingResult errors){
+		if(StringUtils.isBlank(vo.getActivityName())){
+			errors.rejectValue("activityName",null, "活动名称不能为空!");
+			return getForwardPathByPromotionType(vo.getPromotionType());
+		}
+		if(StringUtils.isBlank(vo.getStartDate()) || StringUtils.isBlank(vo.getEndDate())){
+			errors.rejectValue("startDate",null, "活动起止时间不能为空!");
+			return getForwardPathByPromotionType(vo.getPromotionType());
+		}
+		if(StringUtils.isBlank(vo.getRebateAmount())){
+			errors.rejectValue("rebateAmount",null, "返利额度不能为空!");
+			return getForwardPathByPromotionType(vo.getPromotionType());
+		}
+		
+		if(vo.getPromotionType().equals(Constants.PROMOTIONTYPE_RECHARGE) || vo.getPromotionType().equals(Constants.PROMOTIONTYPE_RECOMMEND)){
+			if(StringUtils.isBlank(vo.getRebateThresholdValue())){
+				errors.rejectValue("rebateAmount",null, "返利条件不能为空!");
+				return getForwardPathByPromotionType(vo.getPromotionType());
+			}
+		}
+		
+		
+		
+		CloudPromotionInfoVo cloudPromotionInfoVo = new CloudPromotionInfoVo();
+		try {
+			cloudPromotionInfoVo = this.genCloudPromotionInfo(vo);
+			this.cloudPromotionInfoService.save(cloudPromotionInfoVo);
+			if(vo.getPromotionType().equals(Constants.PROMOTIONTYPE_SINA) || vo.getPromotionType().equals(Constants.PROMOTIONTYPE_COMB)){
+				String prodIds = request.getParameter("prodIds");
+				this.cloudPromotionProductService.save(cloudPromotionInfoVo.getPromotionId(), prodIds);
+			}
+			return getRedirectStr(getCloseView());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	private String getForwardPathByPromotionType(String type){
+		if(Constants.PROMOTIONTYPE_SINA.equals(type)){
+			//获取已经创建的单一产品，在创建活动时需要选择具体产品
+			return getViewPath()+"/singleActivityEdit";
+		}else if(Constants.PROMOTIONTYPE_COMB.equals(type)){
+			//获取已经创建的组合产品，在创建活动时需要选择具体产品
+			return getViewPath()+"/combinationActivityEdit";
+		}else if(Constants.PROMOTIONTYPE_FIRST.equals(type)){
+			//获取已经存在的首次充值礼包活动
+			return getViewPath()+"/firstRechargeActivityEdit";
+		}else if(Constants.PROMOTIONTYPE_RECHARGE.equals(type)){
+			//获取已经存在的首次充值返利活动
+			return getViewPath()+"/rechargeRebateActivityEdit";
+		}else if(Constants.PROMOTIONTYPE_RECOMMEND.equals(type)){
+			//获取已经存在的首次推荐返利活动
+			return getViewPath()+"/recommendationActivityEdit";
+		}
+		return null;
+	}
+	
+	/**
+	 * 账户、用户登录首页下面的促销信息展示
+	 * @param request
+	 * @param response
+	 * @param vo
+	 * @param modelMap
+	 * @return
+	 * @throws ValidatorException 
+	 */
+	@RequestMapping(value = "promotionInfo")
+	public String promotionInfo(HttpServletRequest request,
+			HttpServletResponse response, CloudPromotionActivityVo vo, ModelMap modelMap) throws ValidatorException {
+		QueryContext context = new ECContext(request,modelMap,getNameSpace());
+		context.clearParmeters();
+		initContextParams(request, context);
+		List<CloudPromotionInfoVo> list = getService().list(context);
+		afterQueryList(request, list, context, modelMap);
+		
+		List<BasicDictItemVo> promotionTypeList = null;
+		try {
+			promotionTypeList = basicDictItemService
+					.getBaiscDictItemListByDictType("promotionType");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		request.setAttribute("promotionTypeList", promotionTypeList);
+		
+		request.setAttribute("pageFlag","1");
+		return getListView();
+	}
+	
+	public CloudPromotionInfoVo genCloudPromotionInfo(CloudPromotionActivityVo vo) throws Exception {
+		CloudPromotionInfoVo cloudPromotionInfoVo = new CloudPromotionInfoVo();
+		if (vo.getPromotionId() != null) {
+			cloudPromotionInfoVo.setPromotionId(vo.getPromotionId());
+		}
+		cloudPromotionInfoVo.setActivityName(vo.getActivityName());
+		cloudPromotionInfoVo.setBasicPromotionType(this.basicDictItemService.getBasicDictItemVoByItemCode("promotionType",vo.getPromotionType()));
+		cloudPromotionInfoVo.setStartDate(DateUtil.convertDate(vo.getStartDate()));
+		cloudPromotionInfoVo.setEndDate(DateUtil.convertDate(vo.getEndDate()));
+		cloudPromotionInfoVo.setRebateFlag(vo.getRebateFlag());
+		cloudPromotionInfoVo.setRebateAmount(BigDecimal.valueOf(Double.parseDouble(vo.getRebateAmount())));
+		if(vo.getPromotionType().equals(Constants.PROMOTIONTYPE_RECHARGE) || vo.getPromotionType().equals(Constants.PROMOTIONTYPE_RECOMMEND)){
+			cloudPromotionInfoVo.setRebateThresholdValue(BigDecimal.valueOf(Double.parseDouble(vo.getRebateThresholdValue())));
+			if (vo.getRebateFlag() == 1) {
+				//按比例返
+				cloudPromotionInfoVo.setRebatePercentage(BigDecimal.valueOf(Double.parseDouble(vo.getRebateAmount())/100));
+			} else {
+				//按金额返回
+				cloudPromotionInfoVo.setRebatePercentage(BigDecimal.valueOf(Double.parseDouble(vo.getRebateAmount())/Double.parseDouble(vo.getRebateThresholdValue())));
+			}
+		}
+		cloudPromotionInfoVo.setState(vo.getState());
+		return cloudPromotionInfoVo;
+	}
+	
+	public String getConditionFromArray(String[] vArray) throws Exception {
+		String param ="";
+		if (vArray != null && vArray.length > 0) {
+			for (int i = 0; i < vArray.length; i++) {
+				param += vArray[i] + ",";
+			}
+			param=param.substring(0, param.length() - 1);
+		}
+		return param;
+	}
+
+	@Override
+	public BasicServiceI<CloudPromotionInfoVo> getService() {
+		return cloudPromotionInfoService;
+	}
+
+	public BasicDictItemServiceI getBasicDictItemService() {
+		return basicDictItemService;
+	}
+
+	public void setBasicDictItemService(BasicDictItemServiceI basicDictItemService) {
+		this.basicDictItemService = basicDictItemService;
+	}
+
+	public void setCloudPromotionInfoService(
+			CloudPromotionInfoServiceI cloudPromotionInfoService) {
+		this.cloudPromotionInfoService = cloudPromotionInfoService;
+	}
+
+	public void setCloudPromotionProductService(
+			CloudPromotionProductServiceI cloudPromotionProductService) {
+		this.cloudPromotionProductService = cloudPromotionProductService;
+	}
+
+	@Override
+	public String getViewPath() {
+		return "promotion";
+	}
+	
+	@Autowired
+	private CloudPromotionInfoServiceI cloudPromotionInfoService;
+	@Autowired
+	private BasicDictItemServiceI basicDictItemService;
+	@Autowired
+	private CloudPromotionProductServiceI cloudPromotionProductService;
+}

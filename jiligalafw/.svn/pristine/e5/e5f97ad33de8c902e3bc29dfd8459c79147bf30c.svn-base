@@ -1,0 +1,305 @@
+<%@ include file="/commons/taglibs.jsp"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html id="content">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<%@ include file="/commons/meta.jsp"%>
+<title>产品购买-快速购买-选择计费</title>
+<link href="${ctx}/css/table.css" rel="stylesheet" />
+<link href="${ctx}/css/css_main.css" rel="stylesheet" />
+<link href="${ctx}/css/css_font.css" rel="stylesheet" />
+<script type="text/javascript" src="${ctx}/scripts/common.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/My97DatePicker/WdatePicker.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-1.6.4.min.js"></script>
+<script type="text/javascript" src="${ctx}/widgets/jquery/jquery-impromptu.3.2.min.js"></script>
+<style type="text/css">
+body {
+	margin:0px auto;
+	background-image:url(../images/middle_bg.jpg);
+	background-repeat:repeat;
+	background-position:left;
+	margin-left: 0px;
+	margin-top: 0px;
+	margin-right: 0px;
+	margin-bottom: 0px;
+}
+</style>
+<script type="text/javascript">
+function next(){
+	var comPprices =  document.getElementsByName("comPprice");
+	var ipPrices =  document.getElementsByName("ipPrice");
+	var networkFlag = document.getElementsByName("networkFlag");
+	var ipPrice ="";
+	var comPprice ="";
+	for ( var i = 0; i < comPprices.length; i++) {
+		if (comPprices.item(i).checked) {
+			comPprice = comPprice + comPprices.item(i).getAttribute("value");
+			continue;
+		}
+	}
+	for ( var i = 0; i < ipPrices.length; i++) {
+		if (ipPrices.item(i).checked) {
+			ipPrice = ipPrice + ipPrices.item(i).getAttribute("value");
+			continue;
+		}
+	}
+	
+	if(comPprice==""){
+		alert("请选择符合组合产品的计费方式!");
+		return;
+	}
+
+	if(ipPrice=="" && networkFlag=='1'){
+		alert("请选择网络方案的计费方式!");
+		return;
+	}
+	var form = document.forms.listForm;
+	form.action="${ctx}/quickBuy/finishBuy.do?comPriceType="+comPprice+"&ipPrice"+ipPrice+"&networkFlag"+networkFlag;
+	waitloading();
+	form.submit();
+}
+function previous(){
+	var form = document.forms.listForm;
+	form.action="${ctx}/quickBuy/hostConfig.do";
+	form.submit();
+}
+function customBuy(){
+	var form = document.forms.listForm;
+	form.action="${ctx}/customBuy/selectDc.do";
+	form.submit();		
+}
+function getselectFlag() {
+	var quickNetWorkType = '${quickNetWorkType}';
+	var sts = quickNetWorkType.split(",");
+	var st = document.getElementsByName("ipPrice");
+	for ( var i = 0; i < st.length; i++) {
+		for ( var j = 0; j < sts.length; j++) {
+			if (st[i].value == sts[j]) {
+				st[i].checked = true;
+			}
+		}
+	}
+}
+
+</script>
+
+</head>
+  <body onLoad="getselectFlag()">
+    <form:form modelAttribute="baseVoList" action="${ctx}/quickBuy/selectBilling.do" method="post" name="listForm">
+    <input type="hidden" name="networkFlag" id="networkFlag" value="${networkFlag}" />
+		<!-- 左侧 面板-->
+        <div id="middle_sheet_buy_01">
+          <table width="210" border="0" cellpadding="0" cellspacing="0">
+            <tr>
+              <td colspan="4" align="left" valign="top">
+              	<img src="${ctx}/images/buy_title_01.png" width="210" height="29" border="0" usemap="#Map"/>
+              	<map name="Map" id="Map">
+			    	<area shape="rect" coords="8,10,93,27" href="javascript:customBuy();" />
+			    	<area shape="rect" coords="113,5,195,26"/>
+			    </map>
+              </td>
+            </tr>
+            <tr>
+            	<td width="20" rowspan="12" height="20"></td>
+              	<td colspan="2" height="20"></td>
+              	<td width="20" rowspan="12" height="20"></td>
+            </tr>
+            <tr>
+              <td colspan="2" height="25" align="left" class="f15_1"><img src="${ctx}/images/buy_ico_01.png" width="18" height="18" align="absmiddle"/>&nbsp;购买流程</td>
+            </tr>
+            <tr>
+              <td width="40" align="right" valign="bottom"><img src="${ctx}/images/buy_ico_02.png" width="18" height="17"/></td>
+              <td align="left" height="25" valign="bottom" class="f13_5">&nbsp;1.选择虚拟机</td>
+            </tr>
+            <tr><td colspan="4"><hr style="border: 1px dashed #ccc; width: 84%; height:1px;" /></td></tr>
+            <tr>
+              <td width="40" align="right" valign="bottom"><img src="${ctx}/images/buy_ico_02.png" width="18" height="17"/></td>
+              <td align="left" height="25" valign="bottom" class="f13_5">&nbsp;2.选择网络</td>
+            </tr>
+            <tr><td colspan="4"><hr style="border: 1px dashed #ccc; width: 84%; height:1px;" /></td></tr>
+            <tr>
+              <td width="40" align="right" valign="bottom"><img src="${ctx}/images/buy_ico_02.png" width="18" height="17"/></td>
+              <td align="left" height="25" valign="bottom" class="f13_5">&nbsp;3.主机配置</td>
+            </tr>
+            <tr><td colspan="4"><hr style="border: 1px dashed #ccc; width: 84%; height:1px;" /></td></tr>
+            <tr>
+              <td width="40" align="right" valign="bottom"><img src="${ctx}/images/buy_ico_03.png" width="18" height="17"/></td>
+              <td align="left" height="25" valign="bottom" class="f13_5">&nbsp;4.选择计费</td>
+            </tr>
+            <tr><td colspan="4"><hr style="border: 1px dashed #ccc; width: 84%; height:1px;" /></td></tr>
+            <tr>
+              <td width="20"></td>
+              <td align="left" height="25" valign="bottom" class="f13_1">&nbsp;5.完成购买</td>
+            </tr>
+            <tr><td colspan="4"><hr style="border: 1px dashed #ccc; width: 84%; height:1px;" /></td></tr>
+          </table>
+        </div>
+        
+        <!-- 左侧内容 -->
+        <div id="middle_sheet_buy_02">
+          <table width="751" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+              <td width="12"><img src="${ctx}/images/buy_sheet_border_01.png" width="12" height="35" /></td>
+              <td width="729" background="${ctx}/images/buy_sheet_border_02.png" align="left" class="f18_1">产品购买（快速）</td>
+              <td width="10"><img src="${ctx}/images/buy_sheet_border_03.png" width="10" height="35" /></td>
+            </tr>
+            <tr>
+              <td background="${ctx}/images/buy_sheet_border_04.png" ></td>
+              <td align="left" valign="top" bgcolor="#F0F1F2" height="560">
+                <table width="336" border="0" cellspacing="0" cellpadding="0">
+                  <tr>
+                    <td width="35" align="left" valign="middle"><img src="${ctx}/images/buy_ico_04.gif" width="25" height="26" /></td>
+                    <td width="301" align="left" valign="middle" class="f18b2">请选择符合您要求的计费方式</td>
+                  </tr>
+                  <tr>
+                    <td height="5" colspan="2" align="left" valign="middle"><img src="${ctx}/images/buy_blue_line.jpg" width="280" height="1" /></td>
+                  </tr>
+                </table>
+                
+                <table width="729" border="0" cellpadding="0" cellspacing="0">
+                  <tr height="30">
+                	<td width="4%" class="f15_1"></td>
+                    <td align="left" class="f15_1">组合产品定价:${message}</td>
+                  </tr>
+                 <tr height="30">
+                	<td width="4%"></td>
+                    <td>
+					 <table width="95%" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+                       	<tr bgcolor="#92b8c1" height="20">
+                         	<td width="10%" align="center" class="f12">选择</td>
+                         	<td width="30%" align="center" class="f12">收费类型</td>
+                         	<td width="30%" align="center" class="f12">实际金额</td>
+                         	<td width="30%" align="center" class="f12">折扣后金额</td>
+                        </tr>
+                      </table>
+                    	<table width="100%"  border="0" cellpadding="0" cellspacing="0">
+                    	<c:choose>
+                    	  <c:when test="${quickBuyVo.priceMode=='0'}">
+                    	  <tr height="30">
+                          	<td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="comPprice" value="compOneTime"/></td>
+                            <td width="30%" align="center" class="f13_1">一次性收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.oneTimePrice}元</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.oneTimeRebatePrice}元</td>
+                          </tr>
+                          </c:when>
+                          <c:otherwise>
+                          <tr height="30">
+                            <td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="comPprice" value="compYear"/></td>
+                            <td width="30%" align="center" class="f13_1">年收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.yearPrice}元/年</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.yearRebatePrice}元/年</td>
+                          </tr>
+                          <tr height="30">
+                           <td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="comPprice" value="compMonth"/></td>
+                            <td width="30%" align="center" class="f13_1">月收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.monthPrice}元/月</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.monthRebatePrice}元/月</td>
+                          </tr>
+                    	  <tr height="30">
+                    	    <td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="comPprice" value="compDay"/></td>
+                            <td width="30%" align="center" class="f13_1">日收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.dayPrice}元/日</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.dayRebatePrice}元/日</td>
+                          </tr>
+                          <tr height="30">
+                    	    <td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="comPprice" value="compHour"/></td>
+                            <td width="30%" align="center" class="f13_1">小时收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.hourPrice}元/小时</td>
+                         	<td width="30%" align="center" class="f13_1">${quickBuyVo.hourRebatePrice}元/小时</td>
+                          </tr>
+                          </c:otherwise>
+                        </c:choose>                         
+                      	</table>
+                   	</td>
+                  </tr>
+                </table>
+              <c:if test="${networkFlag=='1'}">
+              <table width="729" border="0" cellpadding="0" cellspacing="0">
+                       
+                  <tr height="30">
+                	<td width="4%"></td>
+                    <td align="left" class="f15_1">高级网络收费:</td>
+                  </tr>
+                 <tr height="30">
+                	<td width="4%"></td>
+                    <td>
+					 <table width="95%" border="0" cellspacing="1" cellpadding="1" bgcolor="#eeeeee">
+                       	 	<tr bgcolor="#92b8c1" height="20">
+                         	<td width="10%" align="center" class="f12">选择</td>
+                         	<td width="30%" align="center" class="f12">收费类型</td>
+                         	<td width="30%" align="center" class="f12">实际金额</td>
+                         	<td width="30%" align="center" class="f12">折扣后金额</td>
+                        </tr>
+                      </table>
+                 <table width="100%"  border="0" cellpadding="0" cellspacing="0">
+                    	<c:choose>
+                    	  <c:when test="${quickNetWorkBuyVo.priceMode=='0'}">
+                    	  <tr height="30">
+                          	<td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="ipPrice" value="0"/></td>
+                            <td width="30%" align="center" class="f13_1">一次性收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.oneTimePrice}元</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.oneTimeRebatePrice}元</td>
+                          </tr>
+                          </c:when>
+                          <c:otherwise>
+                          <tr height="30">
+                            <td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="ipPrice" value="2"/></td>
+                            <td width="30%" align="center" class="f13_1">年收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.yearPrice}元/年</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.yearRebatePrice}元/年</td>
+                          </tr>
+                          <tr height="30">
+                           <td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="ipPrice" value="3"/></td>
+                            <td width="30%" align="center" class="f13_1">月收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.monthPrice}元/月</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.monthRebatePrice}元/月</td>
+                          </tr>
+                    	  <tr height="30">
+                    	    <td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="ipPrice" value="4"/></td>
+                            <td width="30%" align="center" class="f13_1">日收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.dayPrice}元/日</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.dayRebatePrice}元/日</td>
+                          </tr>
+                           <tr height="30">
+                    	    <td width="10%" height="30" align="left" class="f13_1"><input type="radio" name="ipPrice" value="5"/></td>
+                            <td width="30%" align="center" class="f13_1">小时收费：</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.hourPrice}元/小时</td>
+                         	<td width="30%" align="center" class="f13_1">${quickNetWorkBuyVo.hourRebatePrice}元/小时</td>
+                          </tr>
+                          </c:otherwise>
+                        </c:choose>  
+                      	</table>
+                   	
+                    </td>
+                  </tr>  
+                  </table>
+               </c:if>
+
+                <table align="right" width="352" height="33" border="0" cellpadding="0" cellspacing="0">
+                  <tr><td colspan="3" height="35">&nbsp;</td></tr>
+                  <tr>
+                    <td width="117" align="right" valign="middle">
+                    	<img src="${ctx}/images/btn2.png" width="117" height="32" style="cursor:pointer;" onclick="previous()"/>
+                    </td>
+                    <td width="185" align="right" valign="middle">
+                    	<img src="${ctx}/images/btn3.png" width="117" height="32" style="cursor:pointer;" onclick="next()"/>
+                    </td>
+                    <td width="15" align="right" valign="middle">&nbsp;</td>
+                  </tr>
+                  <tr><td colspan="3" height="185">&nbsp;</td></tr>
+                </table>
+              </td>     
+              <td background="${ctx}/images/buy_sheet_border_05.png">&nbsp;</td>
+            </tr>
+            <tr>
+              <td><img src="${ctx}/images/buy_sheet_border_06.png" width="12" height="13" /></td>
+              <td height="13" background="${ctx}/images/buy_sheet_border_07.png"></td>
+              <td><img src="${ctx}/images/buy_sheet_border_08.png" width="10" height="13" /></td>
+            </tr>
+          </table>
+        </div>
+        
+	</form:form>
+  </body>
+</html>
